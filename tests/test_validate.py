@@ -211,3 +211,30 @@ class TestInfo(CmdTest):
         self.assertIn("All rows are sorted: True", out)
         self.assertIn("->", out)
 
+
+class TestValidateMessages(unittest.TestCase):
+
+    def test_all_types(self):
+        for msg_type, msg_fields in gpsd_format.validate.MSG_TYPE_FIELDS.items():
+
+            # Check type field individually since the other tests force it to be correct
+            assert not gpsd_format.validate.validate_messages([{'field': 'val'}])
+            assert not gpsd_format.validate.validate_messages([{'type': gpsd_format.validate.MSG_VALIDATION_LOOKUP['type']['bad']}])
+
+            # Construct a good message
+            good_message = {f: gpsd_format.validate.MSG_VALIDATION_LOOKUP[f]['good'] for f in msg_fields}
+            good_message['type'] = msg_type
+
+            assert gpsd_format.validate.validate_messages([good_message]), \
+                "Supposed 'good' msg failed validation: %s" % good_message
+
+            # Creating a bad message from all of the bad values is an insufficient test because the validator
+            # will start checking fields and as soon as it gets to a bad one it will flag the message as invalid.
+            # Every field is checked in every message and every bad field is logged but we can't validate individual
+            # fields without taking a good message and then changing one field at a time to a bad field.
+            for field in msg_fields:
+                if field != 'type':
+                    bad_message = good_message.copy()
+                    bad_message[field] = gpsd_format.validate.MSG_VALIDATION_LOOKUP[field]['bad']
+                    assert not gpsd_format.validate.validate_messages([bad_message]), \
+                        "Field `%s' should have caused message to fail: %s" % (field, bad_message)
