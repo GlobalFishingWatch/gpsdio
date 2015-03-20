@@ -1,12 +1,13 @@
 #! /usr/bin/python
 
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 
 setup(
     name="gpsd_format",
-    description="A library and command line tool to read, write and validate AIS and GPS messages in the GPSD JSON format (or the same format in a msgpack container).",
+    description="A library and command line tool to read, write and validate "
+                "AIS and GPS messages in the GPSD JSON format (or the same format in a msgpack container).",
     keywords="gpsd",
     install_requires=["python-dateutil"],
     extras_require={
