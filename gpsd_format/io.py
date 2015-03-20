@@ -6,16 +6,41 @@ that of csv.DictReader/DictWriter and uses gpsd_format.schema to get schema deta
 
 import os
 import msgpack
+import json
 
 import gpsd_format.schema
 
-
 __all__ = ['GPSDReader', 'GPSDWriter']
 
+def json_reader(f):
+    for line in f:
+        try:
+            yield json.loads(line.strip())
+        except:
+            yield {"__invalid__": {"__content__": line}}
+
+class msgpack_writer(object):
+    def __init__(self, f):
+        self.f = f
+
+    def writerow(self, row):
+        msgpack.dump(row, self.f)
+
+class json_writer(object):
+    def __init__(self, f):
+        self.f = f
+
+    def writerow(self, row):
+        json.dump(row, self.f)
 
 class GPSDReader(object):
+    container_formats = {
+        'msg': msgpack.Unpacker,
+        'msgpack': msgpack.Unpacker,
+        'json': json_reader
+        }
 
-    def __init__(self, f, force_message=False, keep_fields=True, throw_exceptions=True, convert=True, *args, **kwargs):
+    def __init__(self, f, force_message=False, keep_fields=True, throw_exceptions=True, convert=True, container=None, *args, **kwargs):
         """
         Read the GPSD format. The API mimics that of
         csv.DictReader.
@@ -33,6 +58,12 @@ class GPSDReader(object):
         throw_exceptions: bool
             If true, reading a row with an attribute value that does not match
             the schema type for that attribute will cause an exception.
+        convert: bool
+            If false, don't convert attribute values not natively converted by the
+            container format (e.g. dates)
+        container: function
+            A function that iterates over a file handle producing a messages (dictionaries).
+            Default depends on the file extension in f.name
         *args
             Collect and ignore additional positional arguments so the reader can
             be swapped with other readers that might take additional arguments
@@ -41,7 +72,13 @@ class GPSDReader(object):
         """
 
         self.f = f
-        self.reader = msgpack.Unpacker(self.f)
+        if container is None:
+            if hasattr(f, 'name'):
+                container = self.container_formats.get(f.name.rsplit(".", 1)[1])
+            else:
+                container = self.container_formats['json']
+        self.container = container
+        self.reader = self.container(self.f)
         self.convert = convert
         self.force_message = force_message
         self.keep_fields = keep_fields
@@ -103,9 +140,14 @@ class GPSDReader(object):
 
         self.f.close()
 
-
 class GPSDWriter(object):
-    def __init__(self, f, force_message=False, keep_fields=True, throw_exceptions=True, convert=True, *args, **kwargs):
+    container_formats = {
+        'msg': msgpack_writer,
+        'msgpack':  msgpack_writer,
+        'json': json_writer
+        }
+
+    def __init__(self, f, force_message=False, keep_fields=True, throw_exceptions=True, convert=True, container=None, *args, **kwargs):
         """
         Write the GPSD format. The API mimics that of
         csv.DictWriter.
@@ -123,6 +165,12 @@ class GPSDWriter(object):
         throw_exceptions: bool
             If true, writing a row with an attribute value that does not match
             the schema type for that attribute will cause an exception.
+        convert: bool
+            If false, don't convert attribute values not natively converted by the
+            container format (e.g. dates)
+        container: class
+            A class that takes a file handle and provides a writerow() function
+            Default depends on the file extension in f.name
         *args
             Collect and ignore additional positional arguments so the reader can
             be swapped with other readers that might take additional arguments
@@ -131,6 +179,13 @@ class GPSDWriter(object):
         """
 
         self.f = f
+        if container is None:
+            if hasattr(f, 'name'):
+                container = self.container_formats.get(f.name.rsplit(".", 1)[1])
+            else:
+                container = self.container_formats['json']
+        self.container = container
+        self.writer = self.container(self.f)
         self.force_message = force_message
         self.convert = convert
         self.keep_fields = keep_fields
@@ -156,10 +211,11 @@ class GPSDWriter(object):
 
     def writeheader(self):
         """
-        Placeholder method that exists in csv.DictWriter but does nothing here.
+        Write a file header if one is needed by the container format
         """
-
-        pass
+        
+        if hasattr(self.writer, 'writeheader'):
+            self.writer.writeheader()
 
     def writerow(self, row):
         """
@@ -179,7 +235,7 @@ class GPSDWriter(object):
             if self.force_message:
                 row = gpsd_format.schema.row2message(row, keep_fields=self.keep_fields)
 
-        self.f.write(msgpack.dumps(row))
+        self.writer.writerow(row)
 
     def writerows(self, rows):
         """
