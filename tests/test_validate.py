@@ -32,12 +32,11 @@ class CmdTest(unittest.TestCase):
     def runcmd(self, *args):
         return self.runner.invoke(gpsd_format.cli.main, args, catch_exceptions=False)
 
+
 class TestInfoDetails(CmdTest):
     def test_extend(self):
         data = {"foo": 1}
         self.assertDictEqual(data, gpsd_format.validate.merge_info({}, data))
-
-        
         d1 = {
             'num_rows': 3,
             'num_incomplete_rows': 1,
@@ -99,10 +98,10 @@ class TestInfoDetails(CmdTest):
             }
 
         self.assertDictEqual(expected, gpsd_format.validate.merge_info(d1, d2))
-        
+
+
 class TestInfo(CmdTest):
     maxDiff = None
-    
     epoch = datetime.datetime(1970, 1, 1)
 
     def _random_row(self):
@@ -166,7 +165,6 @@ class TestInfo(CmdTest):
             else:
                 self.expected[u'msg_type_hist'][msgtype] = 1
 
-
     def test_sorted(self):
         infile = os.path.join(self.dir, "rows.mmsi=123.json")
         with open(infile, "w") as f:
@@ -219,7 +217,8 @@ class TestValidateMessages(unittest.TestCase):
 
             # Check type field individually since the other tests force it to be correct
             assert not gpsd_format.validate.validate_messages([{'field': 'val'}])
-            assert not gpsd_format.validate.validate_messages([{'type': gpsd_format.validate.MSG_VALIDATION_LOOKUP['type']['bad']}])
+            assert not gpsd_format.validate.validate_messages(
+                [{'type': gpsd_format.validate.MSG_VALIDATION_LOOKUP['type']['bad']}])
 
             # Construct a good message
             good_message = {f: gpsd_format.validate.MSG_VALIDATION_LOOKUP[f]['good'] for f in msg_fields}

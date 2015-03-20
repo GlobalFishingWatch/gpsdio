@@ -79,12 +79,14 @@ MSG_VALIDATION_LOOKUP = {
         'bad': -100
     },
     'lon': {
-        'test': lambda x: isinstance(x, float) and -180 <= x <= 180 or x == 181,  # TODO: Should -180 be a valid value?  Maybe `-180 < x` instead?
+        # TODO: Should -180 be a valid value?  Maybe `-180 < x` instead?
+        'test': lambda x: isinstance(x, float) and -180 <= x <= 180 or x == 181,
         'good': 181,
         'bad': -180.1
     },
     'course': {
-        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and 0 <= x <= 359 or x == 3600,  # TODO: Should -90 be a valid value?  Maybe `-90 < x` instead?
+        # TODO: Should -90 be a valid value?  Maybe `-90 < x` instead?
+        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and 0 <= x <= 359 or x == 3600,
         'good': 3600,
         'bad': 360
     },
@@ -104,19 +106,22 @@ MSG_VALIDATION_LOOKUP = {
         'bad': 3
     },
     'raim': {
-        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),  # TODO: bool is more Pythonic if the field is actually boolean and not state
+        # TODO: bool is more Pythonic if the field is actually boolean and not state
+        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
         'good': 0,
         'bad': -2
     },
     'radio': {
-        'test': lambda x: x is None,  # TODO: What will this value be?
+        # TODO: What will this value be?
+        'test': lambda x: x is None,
         'good': None,
         'bad': False
     },
 
     # Pulled from type 5 GPSD spec
     'ais_version': {
-        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1, 2, 3),  # TODO: Should always be 0 right now.  The other vals are reserved.
+        # TODO: Should always be 0 right now.  The other vals are reserved.
+        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1, 2, 3),
         'good': 2,
         'bad': True
     },
@@ -196,7 +201,8 @@ MSG_VALIDATION_LOOKUP = {
         'bad': 2 * 2
     },
     'dte': {
-        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),  # TODO: Switch to a more Pythonic bool if this is actually bolean and not a status
+        # TODO: Switch to a more Pythonic bool if this is actually bolean and not a status
+        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
         'good': 0,
         'bad': 8
     },
@@ -218,32 +224,38 @@ MSG_VALIDATION_LOOKUP = {
         'bad': str
     },
     'cs': {
-        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),  # Not bool - state
+        # Not bool - state
+        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
         'good': 0,
         'bad': 7
     },
     'display': {
-        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),  # Not bool - state
+        # Not bool - state
+        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
         'good': 1,
         'bad': 'j'
     },
     'dsc': {
-        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),  # TODO: Switch to a more Pythonic bool?
+        # TODO: Switch to a more Pythonic bool?
+        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
         'good': 1,
         'bad': -45
     },
     'band': {
-        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),  # TODO: Switch to a more Pythonic bool?
+        # TODO: Switch to a more Pythonic bool?
+        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
         'good': 0,
         'bad': 4
     },
     'msg22': {
-        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),  # TODO: Switch to a more Pythonic bool?
+        # TODO: Switch to a more Pythonic bool?
+        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
         'good': 0,
         'bad': -2
     },
     'assigned': {
-        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),  # TODO: Switch to a more Pythonic bool?
+        # TODO: Switch to a more Pythonic bool?
+        'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
         'good': 1,
         'bad': -33
     },
@@ -356,7 +368,6 @@ def merge_info(info_a, info_b):
             return a
         return min(a, b)
 
-
     if not info_a:
         return info_b
 
@@ -394,7 +405,8 @@ def collect_info(infile, verbose=False, err=sys.stderr):
         msg_type_hist (dict) -> {message_type: number of rows with that type}
         min_timestamp (datetime) -> Earliest timestamp
         max_timestamp (datetime) -> Latest timestamp
-        mmsi_declaration (bool) -> Wether an MMSI specified in the filename with mmsi=NUMBER is the only mmsi inside the file.
+        mmsi_declaration (bool) -> Whether an MMSI specified in the filename
+            with mmsi=NUMBER is the only mmsi inside the file.
 
     Example output:
 
