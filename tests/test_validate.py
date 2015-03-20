@@ -1,0 +1,213 @@
+"""
+Unittests for: gpsd_format.validate
+"""
+
+
+import datetime
+import random
+import gpsd_format.io
+import gpsd_format.validate
+import json
+import os.path
+import unittest
+import tempfile
+import shutil
+import click.testing
+import gpsd_format.cli
+
+
+class CmdTest(unittest.TestCase):
+    keep_tree = False
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.runner = click.testing.CliRunner()
+        if self.keep_tree:
+            print "CmdTest is running in %s" % self.dir
+
+    def tearDown(self):
+        if not self.keep_tree:
+            shutil.rmtree(self.dir)
+
+    def runcmd(self, *args):
+        return self.runner.invoke(gpsd_format.cli.main, args, catch_exceptions=False)
+
+class TestInfoDetails(CmdTest):
+    def test_extend(self):
+        data = {"foo": 1}
+        self.assertDictEqual(data, gpsd_format.validate.merge_info({}, data))
+
+        
+        d1 = {
+            'num_rows': 3,
+            'num_incomplete_rows': 1,
+            'num_invalid_rows': 2,
+            'lat_min': 5,
+            'lat_max': 7,
+            'lon_min': 11,
+            'lon_max': 13,
+            'min_timestamp': datetime.datetime(1970, 1, 2, 0, 0, 0),
+            'max_timestamp': datetime.datetime(1971, 3, 4, 5, 6, 7),
+            'is_sorted': True,
+            'mmsi_declaration': True,
+            'mmsi_hist': {
+                '111111111': 1,
+                '222222222': 2,
+            },
+            'msg_type_hist': {
+                1: 1,
+                2: 2
+            }
+        }
+
+        d2 = {
+            'num_rows': 5,
+            'num_incomplete_rows': 2,
+            'num_invalid_rows': 3,
+            'lat_min': 6,
+            'lat_max': 8,
+            'lon_min': 10,
+            'lon_max': 12,
+            'min_timestamp': datetime.datetime(1970, 1, 1, 0, 0, 0),
+            'max_timestamp': datetime.datetime(1971, 2, 1, 0, 0, 0),
+            'is_sorted': True,
+            'mmsi_declaration': True,
+            'mmsi_hist': {
+                '111111111': 1,
+                '333333333': 4,
+            },
+            'msg_type_hist': {
+                1: 4,
+                3: 1
+            }
+        }
+
+        expected = {
+            'is_sorted': True,
+            'lat_max': 8,
+            'lat_min': 5,
+            'lon_max': 13,
+            'lon_min': 10,
+            'max_timestamp': datetime.datetime(1971, 3, 4, 5, 6, 7),
+            'min_timestamp': datetime.datetime(1970, 1, 1, 0, 0),
+            'mmsi_declaration': True,
+            'mmsi_hist': {'111111111': 2, '222222222': 2, '333333333': 4},
+            'msg_type_hist': {1: 5, 2: 2, 3: 1},
+            'num_incomplete_rows': 3,
+            'num_invalid_rows': 5,
+            'num_rows': 8
+            }
+
+        self.assertDictEqual(expected, gpsd_format.validate.merge_info(d1, d2))
+        
+class TestInfo(CmdTest):
+    maxDiff = None
+    
+    epoch = datetime.datetime(1970, 1, 1)
+
+    def _random_row(self):
+        return {
+            'lon': random.uniform(-180, 180),
+            'lat': random.uniform(-180, 180),
+            'timestamp': datetime.datetime.fromtimestamp(
+                random.randint(0, int((datetime.datetime.now() - self.epoch).total_seconds()))),
+            'mmsi': random.randint(100000000, 100000010),
+            'type': random.randint(1, 32)
+        }
+
+    num_rows = 2
+    num_invalid_rows = 1
+
+    def setUp(self):
+        CmdTest.setUp(self)
+
+        # The result of _random_row has a random timestamp so this value must be overwritten when the list of rows
+        # to test is computed.  Every iteration picks a new time between the last time and now.
+        self.rows = []
+        previous_timestamp = self.epoch
+        for row in [self._random_row() for r in range(self.num_rows)]:
+            now = datetime.datetime.now()
+            # Since it takes far less than a second to create this set of tests rows it is possible for one of the
+            # new timestamps created below to be the exact same (in seconds) as the previous timestamp.  The while
+            # statement prevents that from happening
+            while now == previous_timestamp:
+                now = datetime.datetime.now()
+            new_timestamp = datetime.datetime.utcfromtimestamp(random.randint(
+                int((previous_timestamp - self.epoch).total_seconds()), int((now - self.epoch).total_seconds())))
+            row['timestamp'] = new_timestamp
+            previous_timestamp = new_timestamp
+            self.rows.append(row)
+
+        self.expected = {
+            u'num_rows': self.num_rows + self.num_invalid_rows,
+            u'num_incomplete_rows': 0,
+            u'num_invalid_rows': self.num_rows + self.num_invalid_rows,  # None of the input rows are complete messages
+            u'lat_min': min([r['lat'] for r in self.rows]),
+            u'lat_max': max([r['lat'] for r in self.rows]),
+            u'lon_min': min([r['lon'] for r in self.rows]),
+            u'lon_max': max([r['lon'] for r in self.rows]),
+            u'min_timestamp': unicode(min([r['timestamp'] for r in self.rows]).strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
+            u'max_timestamp': unicode(max([r['timestamp'] for r in self.rows]).strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
+            u'mmsi_hist': {},
+            u'msg_type_hist': {},
+            u'is_sorted': True,
+            u'mmsi_declaration': False
+        }
+        for row in self.rows:
+            mmsi = unicode(row['mmsi'])
+            if mmsi in self.expected['mmsi_hist']:
+                self.expected[u'mmsi_hist'][mmsi] += 1
+            else:
+                self.expected[u'mmsi_hist'][mmsi] = 1
+
+            msgtype = unicode(row['type'])
+            if msgtype in self.expected['msg_type_hist']:
+                self.expected[u'msg_type_hist'][msgtype] += 1
+            else:
+                self.expected[u'msg_type_hist'][msgtype] = 1
+
+
+    def test_sorted(self):
+        infile = os.path.join(self.dir, "rows.mmsi=123.json")
+        with open(infile, "w") as f:
+            w = gpsd_format.io.GPSDWriter(f)
+            for row in self.rows:
+                w.writerow(row)
+            for x in xrange(0, self.num_invalid_rows):
+                f.write("N")
+
+        self.expected[u'file'] = unicode(infile)
+
+        actual = json.loads(self.runcmd("validate", "--print-json", infile).output.split("\n")[1])
+        self.assertDictEqual(self.expected, actual)
+
+    def test_unsorted(self):
+        self.rows[0:2] = [self.rows[1], self.rows[0]]
+        infile = os.path.join(self.dir, "rows.mmsi=123.json")
+        with open(infile, "w") as f:
+            w = gpsd_format.io.GPSDWriter(f)
+            for row in self.rows:
+                w.writerow(row)
+            for x in xrange(0, self.num_invalid_rows):
+                f.write("N")
+
+        self.expected[u'file'] = unicode(infile)
+        self.expected['is_sorted'] = False
+
+        actual = json.loads(self.runcmd("validate", "--print-json", infile).output.split("\n")[1])
+        self.assertDictEqual(self.expected, actual)
+
+    def test_nonjson(self):
+        infile = os.path.join(self.dir, "rows.mmsi=123.json")
+        with open(infile, "w") as f:
+            w = gpsd_format.io.GPSDWriter(f)
+            for row in self.rows:
+                w.writerow(row)
+            for x in xrange(0, self.num_invalid_rows):
+                f.write("N\n")
+
+        out = self.runcmd("validate", "--verbose", "--msg-hist", "--mmsi-hist", infile).output
+
+        self.assertIn("All rows are sorted: True", out)
+        self.assertIn("->", out)
+
