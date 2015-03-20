@@ -4,6 +4,8 @@ import click
 import gpsd_format.io
 import gpsd_format.schema
 import gpsd_format.validate
+import datetime
+import json
 
 @click.group()
 @click.pass_context
