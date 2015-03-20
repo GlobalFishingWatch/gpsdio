@@ -72,7 +72,7 @@ class TestGPSDReader(unittest.TestCase):
         reader = gpsd_format.io.GPSDReader(self.valid_f, force_message=False, keep_fields=True)
         for expected, actual in zip(self.valid_rows, reader):
             self.assertDictEqual(expected, actual)
-    
+
     def test_keep_invalid_fields(self):
 
         """
@@ -138,6 +138,7 @@ class TestGPSDReader(unittest.TestCase):
                     bad_fields += 1
         self.assertEqual(bad_lines, 1)
         self.assertEqual(bad_fields, 2)
+
 
 class TestGPSDWriter(unittest.TestCase):
 
@@ -242,7 +243,8 @@ class TestGPSDWriter(unittest.TestCase):
         test_f.seek(0)
         reader = gpsd_format.io.GPSDReader(test_f, force_message=False, keep_fields=True)
 
-        for expected, actual in zip([gpsd_format.schema.row2message(row, keep_fields=True) for row in self.extended_rows], reader):
+        for expected, actual in zip(
+                [gpsd_format.schema.row2message(row, keep_fields=True) for row in self.extended_rows], reader):
 
             # The reader is type-casting so make sure the expected row is also cast
             expected = gpsd_format.schema.import_row(expected.copy())

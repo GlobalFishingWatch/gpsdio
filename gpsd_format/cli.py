@@ -1,3 +1,8 @@
+"""
+Commandline interface for gpsd_format
+"""
+
+
 import os
 import sys
 import click
@@ -7,6 +12,7 @@ import gpsd_format.validate
 import datetime
 import json
 
+
 @click.group()
 @click.pass_context
 def main(ctx):
@@ -15,6 +21,7 @@ def main(ctx):
     """
 
     pass
+
 
 @main.command()
 @click.argument("infile", metavar="INPUT_FILENAME")
@@ -97,8 +104,6 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
         click.echo("")
 
     sys.exit(0)
-
-
 
 
 @main.command()

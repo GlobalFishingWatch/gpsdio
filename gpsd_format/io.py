@@ -4,16 +4,17 @@ that of csv.DictReader/DictWriter and uses gpsd_format.schema to get schema deta
 """
 
 
-import os
 try:
     import msgpack
-except:
-    pass
+except ImportError:
+    msgpack = None
 import json
 
 import gpsd_format.schema
 
+
 __all__ = ['GPSDReader', 'GPSDWriter']
+
 
 def json_reader(f):
     for line in f:
@@ -22,20 +23,23 @@ def json_reader(f):
         except Exception, e:
             yield {"__invalid__": {"__content__": line}}
 
-class msgpack_writer(object):
+
+class _MsgPackWriter(object):
     def __init__(self, f):
         self.f = f
 
     def writerow(self, row):
         msgpack.dump(row, self.f)
 
-class json_writer(object):
+
+class _JSONWriter(object):
     def __init__(self, f):
         self.f = f
 
     def writerow(self, row):
         json.dump(row, self.f)
         self.f.write("\n")
+
 
 class GPSDReader(object):
     container_formats = {
@@ -44,7 +48,8 @@ class GPSDReader(object):
         'json': json_reader
         }
 
-    def __init__(self, f, force_message=False, keep_fields=True, throw_exceptions=True, convert=True, container=None, *args, **kwargs):
+    def __init__(self, f, force_message=False, keep_fields=True, throw_exceptions=True, convert=True, container=None,
+                 *args, **kwargs):
         """
         Read the GPSD format. The API mimics that of
         csv.DictReader.
@@ -144,14 +149,16 @@ class GPSDReader(object):
 
         self.f.close()
 
+
 class GPSDWriter(object):
     container_formats = {
-        'msg': msgpack_writer,
-        'msgpack':  msgpack_writer,
-        'json': json_writer
+        'msg': _MsgPackWriter,
+        'msgpack':  _MsgPackWriter,
+        'json': _JSONWriter
         }
 
-    def __init__(self, f, force_message=False, keep_fields=True, throw_exceptions=True, convert=True, container=None, *args, **kwargs):
+    def __init__(self, f, force_message=False, keep_fields=True, throw_exceptions=True, convert=True, container=None,
+                 *args, **kwargs):
         """
         Write the GPSD format. The API mimics that of
         csv.DictWriter.
@@ -217,7 +224,7 @@ class GPSDWriter(object):
         """
         Write a file header if one is needed by the container format
         """
-        
+
         if hasattr(self.writer, 'writeheader'):
             self.writer.writeheader()
 
@@ -232,7 +239,8 @@ class GPSDWriter(object):
         """
 
         if not self.keep_fields and 'type' in row:
-            row = {field: val for field, val in row.iteritems() if field in gpsd_format.schema.get_message_default(row['type'])}
+            row = {field: val for field, val in row.iteritems()
+                   if field in gpsd_format.schema.get_message_default(row['type'])}
 
         if self.convert:
             row = gpsd_format.schema.export_row(row, throw_exceptions=self.throw_exceptions)
