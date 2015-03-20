@@ -19,7 +19,7 @@ def json_reader(f):
     for line in f:
         try:
             yield json.loads(line.strip())
-        except:
+        except Exception, e:
             yield {"__invalid__": {"__content__": line}}
 
 class msgpack_writer(object):
