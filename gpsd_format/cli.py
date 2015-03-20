@@ -1,6 +1,7 @@
 import os
 import sys
 import click
+import gpsd_format.io
 import gpsd_format.schema
 import gpsd_format.validate
 
@@ -94,3 +95,22 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
         click.echo("")
 
     sys.exit(0)
+
+
+
+
+@main.command()
+@click.argument("infile", metavar="INPUT_FILENAME")
+@click.argument("outfile", metavar="OUTPUT_FILENAME")
+@click.pass_context
+def convert(ctx, infile, outfile):
+    """
+    Converts between JSON and msgpack container formats
+    """
+
+    with open(infile) as inf:
+        with open(outfile, "w") as of:
+            reader = gpsd_format.io.GPSDReader(inf)
+            writer = gpsd_format.io.GPSDWriter(of)
+            for row in reader:
+                writer.writerow(row)

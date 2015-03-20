@@ -5,7 +5,10 @@ that of csv.DictReader/DictWriter and uses gpsd_format.schema to get schema deta
 
 
 import os
-import msgpack
+try:
+    import msgpack
+except:
+    pass
 import json
 
 import gpsd_format.schema
@@ -32,6 +35,7 @@ class json_writer(object):
 
     def writerow(self, row):
         json.dump(row, self.f)
+        self.f.write("\n")
 
 class GPSDReader(object):
     container_formats = {
