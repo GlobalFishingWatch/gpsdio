@@ -214,7 +214,7 @@ class TestInfo(CmdTest):
 class TestValidateMessages(unittest.TestCase):
 
     def test_all_types(self):
-        for msg_type, msg_fields in gpsd_format.validate.MSG_TYPE_FIELDS.items():
+        for msg_type, msg_fields in gpsd_format.schema.fields_by_message_type.items():
 
             # Check type field individually since the other tests force it to be correct
             assert not gpsd_format.validate.validate_messages([{'field': 'val'}])

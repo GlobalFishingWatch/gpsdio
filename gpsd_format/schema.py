@@ -305,5 +305,8 @@ fields_by_message_type = {
     ],
     24: [
         'scaled', 'repeat', 'shipname', 'device', 'mmsi', 'type', 'part_num', 'class'
+    ],
+    27: [
+        'type', 'repeat', 'mmsi', 'accuracy', 'raim', 'status', 'lon', 'lat', 'speed', 'course', 'gnss'
     ]
 }

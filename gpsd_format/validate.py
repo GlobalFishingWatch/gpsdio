@@ -11,66 +11,6 @@ import re
 import gpsd_format.io
 import gpsd_format.schema
 
-
-# TODO: Move this to the schema?
-# In order to ease test maintenance as outputs and inputs change the data structure below contains a test for every
-# field, a value that will pass the test, and a value that will fail the test.  All information is pulled from GPSD
-# (http://catb.org/gpsd/AIVDM.html) and assumes two things:
-#   1. Fieldnames are unique across all messages
-#   2. Fields appearing in different message types contain the same information.  For instance, the field 'sog'
-#      appears in multiple types but is always speed over ground in the same units in every message.
-#
-# Keys are fieldnames and values are dictionaries containing three keys:
-#   1. test - a function that verifies a value is acceptable for this field
-#   2. good - a value that will pass the test function
-#   3. bad  - a value that will not pass the test function
-#
-# Some fields are flags with values 0 or 1 that may be switched to Python's bool in the future but in the meantime
-# we want to be positive these values are int's.  Since bool subclasses int expressions like `0 in (1, 0)` and
-# `True in (0, 1)` both evaluate as `True` which could yield unexpected results.  Any test that expects an int
-# also checks to make sure that int is NOT a bool, even if the field is a range and will never be bool.  Better to be
-# safe here than be forced to debug some potentially ambiguous bugs elsewhere.
-
-
-# Keys are message types and values are lists of fields that type expects
-MSG_TYPE_FIELDS = {
-    1: [
-        'type', 'repeat', 'mmsi', 'status', 'turn', 'sog', 'accuracy', 'lat', 'lon', 'course', 'heading', 'second',
-        'maneuver', 'raim', 'radio'
-    ],
-    2: [
-        'type', 'repeat', 'mmsi', 'status', 'turn', 'sog', 'accuracy', 'lat', 'lon', 'course', 'heading', 'second',
-        'maneuver', 'raim', 'radio'
-    ],
-    3: [
-        'type', 'repeat', 'mmsi', 'status', 'turn', 'sog', 'accuracy', 'lat', 'lon', 'course', 'heading', 'second',
-        'maneuver', 'raim', 'radio'
-    ],
-    5: [
-        'type', 'repeat', 'mmsi', 'ais_version', 'imo', 'callsign', 'shipname', 'shiptype', 'to_bow', 'to_stern',
-        'to_port', 'to_starboard', 'epfd',
-        # FIXME: Where are these from? ETA? 'month', 'day', 'hour', 'minute',
-        'draught', 'destination', 'dte'
-    ],
-    18: [
-        'type', 'repeat', 'mmsi', 'reserved', 'speed', 'accuracy', 'lon', 'lat', 'course', 'heading', 'second',
-        'regional', 'cs', 'display', 'dsc', 'band', 'msg22', 'assigned', 'raim', 'radio', 'dte', 'assigned'
-    ],
-    19: [
-        'type', 'repeat', 'mmsi', 'reserved', 'speed', 'accuracy', 'lon', 'lat', 'course', 'heading', 'second',
-        'regional', 'shipname', 'shiptype', 'to_bow', 'to_stern', 'to_port', 'to_starboard', 'epfd', 'raim', 'dte',
-        'assigned'
-    ],
-    24: [
-        'type', 'repeat', 'mmsi', 'partno', 'shipname', 'shiptype', 'vendorid', 'model', 'serial', 'callsign',
-        'to_bow', 'to_stern', 'to_port', 'to_starboard', 'mothership_mmsi'
-    ],
-    27: [
-        'type', 'repeat', 'mmsi', 'accuracy', 'raim', 'status', 'lon', 'lat', 'speed', 'course', 'gnss'
-    ]
-}
-
-
 def merge_info(info_a, info_b):
     """Joins two info dicts from info() below"""
 
@@ -323,7 +263,7 @@ def validate_messages(messages, err=None):
     for msg in messages:
 
         # Make sure the message specifies its type and that the type is one we can validate
-        if 'type' not in msg or msg['type'] not in MSG_TYPE_FIELDS:
+        if 'type' not in msg or msg['type'] not in gpsd_format.schema.fields_by_message_type:
             if err is not None:
                 err.write("No 'type' key in msg or type is invalid or not testable: %s" % msg)
             return_val = False
@@ -331,7 +271,7 @@ def validate_messages(messages, err=None):
         # Normal field validation
         else:
             msg_type = msg['type']
-            for field in MSG_TYPE_FIELDS[msg_type]:
+            for field in gpsd_format.schema.fields_by_message_type[msg_type]:
                 if 'test' in gpsd_format.schema.CURRENT[field] and not gpsd_format.schema.CURRENT[field]['test'](msg[field]):
                     if err is not None:
                         sys.stdout.write("Field `%s' failed: %s" % (field, json.dumps(msg) + os.linesep))

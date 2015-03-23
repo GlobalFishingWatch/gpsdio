@@ -45,6 +45,24 @@ def str2datetime(string):
         int(string[17:19]),
         int(ms))
 
+# In order to ease test maintenance as outputs and inputs change the data structure below contains a test for every
+# field, a value that will pass the test, and a value that will fail the test.  All information is pulled from GPSD
+# (http://catb.org/gpsd/AIVDM.html) and assumes two things:
+#   1. Fieldnames are unique across all messages
+#   2. Fields appearing in different message types contain the same information.  For instance, the field 'sog'
+#      appears in multiple types but is always speed over ground in the same units in every message.
+#
+# Keys are fieldnames and values are dictionaries containing three keys:
+#   1. test - a function that verifies a value is acceptable for this field
+#   2. good - a value that will pass the test function
+#   3. bad  - a value that will not pass the test function
+#
+# Some fields are flags with values 0 or 1 that may be switched to Python's bool in the future but in the meantime
+# we want to be positive these values are int's.  Since bool subclasses int expressions like `0 in (1, 0)` and
+# `True in (0, 1)` both evaluate as `True` which could yield unexpected results.  Any test that expects an int
+# also checks to make sure that int is NOT a bool, even if the field is a range and will never be bool.  Better to be
+# safe here than be forced to debug some potentially ambiguous bugs elsewhere.
+
 VERSIONS = {
     1.0: {
         'course': {
