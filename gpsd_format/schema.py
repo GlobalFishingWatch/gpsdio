@@ -9,7 +9,9 @@ from ._schema_def import str2datetime
 
 
 CURRENT = VERSIONS[max(VERSIONS.keys())]
-default = {field: CURRENT[field]['default'] for field in CURRENT.keys()}
+default = {field: CURRENT[field]['default']
+           for field in CURRENT.keys()
+           if 'default' in CURRENT[field]}
 
 schema_import_functions = {field: CURRENT[field]['import']
                            for field in CURRENT

@@ -6,6 +6,7 @@ Unittests for: gpsd_format.validate
 import datetime
 import random
 import gpsd_format.io
+import gpsd_format.schema
 import gpsd_format.validate
 import json
 import os.path
@@ -218,10 +219,11 @@ class TestValidateMessages(unittest.TestCase):
             # Check type field individually since the other tests force it to be correct
             assert not gpsd_format.validate.validate_messages([{'field': 'val'}])
             assert not gpsd_format.validate.validate_messages(
-                [{'type': gpsd_format.validate.MSG_VALIDATION_LOOKUP['type']['bad']}])
+                [{'type': gpsd_format.schema.CURRENT['type']['bad']}])
 
             # Construct a good message
-            good_message = {f: gpsd_format.validate.MSG_VALIDATION_LOOKUP[f]['good'] for f in msg_fields}
+            good_message = {f: gpsd_format.schema.CURRENT[f]['good'] for f in msg_fields
+                            if 'good' in gpsd_format.schema.CURRENT[f]}
             good_message['type'] = msg_type
 
             assert gpsd_format.validate.validate_messages([good_message]), \
@@ -232,8 +234,8 @@ class TestValidateMessages(unittest.TestCase):
             # Every field is checked in every message and every bad field is logged but we can't validate individual
             # fields without taking a good message and then changing one field at a time to a bad field.
             for field in msg_fields:
-                if field != 'type':
+                if field != 'type' and 'bad' in gpsd_format.schema.CURRENT[field]:
                     bad_message = good_message.copy()
-                    bad_message[field] = gpsd_format.validate.MSG_VALIDATION_LOOKUP[field]['bad']
+                    bad_message[field] = gpsd_format.schema.CURRENT[field]['bad']
                     assert not gpsd_format.validate.validate_messages([bad_message]), \
                         "Field `%s' should have caused message to fail: %s" % (field, bad_message)
