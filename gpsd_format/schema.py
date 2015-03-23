@@ -55,8 +55,11 @@ def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
                         res = False
                 else:
                     t = fieldschema.get('type', str)
-                    if not isinstance(value, t):
+                    if type(value) is not t:
                         add_invalid(key, (str(t), row.pop(key)))
+                        res = False
+                    elif 'test' in fieldschema and not fieldschema['test'](value):
+                        add_invalid(key, ('test failed', row.pop(key)))
                         res = False
             except Exception, e:
                 add_invalid(key, (str(e), row.pop(key)))
