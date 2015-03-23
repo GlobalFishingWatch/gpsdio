@@ -130,6 +130,12 @@ VERSIONS = {
             'units': 'N/A',
             'description': 'Vessel type'
         },
+        'shiptype_text': {
+            'default': 'Unknown',
+            'type': str,
+            'units': 'N/A',
+            'description': 'Vessel type'
+        },
         'callsign': {
             'default': '',
             'type': str,
