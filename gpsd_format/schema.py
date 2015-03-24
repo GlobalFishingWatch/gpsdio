@@ -26,6 +26,7 @@ schema_types = {field: CURRENT[field]['type']
 schema_cast_functions = schema_types.copy()
 schema_cast_functions.update(schema_import_functions)
 
+BaseString = str.__bases__[0]
 
 def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
     """
@@ -55,9 +56,16 @@ def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
                         add_invalid(key, ("null", row.pop(key)))
                         res = False
                 else:
+                    vt = type(value)
                     t = fieldschema.get('type', str)
-                    if type(value) is not t:
-                        add_invalid(key, (str(t), row.pop(key)))
+                    # Hack to allow both UTF-encoded str and unicode
+                    # strings - this seems to be container dependent,
+                    # and actually converting using import/export
+                    # would be to expensive and this is generally not
+                    # that usefull
+                    if t is str or t is unicode: t = BaseString
+                    if not issubclass(vt, t):
+                        add_invalid(key, (t.__name__, row.pop(key)))
                         res = False
                     elif 'test' in fieldschema and not fieldschema['test'](value):
                         add_invalid(key, ('test failed', row.pop(key)))

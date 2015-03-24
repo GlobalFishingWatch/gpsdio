@@ -214,7 +214,7 @@ def collect_info(infile, verbose=False, err=sys.stderr):
                 stats['num_invalid_rows'] += 1
                 if verbose:
                     err.write("ERROR: Invalid row: {row}".format(row=row) + os.linesep)
-            elif not gpsd_format.schema.validate_message(row):
+            elif not gpsd_format.schema.validate_message(row, modify=True):
                 stats['num_incomplete_rows'] += 1
                 if verbose:
                     err.write("WARNING: Incomplete row: {row}".format(row=row) + os.linesep)

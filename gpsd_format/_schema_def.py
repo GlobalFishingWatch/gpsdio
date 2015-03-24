@@ -66,21 +66,21 @@ def str2datetime(string):
 VERSIONS = {
     1.0: {
         'course': {
-            'default': 0,
-            'type': int,
+            'default': 0.0,
+            'type': float,
             'units': 'degrees',
             'description': 'Course over ground - degrees from north',
             # TODO: Should -90 be a valid value?  Maybe `-90 < x` instead?
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and 0 <= x <= 359 or x == 3600,
-            'good': 3600,
-            'bad': 360
+            'test': lambda x: 0.0 <= x < 360.0,
+            'good': 45.0,
+            'bad': 360.0
         },
         'heading': {
             'default': 0,
             'type': int,
             'units': 'degrees',
             'description': 'True heading - degrees from north',
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and 0 <= x <= 359 or x == 511,
+            'test': lambda x: 0 <= x <= 359 or x == 511,
             'good': 511,
             'bad': -102
         },
@@ -105,12 +105,11 @@ VERSIONS = {
         },
         'mmsi': {
             'default': '',
-            'type': str,
+            'type': int,
             'units': 'N/A',
             'description': 'Mobile Marine Service Identifier',
-            'test': lambda x: isinstance(x, str) and len(x) <= 2 ** 30,
-            'good': '12345678902345678',
-            'bad': 1234
+            'good': 123,
+            'bad': True
         },
         'timestamp': {
             'default': str2datetime('1970-01-01T00:00:00.0Z'),
@@ -145,12 +144,12 @@ VERSIONS = {
         },
         'status': {
             'default': 'Not defined',
-            'type': int,
+            'type': str,
             'units': 'N/A',
             'description': 'Navigation status (e.g. at anchor, moored, aground, etc.)',
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in range(0, 16),
-            'good': 2,
-            'bad': -10
+            'test': lambda x: x, # Should test if in list of allowed values
+            'good': 'Moored',
+            'bad': ''
         },
         'turn': {
             'default': None,
@@ -158,7 +157,7 @@ VERSIONS = {
             'type': int,
             'units': 'degrees/min',
             'description': 'Rate of turn',
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in range(-127, 129),
+            'test': lambda x: x in range(-127, 129),
             'good': 125,
             'bad': -1000
         },
@@ -167,7 +166,7 @@ VERSIONS = {
             'type': int,
             'units': 'N/A',
             'description': 'NMEA message code',
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in range(1, 28),
+            'test': lambda x: x in range(1, 28),
             'good': 5,
             'bad': -1            
         },
@@ -176,18 +175,15 @@ VERSIONS = {
             'type': str,
             'units': 'N/A',
             'description': 'Vessel name',
-            'test': lambda x: isinstance(x, str) and len(x) <= 2 ** 120,
+            'test': lambda x: len(x) <= 2 ** 120,
             'good': 'good value',
             'bad': False
         },
         'shiptype': {
             'default': 0,
-            'type': int,
+            'type': str,
             'units': 'N/A',
-            'description': 'Vessel type',
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in range(0, 100),
-            'good': 87,
-            'bad': str
+            'description': 'Vessel type'
         },
         'shiptype_text': {
             'default': 'Unknown',
@@ -200,7 +196,7 @@ VERSIONS = {
             'type': str,
             'units': 'N/A',
             'description': 'Vessel callsign',
-            'test': lambda x: isinstance(x, str) and len(x) <= 2 ** 42,
+            'test': lambda x: len(x) <= 2 ** 42,
             'good': 'good',
             'bad': 123
         },
@@ -216,7 +212,7 @@ VERSIONS = {
             'units': 'N/A',
             'description': 'Assigned-mode flag',
             # TODO: Switch to a more Pythonic bool?
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
+            'test': lambda x: x in (0, 1),
             'good': 1,
             'bad': -33
         },
@@ -225,17 +221,16 @@ VERSIONS = {
             'type': int,
             'units': 'meters',
             'description': 'Dimension to port',
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and 0 <= x <= 2 ** 6,
+            'test': lambda x: 0 <= x <= 2 ** 6,
             'good': 1,
             'bad': -34
         },
         'accuracy': {
-            'default': 0,
+            'default': False,
             'description': '',
-            'type': int,
+            'type': bool,
             'units': '',
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
-            'good': 0,
+            'good': True,
             'bad': 2
         },
         'ack_required': {
@@ -262,7 +257,7 @@ VERSIONS = {
             'type': int,
             'units': '',
             # TODO: Should always be 0 right now.  The other vals are reserved.
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1, 2, 3),
+            'test': lambda x: x in (0, 1, 2, 3),
             'good': 2,
             'bad': True
         },
@@ -290,7 +285,7 @@ VERSIONS = {
             'type': int,
             'units': '',
             # TODO: Switch to a more Pythonic bool?
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
+            'test': lambda x: x in (0, 1),
             'good': 0,
             'bad': 4
         },
@@ -330,7 +325,7 @@ VERSIONS = {
             'type': int,
             'units': '',
             # Not bool - state
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
+            'test': lambda x: x in (0, 1),
             'good': 0,
             'bad': 7
         },
@@ -343,7 +338,7 @@ VERSIONS = {
         'dest_mmsi': {
             'default': '',
             'description': '',
-            'type': str,
+            'type': int,
             'units': ''
         },
         'dest_mmsi_a': {
@@ -376,17 +371,17 @@ VERSIONS = {
             'type': int,
             'units': '',
             # Not bool - state
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
+            'test': lambda x: x in (0, 1),
             'good': 1,
             'bad': 'j'
         },
         'draught': {
             'default': 0,
             'description': '',
-            'type': int,
+            'type': float,
             'units': '',
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and 0 < x <= 2 ** 8,
-            'good': 1,
+            'test': lambda x: 0.0 < x <= 2 ** 8,
+            'good': 1.0,
             'bad': 2 ** 8 + 1
         },
         'dsc': {
@@ -395,7 +390,7 @@ VERSIONS = {
             'type': int,
             'units': '',
             # TODO: Switch to a more Pythonic bool?
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
+            'test': lambda x: x in (0, 1),
             'good': 1,
             'bad': -45
         },
@@ -405,7 +400,7 @@ VERSIONS = {
             'type': int,
             'units': '',
             # TODO: Switch to a more Pythonic bool if this is actually bolean and not a status
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
+            'test': lambda x: x in (0, 1),
             'good': 0,
             'bad': 8
         },
@@ -416,13 +411,10 @@ VERSIONS = {
             'units': ''
         },
         'epfd': {
-            'default': 0,
+            'default': 'Unknown',
             'description': '',
-            'type': int,
+            'type': str,
             'units': '',
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in range(0, 9),
-            'good': 8,
-            'bad': 10
         },
         'fid': {
             'default': 0,
@@ -431,13 +423,10 @@ VERSIONS = {
             'units': ''
         },
         'imo': {
-            'default': '',
+            'default': 0,
             'description': '',
-            'type': str,
-            'units': '',
-            'test': lambda x: isinstance(x, str) and len(x) <= 2 ** 30,
-            'good': 'value',
-            'bad': True,
+            'type': int,
+            'units': ''
         },
         'increment1': {
             'default': 0,
@@ -499,7 +488,7 @@ VERSIONS = {
             'type': int,
             'units': '',
             # TODO: Switch to a more Pythonic bool?
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
+            'test': lambda x: x in (0, 1),
             'good': 0,
             'bad': -2
         },
@@ -626,9 +615,8 @@ VERSIONS = {
         'raim': {
             'default': 0,
             'description': '',
-            'type': int,
+            'type': bool,
             'units': '',
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
             'good': 0,
             'bad': -2
         },
@@ -643,7 +631,7 @@ VERSIONS = {
             'description': '',
             'type': int,
             'units': '',
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and 0 <= x <= 2 ** 2,
+            'test': lambda x: 0 <= x <= 2 ** 2,
             'good': 4,
             'bad': -1
         },
@@ -664,7 +652,7 @@ VERSIONS = {
             'description': '',
             'type': int,
             'units': '',
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in range(0, 64),
+            'test': lambda x: x in range(0, 64),
             'good': 63,
             'bad': 64
         },
@@ -739,7 +727,7 @@ VERSIONS = {
             'description': '',
             'type': int,
             'units': '',
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (1, 2),
+            'test': lambda x: x in (0, 1, 2),
             'good': 2,
             'bad': 3
         },
@@ -797,7 +785,7 @@ VERSIONS = {
             'type': int,
             'units': '',
             # FIXME: This test is incorrect. value can not be > 511 according to AIS spec; check to_stern etc too
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and 0 <= x <= 2 ** 9,
+            'test': lambda x: 0 <= x <= 2 ** 9,
             'good': 1,
             'bad': -1
         },
@@ -806,7 +794,7 @@ VERSIONS = {
             'description': '',
             'type': int,
             'units': '',
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and 0 <= x <= 2 ** 6,
+            'test': lambda x: 0 <= x <= 2 ** 6,
             'good': 0,
             'bad': False
         },
@@ -815,7 +803,7 @@ VERSIONS = {
             'description': '',
             'type': int,
             'units': '',
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and 0 <= x <= 2 ** 9,
+            'test': lambda x: 0 <= x <= 2 ** 9,
             'good': 0,
             'bad': tuple
         },
@@ -897,44 +885,45 @@ VERSIONS = {
         # FIXME: Provide types etc for these
         'radio': {
             # TODO: What will this value be?
-            'test': lambda x: x is None,
-            'good': None,
+            'type': int,
+            'good': 1,
             'bad': False
         },
         'reserved': {
-            'test': lambda x: x is None,
-            'good': None,
-            'bad': 1
+            'type': int
         },
         'regional': {
-            'test': lambda x: x is None,
-            'good': None,
-            'bad': -1
+            'type': int
         },
 
         # Pulled from type 24 GPSD spec
         'partno': { # FIXME: WHich one of this and partnum is the correct field name?
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
+            'type': int,
+            'test': lambda x: x in (0, 1),
             'good': 0,
             'bad': -1
         },
         'vendorid': {
-            'test': lambda x: isinstance(x, str) and len(x) <= 2 ** 18,
+            'type': str,
+            'test': lambda x: len(x) <= 2 ** 18,
             'good': 'this is a gooooooooood value',
             'bad': int
         },
         'model': {
-            'test': lambda x: isinstance(x, str) and len(x) <= 2 ** 4,
+            'type': str,
+            'test': lambda x: len(x) <= 2 ** 4,
             'good': 'something',
             'bad': 333
         },
         'serial': {
-            'test': lambda x: isinstance(x, str) and len(x) <= 2 ** 20,
+            'type': str,
+            'test': lambda x: len(x) <= 2 ** 20,
             'good': 'pawoeiras',
             'bad': -1
         },
         'mothership_mmsi': {
-            'test': lambda x: isinstance(x, str) and len(x) <= 2 ** 30,
+            'type': str,
+            'test': lambda x: len(x) <= 2 ** 30,
             'good': 'done ... finally ...',
             'bad': -200
         },
@@ -942,7 +931,7 @@ VERSIONS = {
         # Pulled from type 27 GPSD spec
         'gnss': {
             'type': int,
-            'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),  # Not bool - state
+            'test': lambda x: x in (0, 1),  # Not bool - state
             'good': 0,
             'bad': 3
         }
