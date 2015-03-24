@@ -64,6 +64,12 @@ def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
                     # would be to expensive and this is generally not
                     # that usefull
                     if t is str or t is unicode: t = BaseString
+
+                    # Hack to allow ints where floats should be used,
+                    # as the container format might convert whole
+                    # numbers into ints under our feet.
+                    if t is float and vt is int or vt is long: vt = float
+
                     if not issubclass(vt, t):
                         add_invalid(key, (t.__name__, row.pop(key)))
                         res = False
@@ -316,15 +322,18 @@ fields_by_message_type = {
     ],
     22: [
         'repeat', 'band_b', 'zonesize', 'power', 'band_a', 'mmsi', 'spare2', 'ne_lon', 'txrx', 'scaled', 'class',
-        'channel_a', 'channel_b', 'device', 'spare', 'y2', 'type', 'sw_lon', 'ne_lat'
+        'channel_a', 'channel_b', 'device', 'spare', 'y2', 'type', 'sw_lon', 'sw_lat', 'ne_lat'
     ],
     23: [
         'repeat', 'type_and_cargo', 'spare3', 'station_type', 'interval_raw', 'mmsi', 'ne_lon', 'quiet', 'txrx',
-        'scaled', 'class', 'spare', 'device', 'spare2', 'y2', 'type', 'sw_lon', 'ne_lat'
+        'scaled', 'class', 'spare', 'device', 'spare2', 'y2', 'type', 'sw_lon', 'sw_lat', 'ne_lat'
     ],
     24: [
         'scaled', 'repeat', 'shipname', 'device', 'mmsi', 'type', 'part_num', 'class'
     ],
+    25: [
+        'repeat', 'dest_mmsi', 'mmsi', 'structured', 'app_id', 'scaled', 'addressed', 'device', 'data', 'class'
+        ],
     27: [
         'type', 'repeat', 'mmsi', 'accuracy', 'raim', 'status', 'lon', 'lat', 'speed', 'course', 'gnss'
     ]

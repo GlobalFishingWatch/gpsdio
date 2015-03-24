@@ -155,7 +155,7 @@ VERSIONS = {
             'type': float,
             'units': 'kn/h',
             'description': 'Speed over ground in nautical miles per hour',
-            'test': lambda x: isinstance(x, float) and 0 <= x <= 102.2 or x == 1022,
+            'test': lambda x: 0 <= x <= 102.2 or x == 1022,
             'good': 1022.0,
             'bad': 103.0
         },
@@ -194,7 +194,8 @@ VERSIONS = {
             'description': 'Vessel name',
             'test': lambda x: len(x) <= 2 ** 120,
             'good': 'good value',
-            'bad': False
+            'bad': False,
+            'required': False
         },
         'shiptype': {
             'default': 0,
@@ -231,7 +232,8 @@ VERSIONS = {
             # TODO: Switch to a more Pythonic bool?
             'test': lambda x: x in (0, 1),
             'good': 1,
-            'bad': -33
+            'bad': -33,
+            'required': False
         },
         'to_port': {
             'default': 0,
@@ -288,13 +290,15 @@ VERSIONS = {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'aton_status': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'band': {
             'default': 1,
@@ -476,7 +480,8 @@ VERSIONS = {
             'default': 11,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'link_id': {
             'default': 0,
@@ -575,12 +580,18 @@ VERSIONS = {
             'default': 0.0,
             'description': '',
             'type': float,
+            # Stored as str in container for some reason
+            'import': float,
+            'export': str,
             'units': ''
         },
         'ne_lon': {
             'default': 0.0,
             'description': '',
             'type': float,
+            # Stored as str in container for some reason
+            'import': float,
+            'export': str,
             'units': ''
         },
         'notice_type': {
@@ -679,7 +690,8 @@ VERSIONS = {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'repeat': {
             'default': 0,
@@ -803,7 +815,8 @@ VERSIONS = {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'sub_areas': {
             'default': [],
@@ -815,6 +828,18 @@ VERSIONS = {
             'default': 0.0,
             'description': '',
             'type': float,
+            # Stored as str in container for some reason
+            'import': float,
+            'export': str,
+            'units': ''
+        },
+        'sw_lat': {
+            'default': 0.0,
+            'description': '',
+            'type': float,
+            # Stored as str in container for some reason
+            'import': float,
+            'export': str,
             'units': ''
         },
         'sync_state': {
@@ -887,7 +912,8 @@ VERSIONS = {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'type_and_cargo': {
             'default': 0,
@@ -913,7 +939,8 @@ VERSIONS = {
             'default': 0.0,
             'description': '',
             'type': float,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'zonesize': {
             'default': 3,
@@ -999,7 +1026,18 @@ VERSIONS = {
             'good': 'done ... finally ...',
             'bad': -200
         },
-
+        'structured': {
+            'type': bool
+        },
+        'app_id': {
+            'type': int
+        },
+        'addressed': {
+            'type': bool
+        },
+        'data': {
+            'type': str,
+        },
         'text': {
             'type': str,
             'required': False
