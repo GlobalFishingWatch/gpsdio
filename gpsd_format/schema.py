@@ -4,6 +4,7 @@ Schema definitions and functions to transform rows
 
 
 from ._schema_def import VERSIONS
+from ._schema_def import DATETIME_FORMAT
 from ._schema_def import datetime2str
 from ._schema_def import str2datetime
 
