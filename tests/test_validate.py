@@ -8,6 +8,7 @@ import random
 import gpsd_format.io
 import gpsd_format.schema
 import gpsd_format.validate
+from . import cmdtest
 import json
 import os.path
 import unittest
@@ -18,24 +19,8 @@ import gpsd_format.cli
 import sys
 
 
-class CmdTest(unittest.TestCase):
-    keep_tree = False
 
-    def setUp(self):
-        self.dir = tempfile.mkdtemp()
-        self.runner = click.testing.CliRunner()
-        if self.keep_tree:
-            print "CmdTest is running in %s" % self.dir
-
-    def tearDown(self):
-        if not self.keep_tree:
-            shutil.rmtree(self.dir)
-
-    def runcmd(self, *args):
-        return self.runner.invoke(gpsd_format.cli.main, args, catch_exceptions=False)
-
-
-class TestInfoDetails(CmdTest):
+class TestInfoDetails(cmdtest.CmdTest):
     def test_extend(self):
         data = {"foo": 1}
         self.assertDictEqual(data, gpsd_format.validate.merge_info({}, data))
@@ -102,7 +87,7 @@ class TestInfoDetails(CmdTest):
         self.assertDictEqual(expected, gpsd_format.validate.merge_info(d1, d2))
 
 
-class TestInfo(CmdTest):
+class TestInfo(cmdtest.CmdTest):
     maxDiff = None
     epoch = datetime.datetime(1970, 1, 1)
 
@@ -120,7 +105,7 @@ class TestInfo(CmdTest):
     num_invalid_rows = 1
 
     def setUp(self):
-        CmdTest.setUp(self)
+        cmdtest.CmdTest.setUp(self)
 
         # The result of _random_row has a random timestamp so this value must be overwritten when the list of rows
         # to test is computed.  Every iteration picks a new time between the last time and now.
