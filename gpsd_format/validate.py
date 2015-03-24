@@ -152,7 +152,7 @@ def collect_info(infile, verbose=False, err=sys.stderr):
 
     # Note that this is the last row that did not throw an exception on decode and is
     # not necessarily the previous row in the input
-    previous_row = None
+    previous_timestamp = None
     for row in gpsd_format.io.GPSDReader(infile, throw_exceptions=False, force_message=False):
 
         # num_rows
@@ -204,8 +204,8 @@ def collect_info(infile, verbose=False, err=sys.stderr):
             # is_sorted
             # This only executes if stats['is_sorted'] = True in order to gain
             # a little optimization.  No need to test if we already know its not sorted.
-            if previous_row is not None and stats['is_sorted'] and 'timestamp' in row:
-                if not row['timestamp'] >= previous_row['timestamp']:
+            if previous_timestamp is not None and stats['is_sorted'] and 'timestamp' in row:
+                if not row['timestamp'] >= previous_timestamp:
                     stats['is_sorted'] = False
 
             # num_invalid_rows
@@ -219,13 +219,16 @@ def collect_info(infile, verbose=False, err=sys.stderr):
                 if verbose:
                     err.write("WARNING: Incomplete row: {row}".format(row=row) + os.linesep)
 
-            previous_row = row
+            if 'timestamp' in row:
+                previous_timestamp = row['timestamp']
 
         # Encountered an error - keep track of how many
-        except Exception as e:
+        except Exception, e:
             stats['num_invalid_rows'] += 1
             if verbose:
-                err.write("Exception: `{msg}' - row: `{row}'".format(msg=e.message, row=row) + os.linesep)
+                err.write("Exception: `{msg}' - row: `{row}'".format(msg=e, row=row) + os.linesep)
+                import traceback
+                traceback.print_exc(1000, err)
 
     return stats
 

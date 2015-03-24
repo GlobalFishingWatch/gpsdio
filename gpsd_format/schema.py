@@ -75,8 +75,7 @@ def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
                 res = False
 
         if not ignore_missing:
-
-            default_keys = set(get_message_default(int(row['type']), schema=schema).keys())
+            default_keys = set(get_message_default(int(row['type']), schema=schema, optional=False).keys())
             row_keys = set(row.keys())
             if len(default_keys - row_keys) != 0:
                 add_invalid('__missing_keys__', tuple(default_keys - row_keys))
@@ -211,7 +210,7 @@ def export_row(row, throw_exceptions=True):
     return output
 
 
-def get_message_default(msg_type, schema=CURRENT):
+def get_message_default(msg_type, schema=CURRENT, optional=False):
 
     """
     Get an AIS message containing nothing but default values
@@ -227,7 +226,7 @@ def get_message_default(msg_type, schema=CURRENT):
     try:
         res = {field: schema[field]['default']
                for field in fields_by_message_type[msg_type]
-               if 'default' in schema[field]}
+               if 'default' in schema[field] and (optional or schema[field].get('required', True))}
         res['type'] = msg_type
         return res
     except Exception, e:
@@ -279,6 +278,12 @@ fields_by_message_type = {
     12: [
         'repeat', 'mmsi', 'scaled', 'spare', 'device', 'class', 'retransmit', 'seqno', 'dest_mmsi', 'type'
          ],
+    13: [
+        'repeat', 'mmsi', 'class', 'scaled', 'device', 'mmsi4', 'mmsi3', 'mmsi2', 'mmsi1'
+        ],
+    14: [
+        'repeat', 'text', 'mmsi', 'scaled', 'device', 'class'
+        ],
     15: [
         'spare4', 'repeat', 'slot_offset_2', 'spare3', 'spare2', 'mmsi_1', 'msg_1_1', 'mmsi', 'mmsi_2', 'class',
         'scaled', 'dest_msg_1_2', 'slot_offset_1_1', 'spare', 'device', 'type', 'msg_2', 'slot_offset_1_2'

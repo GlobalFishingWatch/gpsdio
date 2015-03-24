@@ -45,6 +45,22 @@ def str2datetime(string):
         int(string[17:19]),
         int(ms))
 
+def etastr2datetime(string):
+    string = string[:-1]
+    dt, t = string.split("T")
+    dt = dt.split("-")        
+    t = t.split(":")
+    if '.' in t[-1]:
+        t[-1], ms = t[-1].split(".")
+        ms += "000000"[:6 - len(ms)]
+        t.append(ms)
+    dt = [int(i) for i in dt]
+    t = [int(i) for i in t]
+    dt = [1900, 1, 1][:-len(dt)] + dt
+    t = t + [0, 0, 0, 0][len(t):]
+    return datetime.datetime(*dt + t)
+
+
 # In order to ease test maintenance as outputs and inputs change the data structure below contains a test for every
 # field, a value that will pass the test, and a value that will fail the test.  All information is pulled from GPSD
 # (http://catb.org/gpsd/AIVDM.html) and assumes two things:
@@ -122,10 +138,11 @@ VERSIONS = {
         'eta': {
             'default': str2datetime('1970-01-01T00:00:00.0Z'),
             'type': datetime.datetime,
-            'import': str2datetime,
+            'import': etastr2datetime,
             'export': datetime2str,
             'units': 'N/A',
-            'description': 'Datetime format: {}'.format(DATETIME_FORMAT)
+            'description': 'Datetime format: {}'.format(DATETIME_FORMAT),
+            'required': False
         },
         # FIXME: Confusion over type 1 / type 18 sog/speed
         'sog': {
@@ -345,19 +362,22 @@ VERSIONS = {
             'default': '',
             'description': '',
             'type': str,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'dest_mmsi_b': {
             'default': '',
             'description': '',
             'type': str,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'dest_msg_1_2': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'device': {
             'default': 'stdin',
@@ -468,19 +488,50 @@ VERSIONS = {
             'default': '',
             'description': '',
             'type': str,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'mmsi_2': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
+        },
+        'mmsi1': {
+            'default': 0,
+            'description': '',
+            'type': int,
+            'units': '',
+            'required': False
+        },
+        'mmsi2': {
+            'default': 0,
+            'description': '',
+            'type': int,
+            'units': '',
+            'required': False
+        },
+        'mmsi3': {
+            'default': 0,
+            'description': '',
+            'type': int,
+            'units': '',
+            'required': False
+        },
+        'mmsi4': {
+            'default': 0,
+            'description': '',
+            'type': int,
+            'units': '',
+            'required': False
         },
         'mode': {
             'default': False,
             'description': '',
             'type': bool,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'msg22': {
             'default': 1,
@@ -490,25 +541,29 @@ VERSIONS = {
             # TODO: Switch to a more Pythonic bool?
             'test': lambda x: x in (0, 1),
             'good': 0,
-            'bad': -2
+            'bad': -2,
+            'required': False
         },
         'msg_1_1': {
             'default': 5,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'msg_2': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'msg_seq': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'name': {
             'default': '',
@@ -666,61 +721,74 @@ VERSIONS = {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'slot_offset': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'slot_offset_1_1': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'slot_offset_1_2': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'slot_offset_2': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'slot_timeout': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'spare': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'spare2': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
+
         },
         'spare3': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
+
         },
         'spare4': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
+
         },
         'maneuver': {
             'default': 0,
@@ -753,7 +821,8 @@ VERSIONS = {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'timeout1': {
             'default': 0,
@@ -811,7 +880,8 @@ VERSIONS = {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'txrx': {
             'default': 0,
@@ -823,13 +893,15 @@ VERSIONS = {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'unit': {
             'default': True,
             'description': '',
             'type': bool,
-            'units': ''
+            'units': '',
+            'required': False
         },
         'virtual_aid': {
             'default': False,
@@ -926,6 +998,11 @@ VERSIONS = {
             'test': lambda x: len(x) <= 2 ** 30,
             'good': 'done ... finally ...',
             'bad': -200
+        },
+
+        'text': {
+            'type': str,
+            'required': False
         },
 
         # Pulled from type 27 GPSD spec
