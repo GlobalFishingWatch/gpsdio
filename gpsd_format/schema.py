@@ -67,10 +67,10 @@ def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
 
         if not ignore_missing:
 
-            message = set(get_message_default(int(row['type']), schema=schema).keys())
-            row = set(row.keys())
-            if len(message - row) != 0:
-                add_invalid('__missing_keys__', tuple(message - row))
+            default_keys = set(get_message_default(int(row['type']), schema=schema).keys())
+            row_keys = set(row.keys())
+            if len(default_keys - row_keys) != 0:
+                add_invalid('__missing_keys__', tuple(default_keys - row_keys))
 
                 res = False
     except Exception, e:
@@ -216,11 +216,13 @@ def get_message_default(msg_type, schema=CURRENT):
     """
 
     try:
-        res = {field: schema[field]['default'] for field in fields_by_message_type[msg_type]}
+        res = {field: schema[field]['default']
+               for field in fields_by_message_type[msg_type]
+               if 'default' in schema[field]}
         res['type'] = msg_type
         return res
-    except Exception:
-        raise ValueError("Invalid AIS message type: %s" % msg_type)
+    except Exception, e:
+        raise ValueError("Invalid AIS message type: %s: %s" % (msg_type, e))
 
 
 # Fields required by each message type, by message type ID

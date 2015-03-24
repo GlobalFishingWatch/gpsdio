@@ -15,6 +15,7 @@ import tempfile
 import shutil
 import click.testing
 import gpsd_format.cli
+import sys
 
 
 class CmdTest(unittest.TestCase):
@@ -222,11 +223,12 @@ class TestValidateMessages(unittest.TestCase):
                 [{'type': gpsd_format.schema.CURRENT['type']['bad']}])
 
             # Construct a good message
-            good_message = {f: gpsd_format.schema.CURRENT[f]['good'] for f in msg_fields
-                            if 'good' in gpsd_format.schema.CURRENT[f]}
-            good_message['type'] = msg_type
+            good_message = gpsd_format.schema.get_message_default(int(msg_type))
+            good_message.update({f: gpsd_format.schema.CURRENT[f]['good']
+                                 for f in msg_fields
+                                 if f != 'type' and 'good' in gpsd_format.schema.CURRENT[f]})
 
-            assert gpsd_format.validate.validate_messages([good_message]), \
+            assert gpsd_format.validate.validate_messages([good_message], err=sys.stderr), \
                 "Supposed 'good' msg failed validation: %s" % good_message
 
             # Creating a bad message from all of the bad values is an insufficient test because the validator

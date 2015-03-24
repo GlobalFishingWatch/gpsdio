@@ -261,20 +261,10 @@ def validate_messages(messages, err=None):
     return_val = True
 
     for msg in messages:
-
-        # Make sure the message specifies its type and that the type is one we can validate
-        if 'type' not in msg or msg['type'] not in gpsd_format.schema.fields_by_message_type:
-            if err is not None:
-                err.write("No 'type' key in msg or type is invalid or not testable: %s" % msg)
-            return_val = False
-
-        # Normal field validation
-        else:
-            msg_type = msg['type']
-            for field in gpsd_format.schema.fields_by_message_type[msg_type]:
-                if 'test' in gpsd_format.schema.CURRENT[field] and not gpsd_format.schema.CURRENT[field]['test'](msg[field]):
-                    if err is not None:
-                        sys.stdout.write("Field `%s' failed: %s" % (field, json.dumps(msg) + os.linesep))
-                    return_val = False
+        row = dict(msg)
+        if not gpsd_format.schema.validate_message(row, modify=True):
+            if '__invalid__' in row:
+                if err: err.write("Invalid fields: %s" % row['__invalid__'])
+                return_val = False
 
     return return_val

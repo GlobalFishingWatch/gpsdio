@@ -66,8 +66,8 @@ def str2datetime(string):
 VERSIONS = {
     1.0: {
         'course': {
-            'default': 0.0,
-            'type': float,
+            'default': 0,
+            'type': int,
             'units': 'degrees',
             'description': 'Course over ground - degrees from north',
             # TODO: Should -90 be a valid value?  Maybe `-90 < x` instead?
@@ -76,8 +76,8 @@ VERSIONS = {
             'bad': 360
         },
         'heading': {
-            'default': 0.0,
-            'type': float,
+            'default': 0,
+            'type': int,
             'units': 'degrees',
             'description': 'True heading - degrees from north',
             'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and 0 <= x <= 359 or x == 511,
@@ -90,8 +90,8 @@ VERSIONS = {
             'units': 'WGS84 degrees',
             'description': 'North/South coordinate in WGS84 degrees',
             'test': lambda x: isinstance(x, float) and -90 <= x <= 90 or x == 91,
-            'good': 91,
-            'bad': -100
+            'good': 91.0,
+            'bad': -100.0
         },
         'lon': {
             'default': 0.0,
@@ -100,7 +100,7 @@ VERSIONS = {
             'description': 'East/West coordinate in WGS84 degrees',
              # TODO: Should -180 be a valid value?  Maybe `-180 < x` instead?
              'test': lambda x: isinstance(x, float) and -180 <= x <= 180 or x == 181,
-             'good': 181,
+             'good': 181.0,
              'bad': -180.1
         },
         'mmsi': {
@@ -113,7 +113,7 @@ VERSIONS = {
             'bad': 1234
         },
         'timestamp': {
-            'default': '1970-01-01T00:00:00.0Z',
+            'default': str2datetime('1970-01-01T00:00:00.0Z'),
             'type': datetime.datetime,
             'import': str2datetime,
             'export': datetime2str,
@@ -121,7 +121,7 @@ VERSIONS = {
             'description': 'Datetime format: {}'.format(DATETIME_FORMAT)
         },
         'eta': {
-            'default': '1970-01-01T00:00:00.0Z',
+            'default': str2datetime('1970-01-01T00:00:00.0Z'),
             'type': datetime.datetime,
             'import': str2datetime,
             'export': datetime2str,
@@ -140,12 +140,12 @@ VERSIONS = {
             'units': 'kn/h',
             'description': 'Speed over ground in nautical miles per hour',
             'test': lambda x: isinstance(x, float) and 0 <= x <= 102.2 or x == 1022,
-            'good': 1022,
-            'bad': 103
+            'good': 1022.0,
+            'bad': 103.0
         },
         'status': {
             'default': 'Not defined',
-            'type': str,
+            'type': int,
             'units': 'N/A',
             'description': 'Navigation status (e.g. at anchor, moored, aground, etc.)',
             'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in range(0, 16),
@@ -155,7 +155,7 @@ VERSIONS = {
         'turn': {
             'default': None,
             'null': True,
-            'type': float,
+            'type': int,
             'units': 'degrees/min',
             'description': 'Rate of turn',
             'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in range(-127, 129),
@@ -211,8 +211,8 @@ VERSIONS = {
             'description': 'UN/LOCODE or ERI terminal code'
         },
         'assigned': {
-            'default': False,
-            'type': bool,
+            'default': 0,
+            'type': int,
             'units': 'N/A',
             'description': 'Assigned-mode flag',
             # TODO: Switch to a more Pythonic bool?
@@ -230,9 +230,9 @@ VERSIONS = {
             'bad': -34
         },
         'accuracy': {
-            'default': False,
+            'default': 0,
             'description': '',
-            'type': bool,
+            'type': int,
             'units': '',
             'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
             'good': 0,
@@ -285,9 +285,9 @@ VERSIONS = {
             'units': ''
         },
         'band': {
-            'default': True,
+            'default': 1,
             'description': '',
-            'type': bool,
+            'type': int,
             'units': '',
             # TODO: Switch to a more Pythonic bool?
             'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
@@ -325,9 +325,9 @@ VERSIONS = {
             'units': ''
         },
         'cs': {
-            'default': True,
+            'default': 1,
             'description': '',
-            'type': bool,
+            'type': int,
             'units': '',
             # Not bool - state
             'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
@@ -371,9 +371,9 @@ VERSIONS = {
             'units': ''
         },
         'display': {
-            'default': False,
+            'default': 0,
             'description': '',
-            'type': bool,
+            'type': int,
             'units': '',
             # Not bool - state
             'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
@@ -381,18 +381,18 @@ VERSIONS = {
             'bad': 'j'
         },
         'draught': {
-            'default': 0.0,
+            'default': 0,
             'description': '',
-            'type': float,
+            'type': int,
             'units': '',
             'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and 0 < x <= 2 ** 8,
             'good': 1,
             'bad': 2 ** 8 + 1
         },
         'dsc': {
-            'default': True,
+            'default': 1,
             'description': '',
-            'type': bool,
+            'type': int,
             'units': '',
             # TODO: Switch to a more Pythonic bool?
             'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
@@ -494,9 +494,9 @@ VERSIONS = {
             'units': ''
         },
         'msg22': {
-            'default': True,
+            'default': 1,
             'description': '',
-            'type': bool,
+            'type': int,
             'units': '',
             # TODO: Switch to a more Pythonic bool?
             'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
@@ -624,11 +624,10 @@ VERSIONS = {
             'units': ''
         },
         'raim': {
-            'default': False,
+            'default': 0,
             'description': '',
-            'type': bool,
+            'type': int,
             'units': '',
-            # TODO: bool is more Pythonic if the field is actually boolean and not state
             'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),
             'good': 0,
             'bad': -2
@@ -942,6 +941,7 @@ VERSIONS = {
 
         # Pulled from type 27 GPSD spec
         'gnss': {
+            'type': int,
             'test': lambda x: isinstance(x, int) and not isinstance(x, bool) and x in (0, 1),  # Not bool - state
             'good': 0,
             'bad': 3
