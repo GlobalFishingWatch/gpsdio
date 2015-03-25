@@ -8,7 +8,7 @@ import random
 import gpsd_format.io
 import gpsd_format.schema
 import gpsd_format.validate
-from . import cmdtest
+import cmdtest
 import json
 import os.path
 import unittest

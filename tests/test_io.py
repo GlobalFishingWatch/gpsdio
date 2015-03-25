@@ -216,15 +216,16 @@ class TestGPSDWriter(unittest.TestCase):
         writer = gpsd_format.io.GPSDWriter(test_f, force_message=True, keep_fields=False)
 
         for line in self.extended_rows:
-            writer.writerow(line)
+            try:
+                writer.writerow(line)
+            except:
+                raise
 
         test_f.seek(0)
         reader = gpsd_format.io.GPSDReader(test_f, force_message=False, keep_fields=True)
 
-        for expected, actual in zip([gpsd_format.schema.row2message(row) for row in self.valid_rows], reader):
-
-            # The reader is type-casting so make sure the expected row is also cast
-            expected = gpsd_format.schema.import_row(expected.copy())
+        for expected, actual in zip([gpsd_format.schema.row2message(gpsd_format.schema.import_row(row.copy()))
+                                     for row in self.valid_rows], reader):
             self.assertDictEqual(expected, actual)
 
     def test_force_message_keep_invalid(self):
@@ -243,9 +244,6 @@ class TestGPSDWriter(unittest.TestCase):
         test_f.seek(0)
         reader = gpsd_format.io.GPSDReader(test_f, force_message=False, keep_fields=True)
 
-        for expected, actual in zip(
-                [gpsd_format.schema.row2message(row, keep_fields=True) for row in self.extended_rows], reader):
-
-            # The reader is type-casting so make sure the expected row is also cast
-            expected = gpsd_format.schema.import_row(expected.copy())
+        for expected, actual in zip([gpsd_format.schema.row2message(gpsd_format.schema.import_row(row.copy()), keep_fields=True)
+                                     for row in self.extended_rows], reader):
             self.assertDictEqual(expected, actual)
