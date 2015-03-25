@@ -105,7 +105,7 @@ VERSIONS = {
             'type': float,
             'units': 'WGS84 degrees',
             'description': 'North/South coordinate in WGS84 degrees',
-            'test': lambda x: isinstance(x, float) and -90 <= x <= 90 or x == 91,
+            'test': lambda x: -90 <= x <= 90 or x == 91,
             'good': 91.0,
             'bad': -100.0
         },
@@ -115,15 +115,16 @@ VERSIONS = {
             'units': 'WGS84 degrees',
             'description': 'East/West coordinate in WGS84 degrees',
              # TODO: Should -180 be a valid value?  Maybe `-180 < x` instead?
-             'test': lambda x: isinstance(x, float) and -180 <= x <= 180 or x == 181,
+             'test': lambda x: -180 <= x <= 180 or x == 181,
              'good': 181.0,
              'bad': -180.1
         },
         'mmsi': {
-            'default': '',
+            'default': 1234567890,
             'type': int,
             'units': 'N/A',
             'description': 'Mobile Marine Service Identifier',
+            'test': lambda x: not isinstance(x, bool),
             'good': 123,
             'bad': True
         },
@@ -146,9 +147,12 @@ VERSIONS = {
         },
         # FIXME: Confusion over type 1 / type 18 sog/speed
         'sog': {
-            'test': lambda x: isinstance(x, float) and 0 <= x <= 102.2 or x == 1022,
+            'type': float,
+            'test': lambda x: 0 <= x <= 102.2 or x == 1022,
             'good': 1022,
-            'bad': 103
+            'bad': 103,
+            'description': '',
+            'units': ''
         },
         'speed': {
             'default': 0.0,
@@ -198,7 +202,7 @@ VERSIONS = {
             'required': False
         },
         'shiptype': {
-            'default': 0,
+            'default': 'Unknown',
             'type': str,
             'units': 'N/A',
             'description': 'Vessel type'
@@ -276,7 +280,7 @@ VERSIONS = {
             'type': int,
             'units': '',
             # TODO: Should always be 0 right now.  The other vals are reserved.
-            'test': lambda x: x in (0, 1, 2, 3),
+            'test': lambda x: not isinstance(x, bool) and x in (0, 1, 2, 3),
             'good': 2,
             'bad': True
         },
@@ -357,7 +361,7 @@ VERSIONS = {
             'units': ''
         },
         'dest_mmsi': {
-            'default': '',
+            'default': 0,
             'description': '',
             'type': int,
             'units': ''
@@ -679,11 +683,11 @@ VERSIONS = {
             'units': ''
         },
         'raim': {
-            'default': 0,
+            'default': False,
             'description': '',
             'type': bool,
             'units': '',
-            'good': 0,
+            'good': False,
             'bad': -2
         },
         'received_stations': {
@@ -890,7 +894,7 @@ VERSIONS = {
             'units': '',
             'test': lambda x: 0 <= x <= 2 ** 6,
             'good': 0,
-            'bad': False
+            'bad': 'BAD'
         },
         'to_stern': {
             'default': 0,
@@ -986,13 +990,19 @@ VERSIONS = {
             # TODO: What will this value be?
             'type': int,
             'good': 1,
-            'bad': False
+            'bad': False,
+            'description': '',
+            'units': ''
         },
         'reserved': {
-            'type': int
+            'type': int,
+            'description': '',
+            'units': ''
         },
         'regional': {
-            'type': int
+            'type': int,
+            'description': '',
+            'units': ''
         },
 
         # Pulled from type 24 GPSD spec
@@ -1000,55 +1010,83 @@ VERSIONS = {
             'type': int,
             'test': lambda x: x in (0, 1),
             'good': 0,
-            'bad': -1
+            'bad': -1,
+            'description': '',
+            'units': ''
         },
         'vendorid': {
             'type': str,
             'test': lambda x: len(x) <= 2 ** 18,
             'good': 'this is a gooooooooood value',
-            'bad': int
+            'bad': int,
+            'description': '',
+            'units': ''
         },
         'model': {
             'type': str,
             'test': lambda x: len(x) <= 2 ** 4,
             'good': 'something',
-            'bad': 333
+            'bad': 333,
+            'description': '',
+            'units': ''
         },
         'serial': {
             'type': str,
             'test': lambda x: len(x) <= 2 ** 20,
             'good': 'pawoeiras',
-            'bad': -1
+            'bad': -1,
+            'description': '',
+            'units': ''
         },
         'mothership_mmsi': {
             'type': str,
             'test': lambda x: len(x) <= 2 ** 30,
             'good': 'done ... finally ...',
-            'bad': -200
+            'bad': -200,
+            'description': '',
+            'units': ''
         },
         'structured': {
-            'type': bool
+            'default': False,
+            'type': bool,
+            'description': '',
+            'units': ''
         },
         'app_id': {
-            'type': int
+            'default': 0,
+            'type': int,
+            'description': '',
+            'units': ''
         },
         'addressed': {
-            'type': bool
+            'default': False,
+            'type': bool,
+            'description': '',
+            'units': ''
         },
         'data': {
+            'default': '',
             'type': str,
+            'description': '',
+            'units': ''
         },
         'text': {
+            'default': '',
             'type': str,
-            'required': False
+            'required': False,
+            'description': '',
+            'units': ''
         },
 
         # Pulled from type 27 GPSD spec
         'gnss': {
+            'default': 0,
             'type': int,
             'test': lambda x: x in (0, 1),  # Not bool - state
             'good': 0,
-            'bad': 3
+            'bad': 3,
+            'description': '',
+            'units': ''
         }
     }
 }

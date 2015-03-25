@@ -21,7 +21,10 @@ class TestCurrentSchema(unittest.TestCase):
         """
         required = set(('default', 'type', 'units', 'description'))
         for field, definition in gpsd_format.schema.CURRENT.items():
-            self.assertEqual(required - set(definition.keys()), set())
+            req = required.copy()
+            if definition.get('required', True):
+                req.remove('default')
+            self.assertEqual(req - set(definition.keys()), set(), "Field schema %s has missing fields: %s" % (field, req - set(definition.keys())))
             self.assertIsInstance(definition['type'], type)
             self.assertIsInstance(definition['description'], str)
             self.assertIsInstance(definition['units'], str)
@@ -150,17 +153,15 @@ class TestCastRow(unittest.TestCase):
  
 class TestGetMessageDefault(unittest.TestCase):
 
-    def test_standard(self):
-
-        """
-        Get default AIS messages
-        """
+    def test_get_default_messages(self):
 
         for msg_type, fields in gpsd_format.schema.fields_by_message_type.items():
-            expected = {field: gpsd_format.schema.CURRENT[field]['default'] for field in fields}
-            expected['type'] = msg_type
             actual = gpsd_format.schema.get_message_default(msg_type)
-            self.assertDictEqual(expected, actual)
+            for field in fields:
+                if field == 'type': continue
+                if not gpsd_format.schema.CURRENT[field].get('required', True): continue
+                self.assertIn(field, actual)
+                self.assertEqual(actual[field], gpsd_format.schema.CURRENT[field]['default'])
 
     def test_invalid_msg_type(self):
 
