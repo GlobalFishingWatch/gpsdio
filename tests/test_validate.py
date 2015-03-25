@@ -88,17 +88,22 @@ class TestInfoDetails(cmdtest.CmdTest):
 
 
 class TestInfo(cmdtest.CmdTest):
+    keep_tree = True
+
     maxDiff = None
     epoch = datetime.datetime(1970, 1, 1)
 
     def _random_row(self):
+        msg_types = gpsd_format.schema.fields_by_message_type.keys()
+        msg_type = msg_types[random.randint(0, len(msg_types)-1)]
+
         return {
             'lon': random.uniform(-180, 180),
-            'lat': random.uniform(-180, 180),
+            'lat': random.uniform(-90, 90),
             'timestamp': datetime.datetime.fromtimestamp(
                 random.randint(0, int((datetime.datetime.now() - self.epoch).total_seconds()))),
             'mmsi': random.randint(100000000, 100000010),
-            'type': random.randint(1, 32)
+            'type': msg_type # FIXME: Support all types eventually: random.randint(1, 32)
         }
 
     num_rows = 2
@@ -126,8 +131,8 @@ class TestInfo(cmdtest.CmdTest):
 
         self.expected = {
             u'num_rows': self.num_rows + self.num_invalid_rows,
-            u'num_incomplete_rows': 0,
-            u'num_invalid_rows': self.num_rows + self.num_invalid_rows,  # None of the input rows are complete messages
+            u'num_incomplete_rows': self.num_rows,
+            u'num_invalid_rows': self.num_invalid_rows,  # None of the input rows are complete messages
             u'lat_min': min([r['lat'] for r in self.rows]),
             u'lat_max': max([r['lat'] for r in self.rows]),
             u'lon_min': min([r['lon'] for r in self.rows]),
