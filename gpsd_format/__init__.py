@@ -10,7 +10,7 @@ import schema
 import validate
 
 
-__version__ = "0.1"
+__version__ = "0.2"
 __author__ = "Egil Moeller, Kevin Wurster"
 __email__ = "egil@skytruth.org, kevin@skytruth.org"
 __source__ = "https://github.com/SkyTruth/gpsd_format.git"
