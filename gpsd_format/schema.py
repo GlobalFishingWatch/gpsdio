@@ -216,7 +216,7 @@ def export_row(row, throw_exceptions=True):
     return output
 
 
-def get_message_default(msg_type, schema=CURRENT, optional=False):
+def get_message_default(msg_type, schema=CURRENT, optional=True):
 
     """
     Get an AIS message containing nothing but default values

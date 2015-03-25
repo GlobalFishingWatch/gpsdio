@@ -243,9 +243,9 @@ class GPSDWriter(object):
                    if field in gpsd_format.schema.get_message_default(row['type'])}
 
         if self.convert:
-            row = gpsd_format.schema.export_row(row, throw_exceptions=self.throw_exceptions)
             if self.force_message:
                 row = gpsd_format.schema.row2message(row, keep_fields=self.keep_fields)
+            row = gpsd_format.schema.export_row(row, throw_exceptions=self.throw_exceptions)
 
         self.writer.writerow(row)
 
