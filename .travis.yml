@@ -1,13 +1,20 @@
 language: python
+
 python:
-- '2.7'
+  - '2.7'
+  - '3.3'
+  - '3.4'
+
 install:
-- pip install coveralls
-- pip install -e .
+  - pip install -r requirements-dev.txt
+  - pip install -e .
+
 script:
-- nosetests --with-coverage
+  - nosetests --with-coverage
+
 after_success:
-- coveralls
+  - coveralls
+
 notifications:
   flowdock:
     secure: sSDUIIuldA7tWGqgexf+nmeC/+Htm97bwcPaZOHv2+/c3jKsxUoMMnwkcT3ChqPTEvqs2pGoAYuSDDOWXYUZTpETmZyfECmSqPdfD9nePdqDCum8Q909jlttJWR4jmMuhToNifXdwIkPjnspnLrnxCj92/9/Nx/9uSo/+JfPfE0=
