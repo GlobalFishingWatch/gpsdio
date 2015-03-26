@@ -102,7 +102,7 @@ class TestGPSDReader(unittest.TestCase):
 
         reader = gpsd_format.io.GPSDReader(self.extended_f, force_message=True, keep_fields=False)
         for invalid_row, actual_row in zip(self.extended_rows, reader):
-            expected_row = gpsd_format.schema.get_message_default(actual_row['type'])
+            expected_row = gpsd_format.schema.get_default_msg(actual_row['type'])
             expected_row.update({key: val for key, val in invalid_row.items() if key in expected_row})
             self.assertDictEqual(expected_row, actual_row)
 
@@ -115,7 +115,7 @@ class TestGPSDReader(unittest.TestCase):
 
         reader = gpsd_format.io.GPSDReader(self.extended_f, force_message=True, keep_fields=True)
         for invalid_row, actual_row in zip(self.extended_rows, reader):
-            expected_row = gpsd_format.schema.get_message_default(actual_row['type'])
+            expected_row = gpsd_format.schema.get_default_msg(actual_row['type'])
             expected_row.update(invalid_row)
             self.assertDictEqual(expected_row, actual_row)
 
@@ -224,7 +224,7 @@ class TestGPSDWriter(unittest.TestCase):
         test_f.seek(0)
         reader = gpsd_format.io.GPSDReader(test_f, force_message=False, keep_fields=True)
 
-        for expected, actual in zip([gpsd_format.schema.row2message(gpsd_format.schema.import_row(row.copy()))
+        for expected, actual in zip([gpsd_format.schema.row2message(gpsd_format.schema.import_msg(row.copy()))
                                      for row in self.valid_rows], reader):
             self.assertDictEqual(expected, actual)
 
@@ -245,6 +245,6 @@ class TestGPSDWriter(unittest.TestCase):
         reader = gpsd_format.io.GPSDReader(test_f, force_message=False, keep_fields=True)
 
         for expected, actual in zip(
-                [gpsd_format.schema.row2message(gpsd_format.schema.import_row(row.copy()), keep_fields=True)
+                [gpsd_format.schema.row2message(gpsd_format.schema.import_msg(row.copy()), keep_fields=True)
                  for row in self.extended_rows], reader):
             self.assertDictEqual(expected, actual)

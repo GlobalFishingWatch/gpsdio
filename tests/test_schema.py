@@ -46,7 +46,7 @@ class TestValidateMessage(unittest.TestCase):
                  }))
 
     def test_invalid_type(self):
-        msg = gpsd_format.schema.get_message_default(1)
+        msg = gpsd_format.schema.get_default_msg(1)
         self.assertTrue(gpsd_format.schema.validate_message(msg))
         msg['lat'] = 'foo'
         self.assertFalse(gpsd_format.schema.validate_message(msg))
@@ -54,7 +54,7 @@ class TestValidateMessage(unittest.TestCase):
     def test_valid(self):
         self.assertTrue(
             gpsd_format.schema.validate_message(
-                gpsd_format.schema.get_message_default(1)))
+                gpsd_format.schema.get_default_msg(1)))
 
     def test_error(self):
         self.assertFalse(gpsd_format.schema.validate_message(None))
@@ -127,7 +127,7 @@ class TestRow2Message(unittest.TestCase):
 class TestCastRow(unittest.TestCase):
 
     def test_standard(self):
-        row = gpsd_format.schema.import_row({
+        row = gpsd_format.schema.import_msg({
                 'type': 1,
                 'shipname': 'SS Test Ship',
                 'timestamp': '1970-01-02T03:04:05Z'
@@ -139,7 +139,7 @@ class TestCastRow(unittest.TestCase):
     def test_invalid_throw(self):
         self.assertRaises(
             Exception,
-            gpsd_format.schema.import_row,
+            gpsd_format.schema.import_msg,
             {
                 'type': '1',
                 'shipname': 'SS Test Ship',
@@ -147,7 +147,7 @@ class TestCastRow(unittest.TestCase):
                 })
 
     def test_invalid_convert(self):
-        row = gpsd_format.schema.import_row(
+        row = gpsd_format.schema.import_msg(
             {
                 'type': 1,
                 'shipname': 'SS Test Ship',
@@ -166,7 +166,7 @@ class TestGetMessageDefault(unittest.TestCase):
     def test_get_default_messages(self):
 
         for msg_type, fields in gpsd_format.schema.fields_by_message_type.items():
-            actual = gpsd_format.schema.get_message_default(msg_type)
+            actual = gpsd_format.schema.get_default_msg(msg_type)
             for field in fields:
                 if field == 'type':
                     continue
@@ -183,14 +183,14 @@ class TestGetMessageDefault(unittest.TestCase):
 
         msg_types = [None, -1, -1.23, 10000000, '', [], {}]
         for mt in msg_types:
-            self.assertRaises(ValueError, gpsd_format.schema.get_message_default, mt)
+            self.assertRaises(ValueError, gpsd_format.schema.get_default_msg, mt)
 
 
 class TestExportRow(unittest.TestCase):
 
     def test_standard(self):
         datetime_now = datetime.datetime.now()
-        row = gpsd_format.schema.export_row(
+        row = gpsd_format.schema.export_msg(
             {
                 'type': 1,
                 'shipname': 'SS Test Ship',
@@ -205,7 +205,7 @@ class TestExportRow(unittest.TestCase):
 
     def test_invalid_throw(self):
         with self.assertRaises(Exception):
-            gpsd_format.schema.export_row(
+            gpsd_format.schema.export_msg(
                 {
                     'type': '1',
                     'shipname': 'SS Test Ship',
@@ -214,7 +214,7 @@ class TestExportRow(unittest.TestCase):
             )
 
     def test_invalid_convert(self):
-        row = gpsd_format.schema.export_row(
+        row = gpsd_format.schema.export_msg(
             {
                 'type': 1,
                 'shipname': 'SS Test Ship',

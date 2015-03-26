@@ -213,7 +213,7 @@ class TestValidateMessages(unittest.TestCase):
                 [{'type': gpsd_format.schema.CURRENT['type']['bad']}])
 
             # Construct a good message
-            good_message = gpsd_format.schema.get_message_default(int(msg_type))
+            good_message = gpsd_format.schema.get_default_msg(int(msg_type))
             good_message.update({f: gpsd_format.schema.CURRENT[f]['good']
                                  for f in msg_fields
                                  if f != 'type' and 'good' in gpsd_format.schema.CURRENT[f]})

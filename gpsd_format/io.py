@@ -132,7 +132,7 @@ class GPSDReader(object):
         try:
             loaded = line = next(self.reader)
             if self.convert:
-                loaded = schema.import_row(line, throw_exceptions=self.throw_exceptions)
+                loaded = schema.import_msg(line, throw_exceptions=self.throw_exceptions)
                 if self.force_message:
                     loaded = schema.row2message(loaded, keep_fields=self.keep_fields)
             return loaded
@@ -246,12 +246,12 @@ class GPSDWriter(object):
 
         if not self.keep_fields and 'type' in row:
             row = {field: val for field, val in six.iteritems(row)
-                   if field in schema.get_message_default(row['type'])}
+                   if field in schema.get_default_msg(row['type'])}
 
         if self.convert:
             if self.force_message:
                 row = schema.row2message(row, keep_fields=self.keep_fields)
-            row = schema.export_row(row, throw_exceptions=self.throw_exceptions)
+            row = schema.export_msg(row, throw_exceptions=self.throw_exceptions)
 
         self.writer.writerow(row)
 

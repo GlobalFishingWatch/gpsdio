@@ -82,7 +82,7 @@ def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
                 add_invalid('__missing_keys__', ('type',))
                 res = False
             else:
-                default_keys = set(get_message_default(int(row['type']), schema=schema, optional=False).keys())
+                default_keys = set(get_default_msg(int(row['type']), schema=schema, optional=False).keys())
                 row_keys = set(row.keys())
                 if len(default_keys - row_keys) != 0:
                     add_invalid('__missing_keys__', tuple(default_keys - row_keys))
@@ -122,7 +122,7 @@ def row2message(row, schema=CURRENT, keep_fields=False):
         Input row forced to a specific message type
     """
 
-    message = get_message_default(int(row['type']), schema=schema)
+    message = get_default_msg(int(row['type']), schema=schema)
 
     # Filter out any fields that don't belong
     filtered_row = {}
@@ -135,7 +135,7 @@ def row2message(row, schema=CURRENT, keep_fields=False):
     return message
 
 
-def import_row(row, throw_exceptions=True, cast_values=False):
+def import_msg(row, throw_exceptions=True, cast_values=False):
 
     """
     Cast all values in a row from their import types as defined by the
@@ -182,7 +182,7 @@ def import_row(row, throw_exceptions=True, cast_values=False):
     return output
 
 
-def export_row(row, throw_exceptions=True):
+def export_msg(row, throw_exceptions=True):
 
     """
     Cast all values in a row to their export types as defined by the
@@ -217,7 +217,7 @@ def export_row(row, throw_exceptions=True):
     return output
 
 
-def get_message_default(msg_type, schema=CURRENT, optional=True):
+def get_default_msg(msg_type, schema=CURRENT, optional=True):
 
     """
     Get an AIS message containing nothing but default values
