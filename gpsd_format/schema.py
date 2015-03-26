@@ -3,6 +3,8 @@ Schema definitions and functions to transform rows
 """
 
 
+import six
+
 from ._schema_def import VERSIONS
 from ._schema_def import DATETIME_FORMAT
 from ._schema_def import datetime2str
@@ -10,23 +12,21 @@ from ._schema_def import str2datetime
 
 
 CURRENT = VERSIONS[max(VERSIONS.keys())]
-default = {field: CURRENT[field]['default']
-           for field in CURRENT.keys()
-           if 'default' in CURRENT[field]}
+default = {
+    field: CURRENT[field]['default'] for field in CURRENT.keys() if 'default' in CURRENT[field]
+}
 
-schema_import_functions = {field: CURRENT[field]['import']
-                           for field in CURRENT
-                           if 'import' in CURRENT[field]}
-schema_export_functions = {field: CURRENT[field]['export']
-                           for field in CURRENT
-                           if 'export' in CURRENT[field]}
-schema_types = {field: CURRENT[field]['type']
-                for field in CURRENT
-                if 'type' in CURRENT[field]}
+schema_import_functions = {
+    field: CURRENT[field]['import'] for field in CURRENT if 'import' in CURRENT[field]
+}
+schema_export_functions = {
+    field: CURRENT[field]['export'] for field in CURRENT if 'export' in CURRENT[field]
+}
+schema_types = {
+    field: CURRENT[field]['type'] for field in CURRENT if 'type' in CURRENT[field]
+}
 schema_cast_functions = schema_types.copy()
 schema_cast_functions.update(schema_import_functions)
-
-BaseString = str.__bases__[0]
 
 
 def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
@@ -60,18 +60,11 @@ def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
                 else:
                     vt = type(value)
                     t = fieldschema.get('type', str)
-                    # Hack to allow both UTF-encoded str and unicode
-                    # strings - this seems to be container dependent,
-                    # and actually converting using import/export
-                    # would be to expensive and this is generally not
-                    # that usefull
-                    if t is str or t is unicode:
-                        t = BaseString
 
                     # Hack to allow ints where floats should be used,
                     # as the container format might convert whole
                     # numbers into ints under our feet.
-                    if t is float and vt is int or vt is long:
+                    if t is float and vt in six.integer_types:
                         vt = float
 
                     if not issubclass(vt, t):
@@ -80,7 +73,7 @@ def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
                     elif 'test' in fieldschema and not fieldschema['test'](value):
                         add_invalid(key, ('test failed', row.pop(key)))
                         res = False
-            except Exception, e:
+            except Exception as e:
                 add_invalid(key, (str(e), row.pop(key)))
                 res = False
 
@@ -95,7 +88,7 @@ def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
                     add_invalid('__missing_keys__', tuple(default_keys - row_keys))
                     res = False
 
-    except Exception, e:
+    except Exception as e:
         add_invalid('__exception__', str(e))
         res = False
 
@@ -133,7 +126,7 @@ def row2message(row, schema=CURRENT, keep_fields=False):
 
     # Filter out any fields that don't belong
     filtered_row = {}
-    for field, val in row.iteritems():
+    for field, val in six.iteritems(row):
         if keep_fields or field in message:
             filtered_row[field] = val
 
@@ -173,11 +166,11 @@ def import_row(row, throw_exceptions=True, cast_values=False):
     # The assumption is that the user wants them to be there since there are enough ways
     # to explicitly strip them off
     output = {}
-    for field, val in row.iteritems():
+    for field, val in six.iteritems(row):
         if field in import_functions:
             try:
                 output[field] = import_functions[field](val)
-            except Exception, e:
+            except Exception as e:
                 if throw_exceptions:
                     raise Exception("%s: %s: %s" % (field, type(e), e))
                 if '__invalid__' not in output:
@@ -212,12 +205,12 @@ def export_row(row, throw_exceptions=True):
         if field in schema_export_functions:
             try:
                 output[field] = schema_export_functions[field](val)
-            except Exception, e:
+            except Exception as e:
                 if throw_exceptions:
                     raise Exception("%s: %s: %s" % (field, type(e), e))
                 if '__invalid__' not in output:
                     output['__invalid__'] = {}
-                output['__invalid__'][field] = unicode(val)
+                output['__invalid__'][field] = str(val)
         else:
             output[field] = val
 
@@ -243,7 +236,7 @@ def get_message_default(msg_type, schema=CURRENT, optional=True):
                if 'default' in schema[field] and (optional or schema[field].get('required', True))}
         res['type'] = msg_type
         return res
-    except Exception, e:
+    except Exception as e:
         raise ValueError("Invalid AIS message type: %s: %s" % (msg_type, e))
 
 

@@ -6,8 +6,8 @@ A collection of tools for working with the GPSD JSON format (or the same format 
 """
 
 
-import schema
-import validate
+from . import schema
+from . import validate
 
 
 __version__ = "0.2"

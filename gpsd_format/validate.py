@@ -3,10 +3,11 @@ Tools for validating GPSD messages
 """
 
 
-import json
 import os
 import sys
 import re
+
+import six
 
 import gpsd_format.io
 import gpsd_format.schema
@@ -20,7 +21,7 @@ def merge_info(info_a, info_b):
 
     def merge_hist(a, b):
         res = dict(a)
-        for key, value in b.iteritems():
+        for key, value in six.iteritems(b):
             if key in res:
                 res[key] += value
             else:
@@ -227,7 +228,7 @@ def collect_info(infile, verbose=False, err=sys.stderr):
                 previous_timestamp = row['timestamp']
 
         # Encountered an error - keep track of how many
-        except Exception, e:
+        except Exception as e:
             stats['num_invalid_rows'] += 1
             if verbose:
                 err.write("Exception: `{msg}' - row: `{row}'".format(msg=e, row=row) + os.linesep)

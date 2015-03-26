@@ -2,15 +2,17 @@
 Commandline interface for gpsd_format
 """
 
-
+import datetime
+import json
 import os
 import sys
+
 import click
+import six
+
 import gpsd_format.io
 import gpsd_format.schema
 import gpsd_format.validate
-import datetime
-import json
 
 
 @click.group()
@@ -42,6 +44,7 @@ def main(ctx):
     help="Print details on individual messages")
 @click.pass_context
 def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
+
     """
     Print info about a GPSD format AIS/GPS file
     """
@@ -58,7 +61,7 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
             stats = gpsd_format.validate.merge_info(stats, gpsd_format.validate.collect_info(f, verbose=verbose))
 
     if print_json:
-        for key, value in stats.iteritems():
+        for key, value in six.iteritems(stats):
             if isinstance(value, datetime.datetime):
                 stats[key] = value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         stats['file'] = infile

@@ -4,13 +4,15 @@ that of csv.DictReader/DictWriter and uses gpsd_format.schema to get schema deta
 """
 
 
+import json
 try:
     import msgpack
 except ImportError:
     msgpack = None
-import json
 
-import gpsd_format.schema
+import six
+
+from . import schema
 
 
 __all__ = ['GPSDReader', 'GPSDWriter']
@@ -20,7 +22,7 @@ def json_reader(f):
     for line in f:
         try:
             yield json.loads(line.strip())
-        except Exception, e:
+        except Exception as e:
             yield {"__invalid__": {"__content__": line}}
 
 
@@ -102,6 +104,9 @@ class GPSDReader(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
+    def __next__(self):
+        return self.next()
+
     @property
     def closed(self):
         """
@@ -125,20 +130,21 @@ class GPSDReader(object):
 
         line = None
         try:
-            loaded = line = self.reader.next()
+            loaded = line = next(self.reader)
             if self.convert:
-                loaded = gpsd_format.schema.import_row(line, throw_exceptions=self.throw_exceptions)
+                loaded = schema.import_row(line, throw_exceptions=self.throw_exceptions)
                 if self.force_message:
-                    loaded = gpsd_format.schema.row2message(loaded, keep_fields=self.keep_fields)
+                    loaded = schema.row2message(loaded, keep_fields=self.keep_fields)
             return loaded
         except StopIteration:
             raise
-        except Exception, e:
+        except Exception as e:
             if self.throw_exceptions:
                 raise Exception("%s: %s: %s" % (self.f.name, type(e), e))
             return {"__invalid__": {"__content__": line}}
 
     def close(self):
+
         """
         Close the file object being read from
 
@@ -153,7 +159,7 @@ class GPSDReader(object):
 class GPSDWriter(object):
     container_formats = {
         'msg': _MsgPackWriter,
-        'msgpack':  _MsgPackWriter,
+        'msgpack': _MsgPackWriter,
         'json': _JSONWriter
         }
 
@@ -239,13 +245,13 @@ class GPSDWriter(object):
         """
 
         if not self.keep_fields and 'type' in row:
-            row = {field: val for field, val in row.iteritems()
-                   if field in gpsd_format.schema.get_message_default(row['type'])}
+            row = {field: val for field, val in six.iteritems(row)
+                   if field in schema.get_message_default(row['type'])}
 
         if self.convert:
             if self.force_message:
-                row = gpsd_format.schema.row2message(row, keep_fields=self.keep_fields)
-            row = gpsd_format.schema.export_row(row, throw_exceptions=self.throw_exceptions)
+                row = schema.row2message(row, keep_fields=self.keep_fields)
+            row = schema.export_row(row, throw_exceptions=self.throw_exceptions)
 
         self.writer.writerow(row)
 

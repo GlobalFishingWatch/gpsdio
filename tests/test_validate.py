@@ -4,19 +4,19 @@ Unittests for: gpsd_format.validate
 
 
 import datetime
+import json
+import os.path
 import random
+import sys
+import unittest
+
+import six
+
+from . import cmdtest
+import gpsd_format.cli
 import gpsd_format.io
 import gpsd_format.schema
 import gpsd_format.validate
-import cmdtest
-import json
-import os.path
-import unittest
-import tempfile
-import shutil
-import click.testing
-import gpsd_format.cli
-import sys
 
 
 class TestInfoDetails(cmdtest.CmdTest):
@@ -94,8 +94,8 @@ class TestInfo(cmdtest.CmdTest):
     epoch = datetime.datetime(1970, 1, 1)
 
     def _random_row(self):
-        msg_types = gpsd_format.schema.fields_by_message_type.keys()
-        msg_type = msg_types[random.randint(0, len(msg_types)-1)]
+        msg_types = list(gpsd_format.schema.fields_by_message_type.keys())
+        msg_type = msg_types[random.randint(0, len(msg_types) - 1)]
 
         return {
             'lon': random.uniform(-180, 180),
@@ -137,21 +137,21 @@ class TestInfo(cmdtest.CmdTest):
             u'lat_max': max([r['lat'] for r in self.rows]),
             u'lon_min': min([r['lon'] for r in self.rows]),
             u'lon_max': max([r['lon'] for r in self.rows]),
-            u'min_timestamp': unicode(min([r['timestamp'] for r in self.rows]).strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
-            u'max_timestamp': unicode(max([r['timestamp'] for r in self.rows]).strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
+            u'min_timestamp': str(min([r['timestamp'] for r in self.rows]).strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
+            u'max_timestamp': str(max([r['timestamp'] for r in self.rows]).strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
             u'mmsi_hist': {},
             u'msg_type_hist': {},
             u'is_sorted': True,
             u'mmsi_declaration': False
         }
         for row in self.rows:
-            mmsi = unicode(row['mmsi'])
+            mmsi = str(row['mmsi'])
             if mmsi in self.expected['mmsi_hist']:
                 self.expected[u'mmsi_hist'][mmsi] += 1
             else:
                 self.expected[u'mmsi_hist'][mmsi] = 1
 
-            msgtype = unicode(row['type'])
+            msgtype = str(row['type'])
             if msgtype in self.expected['msg_type_hist']:
                 self.expected[u'msg_type_hist'][msgtype] += 1
             else:
@@ -163,10 +163,10 @@ class TestInfo(cmdtest.CmdTest):
             w = gpsd_format.io.GPSDWriter(f)
             for row in self.rows:
                 w.writerow(row)
-            for x in xrange(0, self.num_invalid_rows):
+            for x in six.moves.range(0, self.num_invalid_rows):
                 f.write("N")
 
-        self.expected[u'file'] = unicode(infile)
+        self.expected[u'file'] = str(infile)
 
         actual = json.loads(self.runcmd("validate", "--print-json", infile).output.split("\n")[1])
         self.assertDictEqual(self.expected, actual)
@@ -178,10 +178,10 @@ class TestInfo(cmdtest.CmdTest):
             w = gpsd_format.io.GPSDWriter(f)
             for row in self.rows:
                 w.writerow(row)
-            for x in xrange(0, self.num_invalid_rows):
+            for x in six.moves.range(0, self.num_invalid_rows):
                 f.write("N")
 
-        self.expected[u'file'] = unicode(infile)
+        self.expected[u'file'] = str(infile)
         self.expected['is_sorted'] = False
 
         actual = json.loads(self.runcmd("validate", "--print-json", infile).output.split("\n")[1])
@@ -193,7 +193,7 @@ class TestInfo(cmdtest.CmdTest):
             w = gpsd_format.io.GPSDWriter(f)
             for row in self.rows:
                 w.writerow(row)
-            for x in xrange(0, self.num_invalid_rows):
+            for x in six.moves.range(0, self.num_invalid_rows):
                 f.write("N\n")
 
         out = self.runcmd("validate", "--verbose", "--msg-hist", "--mmsi-hist", infile).output

@@ -1,6 +1,7 @@
-import os.path
-import cmdtest
 import json
+import os.path
+
+from . import cmdtest
 
 
 class TestGpsdCompatibility(cmdtest.CmdTest):

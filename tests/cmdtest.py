@@ -12,7 +12,7 @@ class CmdTest(unittest.TestCase):
         self.dir = tempfile.mkdtemp()
         self.runner = click.testing.CliRunner()
         if self.keep_tree:
-            print "CmdTest is running in %s" % self.dir
+            print("CmdTest is running in %s" % self.dir)
 
     def tearDown(self):
         if not self.keep_tree:
