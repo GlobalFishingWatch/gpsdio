@@ -11,8 +11,12 @@ import re
 import gpsd_format.io
 import gpsd_format.schema
 
+
 def merge_info(info_a, info_b):
-    """Joins two info dicts from info() below"""
+
+    """
+    Joins two info dicts from info() below
+    """
 
     def merge_hist(a, b):
         res = dict(a)
@@ -267,7 +271,8 @@ def validate_messages(messages, err=None):
         row = dict(msg)
         if not gpsd_format.schema.validate_message(row, modify=True):
             if '__invalid__' in row:
-                if err: err.write("Invalid fields: %s" % row['__invalid__'])
+                if err:
+                    err.write("Invalid fields: %s" % row['__invalid__'])
                 return_val = False
 
     return return_val

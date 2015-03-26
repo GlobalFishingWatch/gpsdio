@@ -19,12 +19,14 @@ class TestCurrentSchema(unittest.TestCase):
         Helps to make sure that when a new field definition is added it actually
         has the required elements
         """
-        required = set(('default', 'type', 'units', 'description'))
+
+        required = {'default', 'type', 'units', 'description'}
         for field, definition in gpsd_format.schema.CURRENT.items():
             req = required.copy()
             if definition.get('required', True):
                 req.remove('default')
-            self.assertEqual(req - set(definition.keys()), set(), "Field schema %s has missing fields: %s" % (field, req - set(definition.keys())))
+            self.assertEqual(req - set(definition.keys()), set(), "Field schema %s has missing fields: %s"
+                             % (field, req - set(definition.keys())))
             self.assertIsInstance(definition['type'], type)
             self.assertIsInstance(definition['description'], str)
             self.assertIsInstance(definition['units'], str)
@@ -33,7 +35,9 @@ class TestCurrentSchema(unittest.TestCase):
             if 'export' in definition:
                 self.assertTrue(hasattr(definition['export'], '__call__'))
 
+
 class TestValidateMessage(unittest.TestCase):
+
     def test_invalid(self):
         self.assertFalse(
             gpsd_format.schema.validate_message(
@@ -54,6 +58,7 @@ class TestValidateMessage(unittest.TestCase):
 
     def test_error(self):
         self.assertFalse(gpsd_format.schema.validate_message(None))
+
 
 class TestRow2Message(unittest.TestCase):
 
@@ -118,7 +123,9 @@ class TestRow2Message(unittest.TestCase):
 
         self.assertRaises(ValueError, gpsd_format.schema.row2message, {'type': ''})
 
+
 class TestCastRow(unittest.TestCase):
+
     def test_standard(self):
         row = gpsd_format.schema.import_row({
                 'type': 1,
@@ -140,17 +147,20 @@ class TestCastRow(unittest.TestCase):
                 })
 
     def test_invalid_convert(self):
-        row = gpsd_format.schema.import_row({
+        row = gpsd_format.schema.import_row(
+            {
                 'type': 1,
                 'shipname': 'SS Test Ship',
                 'timestamp': 'late'
-                }, throw_exceptions=False)
+            }, throw_exceptions=False
+        )
         self.assertEqual(row['type'], 1)
         self.assertEqual(row['shipname'], 'SS Test Ship')
         self.assertNotIn('timestamp', row)
         self.assertIn('__invalid__', row)
         self.assertIn('timestamp', row['__invalid__'])
- 
+
+
 class TestGetMessageDefault(unittest.TestCase):
 
     def test_get_default_messages(self):
@@ -158,8 +168,10 @@ class TestGetMessageDefault(unittest.TestCase):
         for msg_type, fields in gpsd_format.schema.fields_by_message_type.items():
             actual = gpsd_format.schema.get_message_default(msg_type)
             for field in fields:
-                if field == 'type': continue
-                if not gpsd_format.schema.CURRENT[field].get('required', True): continue
+                if field == 'type':
+                    continue
+                if not gpsd_format.schema.CURRENT[field].get('required', True):
+                    continue
                 self.assertIn(field, actual)
                 self.assertEqual(actual[field], gpsd_format.schema.CURRENT[field]['default'])
 
@@ -175,40 +187,46 @@ class TestGetMessageDefault(unittest.TestCase):
 
 
 class TestExportRow(unittest.TestCase):
+
     def test_standard(self):
         datetime_now = datetime.datetime.now()
-        row = gpsd_format.schema.export_row({
+        row = gpsd_format.schema.export_row(
+            {
                 'type': 1,
                 'shipname': 'SS Test Ship',
                 'speed': 3.2,
                 'timestamp': datetime_now
-                })
+            }
+        )
         self.assertEqual(row['type'], 1)
         self.assertEqual(row['shipname'], 'SS Test Ship')
         self.assertEqual(row['speed'], 3.2)
         self.assertEqual(row['timestamp'], datetime_now.strftime(gpsd_format.schema.DATETIME_FORMAT))
 
     def test_invalid_throw(self):
-        self.assertRaises(
-            Exception,
-            gpsd_format.schema.export_row,
-            {
-                'type': '1',
-                'shipname': 'SS Test Ship',
-                'timestamp': 'late'
-                })
+        with self.assertRaises(Exception):
+            gpsd_format.schema.export_row(
+                {
+                    'type': '1',
+                    'shipname': 'SS Test Ship',
+                    'timestamp': 'late'
+                }
+            )
 
     def test_invalid_convert(self):
-        row = gpsd_format.schema.export_row({
+        row = gpsd_format.schema.export_row(
+            {
                 'type': 1,
                 'shipname': 'SS Test Ship',
                 'timestamp': 'late'
-                }, throw_exceptions=False)
+            }, throw_exceptions=False
+        )
         self.assertEqual(row['type'], 1)
         self.assertEqual(row['shipname'], 'SS Test Ship')
         self.assertNotIn('timestamp', row)
         self.assertIn('__invalid__', row)
         self.assertIn('timestamp', row['__invalid__'])
+
 
 class TestFieldDefaults(unittest.TestCase):
 

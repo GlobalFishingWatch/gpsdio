@@ -244,6 +244,7 @@ class TestGPSDWriter(unittest.TestCase):
         test_f.seek(0)
         reader = gpsd_format.io.GPSDReader(test_f, force_message=False, keep_fields=True)
 
-        for expected, actual in zip([gpsd_format.schema.row2message(gpsd_format.schema.import_row(row.copy()), keep_fields=True)
-                                     for row in self.extended_rows], reader):
+        for expected, actual in zip(
+                [gpsd_format.schema.row2message(gpsd_format.schema.import_row(row.copy()), keep_fields=True)
+                 for row in self.extended_rows], reader):
             self.assertDictEqual(expected, actual)

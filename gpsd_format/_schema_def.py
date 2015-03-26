@@ -45,10 +45,11 @@ def str2datetime(string):
         int(string[17:19]),
         int(ms))
 
+
 def etastr2datetime(string):
     string = string[:-1]
     dt, t = string.split("T")
-    dt = dt.split("-")        
+    dt = dt.split("-")
     t = t.split(":")
     if '.' in t[-1]:
         t[-1], ms = t[-1].split(".")
@@ -78,7 +79,6 @@ def etastr2datetime(string):
 # `True in (0, 1)` both evaluate as `True` which could yield unexpected results.  Any test that expects an int
 # also checks to make sure that int is NOT a bool, even if the field is a range and will never be bool.  Better to be
 # safe here than be forced to debug some potentially ambiguous bugs elsewhere.
-
 VERSIONS = {
     1.0: {
         'course': {
@@ -114,10 +114,10 @@ VERSIONS = {
             'type': float,
             'units': 'WGS84 degrees',
             'description': 'East/West coordinate in WGS84 degrees',
-             # TODO: Should -180 be a valid value?  Maybe `-180 < x` instead?
-             'test': lambda x: -180 <= x <= 180 or x == 181,
-             'good': 181.0,
-             'bad': -180.1
+            # TODO: Should -180 be a valid value?  Maybe `-180 < x` instead?
+            'test': lambda x: -180 <= x <= 180 or x == 181,
+            'good': 181.0,
+            'bad': -180.1
         },
         'mmsi': {
             'default': 1234567890,
@@ -168,7 +168,8 @@ VERSIONS = {
             'type': str,
             'units': 'N/A',
             'description': 'Navigation status (e.g. at anchor, moored, aground, etc.)',
-            'test': lambda x: x, # Should test if in list of allowed values
+            # TODO: Should test if in list of allowed values
+            'test': lambda x: x,
             'good': 'Moored',
             'bad': ''
         },
@@ -189,7 +190,7 @@ VERSIONS = {
             'description': 'NMEA message code',
             'test': lambda x: x in range(1, 28),
             'good': 5,
-            'bad': -1            
+            'bad': -1
         },
         'shipname': {
             'default': '',
@@ -882,7 +883,7 @@ VERSIONS = {
             'description': '',
             'type': int,
             'units': '',
-            # FIXME: This test is incorrect. value can not be > 511 according to AIS spec; check to_stern etc too
+            # TODO: FIXME: This test is incorrect. value can not be > 511 according to AIS spec; check to_stern etc too
             'test': lambda x: 0 <= x <= 2 ** 9,
             'good': 1,
             'bad': -1
@@ -985,7 +986,7 @@ VERSIONS = {
             'type': float,
             'units': ''
         },
-        # FIXME: Provide types etc for these
+        # TODO: FIXME: Provide types etc for these
         'radio': {
             # TODO: What will this value be?
             'type': int,
@@ -1006,7 +1007,7 @@ VERSIONS = {
         },
 
         # Pulled from type 24 GPSD spec
-        'partno': { # FIXME: WHich one of this and partnum is the correct field name?
+        'partno': {  # TODO: FIXME: Which one of this and partnum is the correct field name?
             'type': int,
             'test': lambda x: x in (0, 1),
             'good': 0,
@@ -1082,7 +1083,8 @@ VERSIONS = {
         'gnss': {
             'default': 0,
             'type': int,
-            'test': lambda x: x in (0, 1),  # Not bool - state
+            # Not bool - state
+            'test': lambda x: x in (0, 1),
             'good': 0,
             'bad': 3,
             'description': '',
@@ -1108,7 +1110,7 @@ VERSIONS = {
             'default': '',
             'description': '',
             'type': str,
-            'units': '' 
+            'units': ''
         }
     }
 }

@@ -28,7 +28,9 @@ schema_cast_functions.update(schema_import_functions)
 
 BaseString = str.__bases__[0]
 
+
 def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
+
     """
     Validate that a row contains all fields required by its type and that they
     are of the required types. Returns True if valid, False if fields are
@@ -63,12 +65,14 @@ def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
                     # and actually converting using import/export
                     # would be to expensive and this is generally not
                     # that usefull
-                    if t is str or t is unicode: t = BaseString
+                    if t is str or t is unicode:
+                        t = BaseString
 
                     # Hack to allow ints where floats should be used,
                     # as the container format might convert whole
                     # numbers into ints under our feet.
-                    if t is float and vt is int or vt is long: vt = float
+                    if t is float and vt is int or vt is long:
+                        vt = float
 
                     if not issubclass(vt, t):
                         add_invalid(key, (t.__name__, row.pop(key)))

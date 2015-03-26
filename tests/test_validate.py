@@ -19,8 +19,8 @@ import gpsd_format.cli
 import sys
 
 
-
 class TestInfoDetails(cmdtest.CmdTest):
+
     def test_extend(self):
         data = {"foo": 1}
         self.assertDictEqual(data, gpsd_format.validate.merge_info({}, data))
@@ -88,8 +88,8 @@ class TestInfoDetails(cmdtest.CmdTest):
 
 
 class TestInfo(cmdtest.CmdTest):
-    keep_tree = True
 
+    keep_tree = True
     maxDiff = None
     epoch = datetime.datetime(1970, 1, 1)
 
@@ -103,7 +103,7 @@ class TestInfo(cmdtest.CmdTest):
             'timestamp': datetime.datetime.fromtimestamp(
                 random.randint(0, int((datetime.datetime.now() - self.epoch).total_seconds()))),
             'mmsi': random.randint(100000000, 100000010),
-            'type': msg_type # FIXME: Support all types eventually: random.randint(1, 32)
+            'type': msg_type  # TODO: FIXME: Support all types eventually: random.randint(1, 32)
         }
 
     num_rows = 2
