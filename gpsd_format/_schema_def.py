@@ -1087,6 +1087,28 @@ VERSIONS = {
             'bad': 3,
             'description': '',
             'units': ''
+        },
+
+        # libais extensions
+        'shiptype_text': {
+            'default': 'Unknown',
+            'type': str,
+            'units': 'N/A',
+            'description': 'Vessel type'
+        },
+        'tagblock_timestamp': {
+            'default': str2datetime('1970-01-01T00:00:00.0Z'),
+            'type': datetime.datetime,
+            'import': str2datetime,
+            'export': datetime2str,
+            'units': 'N/A',
+            'description': 'Timestamp from tagblock. Datetime format: {}'.format(DATETIME_FORMAT)
+        },
+        'tagblock_station': {
+            'default': '',
+            'description': '',
+            'type': str,
+            'units': '' 
         }
     }
 }
