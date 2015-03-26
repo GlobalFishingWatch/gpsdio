@@ -6,6 +6,8 @@ Unittests for: gpsd_format._schema_def
 import datetime
 import unittest
 
+import six
+
 import gpsd_format.schema
 import gpsd_format._schema_def
 
@@ -57,3 +59,10 @@ class TestStr2Datetime(unittest.TestCase):
         self.assertEqual(expected.hour, converted.hour)
         self.assertEqual(expected.second, converted.second)
         self.assertEqual(expected.tzinfo, converted.tzinfo)
+
+
+def test_fields_by_msg_type():
+    for msg_type, fields in six.iteritems(gpsd_format._schema_def.fields_by_msg_type):
+        for version, definition in six.iteritems(gpsd_format._schema_def.VERSIONS):
+            for f in fields:
+                assert f in definition
