@@ -81,12 +81,16 @@ def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
                 res = False
 
         if not ignore_missing:
-            default_keys = set(get_message_default(int(row['type']), schema=schema, optional=False).keys())
-            row_keys = set(row.keys())
-            if len(default_keys - row_keys) != 0:
-                add_invalid('__missing_keys__', tuple(default_keys - row_keys))
-
+            if 'type' not in row:
+                add_invalid('__missing_keys__', ('type',))
                 res = False
+            else:
+                default_keys = set(get_message_default(int(row['type']), schema=schema, optional=False).keys())
+                row_keys = set(row.keys())
+                if len(default_keys - row_keys) != 0:
+                    add_invalid('__missing_keys__', tuple(default_keys - row_keys))
+                    res = False
+
     except Exception, e:
         add_invalid('__exception__', str(e))
         res = False
