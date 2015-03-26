@@ -5,10 +5,11 @@ Schema definitions and functions to transform rows
 
 import six
 
-from ._schema_def import VERSIONS
 from ._schema_def import DATETIME_FORMAT
 from ._schema_def import datetime2str
+from ._schema_def import fields_by_msg_type
 from ._schema_def import str2datetime
+from ._schema_def import VERSIONS
 
 
 CURRENT = VERSIONS[max(VERSIONS.keys())]
@@ -232,110 +233,9 @@ def get_default_msg(msg_type, schema=CURRENT, optional=True):
 
     try:
         res = {field: schema[field]['default']
-               for field in fields_by_message_type[msg_type]
+               for field in fields_by_msg_type[msg_type]
                if 'default' in schema[field] and (optional or schema[field].get('required', True))}
         res['type'] = msg_type
         return res
     except Exception as e:
         raise ValueError("Invalid AIS message type: %s: %s" % (msg_type, e))
-
-
-# Fields required by each message type, by message type ID
-fields_by_message_type = {
-    1: [
-        'slot_timeout', 'sync_state', 'repeat', 'lat', 'turn', 'mmsi', 'lon', 'raim', 'heading', 'scaled', 'course',
-        'second', 'status', 'type', 'device', 'spare', 'maneuver', 'class', 'speed', 'accuracy'
-    ],
-    2: [
-        'slot_timeout', 'sync_state', 'repeat', 'lat', 'turn', 'mmsi', 'lon', 'raim', 'heading', 'scaled', 'course',
-        'second', 'status', 'type', 'device', 'spare', 'maneuver', 'class', 'speed', 'accuracy'
-    ],
-    3: [
-        'slot_timeout', 'sync_state', 'repeat', 'lat', 'turn', 'mmsi', 'lon', 'raim', 'heading', 'scaled', 'course',
-        'second', 'status', 'type', 'device', 'spare', 'maneuver', 'class', 'speed', 'accuracy'],
-    4: [
-        'slot_timeout', 'sync_state', 'repeat', 'mmsi', 'device', 'lon', 'raim', 'scaled', 'epfd', 'transmission_ctl',
-        'eta', 'spare', 'slot_number', 'lat', 'type', 'class', 'accuracy'
-    ],
-    5: [
-        'scaled', 'to_starboard', 'repeat', 'shipname', 'ais_version', 'draught', 'mmsi', 'destination', 'to_bow',
-        'dte', 'to_stern', 'to_port', 'eta', 'callsign', 'imo', 'shiptype', 'device', 'spare', 'epfd', 'type', 'class'
-    ],
-    6: [
-        'repeat', 'retransmit', 'spare2', 'dest_mmsi', 'seqno', 'mmsi', 'dac', 'ack_required', 'scaled', 'msg_seq',
-        'spare', 'fid', 'device', 'type', 'class'],
-    7: [
-        'repeat', 'mmsi', 'scaled', 'acks', 'device', 'type', 'class'
-    ],
-    8: [
-        'notice_type_str', 'repeat', 'dac', 'mmsi', 'link_id', 'scaled', 'duration_minutes', 'spare', 'device',
-        'sub_areas', 'class', 'notice_type', 'fid', 'type'
-    ],
-    9: [
-        'slot_timeout', 'received_stations', 'repeat', 'spare2', 'alt_sensor', 'mmsi', 'device', 'lon', 'raim', 'dte',
-        'scaled', 'course', 'second', 'spare', 'lat', 'alt', 'type', 'class', 'speed', 'accuracy'
-    ],
-    10: [
-        'scaled', 'device', 'repeat', 'spare', 'spare2', 'dest_mmsi', 'mmsi', 'type', 'class'
-    ],
-    11: [
-        'slot_timeout', 'sync_state', 'repeat', 'mmsi', 'device', 'lon', 'raim', 'scaled', 'epfd', 'transmission_ctl',
-        'eta', 'spare', 'lat', 'slot_offset', 'type', 'class', 'accuracy'
-    ],
-    12: [
-        'repeat', 'mmsi', 'scaled', 'spare', 'device', 'class', 'retransmit', 'seqno', 'dest_mmsi', 'type'
-         ],
-    13: [
-        'repeat', 'mmsi', 'class', 'scaled', 'device', 'mmsi4', 'mmsi3', 'mmsi2', 'mmsi1'
-        ],
-    14: [
-        'repeat', 'text', 'mmsi', 'scaled', 'device', 'class'
-        ],
-    15: [
-        'spare4', 'repeat', 'slot_offset_2', 'spare3', 'spare2', 'mmsi_1', 'msg_1_1', 'mmsi', 'mmsi_2', 'class',
-        'scaled', 'dest_msg_1_2', 'slot_offset_1_1', 'spare', 'device', 'type', 'msg_2', 'slot_offset_1_2'
-    ],
-    16: [
-        'repeat', 'increment1', 'increment2', 'mmsi', 'scaled', 'spare', 'device', 'dest_mmsi_b', 'dest_mmsi_a',
-        'offset1', 'offset2', 'class', 'type'
-    ],
-    17: [
-        'scaled', 'device', 'repeat', 'spare', 'spare2', 'lat', 'type', 'mmsi', 'lon', 'class'
-    ],
-    18: [
-        'spare2', 'scaled', 'device', 'second', 'cs', 'speed', 'unit', 'lon', 'type', 'dsc', 'msg22', 'accuracy',
-        'repeat', 'mmsi', 'raim', 'band', 'spare', 'lat', 'class', 'course', 'heading', 'mode', 'display'
-    ],
-    19: [
-        'type_and_cargo', 'spare3', 'spare2', 'to_port', 'to_bow', 'scaled', 'course', 'second', 'speed',
-        'to_starboard', 'lon', 'type', 'accuracy', 'repeat', 'mmsi', 'raim', 'epfd', 'spare', 'device', 'class',
-        'assigned', 'to_stern', 'lat', 'shipname', 'dte', 'heading'
-    ],
-    20: [
-        'offset4', 'offset1', 'offset2', 'offset3', 'scaled', 'increment4', 'increment3', 'increment2', 'increment1',
-        'timeout3', 'timeout2', 'timeout1', 'timeout4', 'type', 'repeat', 'mmsi', 'number4', 'number2', 'number3',
-        'number1', 'device', 'class', 'spare'
-    ],
-    21: [
-        'virtual_aid', 'to_port', 'to_bow', 'scaled', 'device', 'second', 'to_starboard', 'lon', 'type', 'accuracy',
-        'repeat', 'mmsi', 'raim', 'aid_type', 'spare', 'lat', 'class', 'assigned', 'to_stern', 'shipname',
-        'aton_status', 'epfd', 'off_position'
-    ],
-    22: [
-        'repeat', 'band_b', 'zonesize', 'power', 'band_a', 'mmsi', 'spare2', 'ne_lon', 'txrx', 'scaled', 'class',
-        'channel_a', 'channel_b', 'device', 'spare', 'y2', 'type', 'sw_lon', 'sw_lat', 'ne_lat'
-    ],
-    23: [
-        'repeat', 'type_and_cargo', 'spare3', 'station_type', 'interval_raw', 'mmsi', 'ne_lon', 'quiet', 'txrx',
-        'scaled', 'class', 'spare', 'device', 'spare2', 'y2', 'type', 'sw_lon', 'sw_lat', 'ne_lat'
-    ],
-    24: [
-        'scaled', 'repeat', 'shipname', 'device', 'mmsi', 'type', 'part_num', 'class'
-    ],
-    25: [
-        'repeat', 'dest_mmsi', 'mmsi', 'structured', 'app_id', 'scaled', 'addressed', 'device', 'data', 'class'
-        ],
-    27: [
-        'type', 'repeat', 'mmsi', 'accuracy', 'raim', 'status', 'lon', 'lat', 'speed', 'course', 'gnss'
-    ]
-}

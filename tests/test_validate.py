@@ -94,7 +94,7 @@ class TestInfo(cmdtest.CmdTest):
     epoch = datetime.datetime(1970, 1, 1)
 
     def _random_row(self):
-        msg_types = list(gpsd_format.schema.fields_by_message_type.keys())
+        msg_types = list(gpsd_format.schema.fields_by_msg_type.keys())
         msg_type = msg_types[random.randint(0, len(msg_types) - 1)]
 
         return {
@@ -205,7 +205,7 @@ class TestInfo(cmdtest.CmdTest):
 class TestValidateMessages(unittest.TestCase):
 
     def test_all_types(self):
-        for msg_type, msg_fields in gpsd_format.schema.fields_by_message_type.items():
+        for msg_type, msg_fields in gpsd_format.schema.fields_by_msg_type.items():
 
             # Check type field individually since the other tests force it to be correct
             assert not gpsd_format.validate.validate_messages([{'field': 'val'}])

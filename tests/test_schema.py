@@ -69,7 +69,7 @@ class TestRow2Message(unittest.TestCase):
             'shiptype': 'I fish for stuff'
         }
         self.expected = self.row.copy()
-        for field in gpsd_format.schema.fields_by_message_type[self.row['type']]:
+        for field in gpsd_format.schema.fields_by_msg_type[self.row['type']]:
             if field not in self.row:
                 self.expected[field] = gpsd_format.schema.CURRENT[field]['default']
 
@@ -165,7 +165,7 @@ class TestGetMessageDefault(unittest.TestCase):
 
     def test_get_default_messages(self):
 
-        for msg_type, fields in gpsd_format.schema.fields_by_message_type.items():
+        for msg_type, fields in gpsd_format.schema.fields_by_msg_type.items():
             actual = gpsd_format.schema.get_default_msg(msg_type)
             for field in fields:
                 if field == 'type':
@@ -236,6 +236,6 @@ class TestFieldDefaults(unittest.TestCase):
         Make sure all default fields are defined in the schema
         """
 
-        for fields in gpsd_format.schema.fields_by_message_type.values():
+        for fields in gpsd_format.schema.fields_by_msg_type.values():
             for f in fields:
                 self.assertTrue(f in gpsd_format.schema.CURRENT, msg="Field {} not found in schema".format(f))
