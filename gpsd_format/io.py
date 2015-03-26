@@ -271,3 +271,74 @@ class GPSDWriter(object):
         """
 
         self.f.close()
+
+
+def as_geojson(iterator, x_field='longitude', y_field='latitude'):
+
+    """
+    Convert GPSD to GeoJSON Points on the fly.
+
+    Parameters
+    ----------
+    iterator : iterable object
+        An iterable object that produces one GPSD message per iteration.
+    x_field : str, optional
+        Field containing longitude.  Will be converted to a GeoJSON point and
+        removed from the output.
+    y_field : str, optional
+        Field containing latitude.  Will be converted to a GeoJSON point and
+        removed from the output.
+    """
+
+    for idx, row in enumerate(iterator):
+        o = {
+            'id': idx,
+            'type': 'Feature',
+            'properties': {k: v for k, v in row.items() if k not in (x_field, y_field)},
+            'geometry': {
+                'type': 'Point',
+                'coordinates': (row[x_field], row[y_field])
+            }
+        }
+        del o[x_field]
+        del o[y_field]
+        yield o
+
+
+def from_geojson(iterator, x_field='longitude', y_field='latitude'):
+
+    """
+    Convert GeoJSON Points to GPSD on the fly.
+
+    Parameters
+    ----------
+    iterator : iterable object
+        An iterable object that produces one GeoJSON Point message per iteration.
+        Note that
+    x_field : str, optional
+        Write longitude to this field - will be overwritten if it already exists.
+    y_field : str, optional
+        Write latitude to this field - will be overwritten if it already exists.
+
+    Raises
+    ------
+    TypeError
+        Input object isn't a GeoJSON Point.
+
+    Yields
+    ------
+    dict
+        GPSD message.
+    """
+
+    for feature in iterator:
+
+        if feature['geometry']['type'] != 'Point':
+            raise TypeError("Input object is not a GeoJSON point: %s" % feature)
+
+        point = feature['geometry']['coordinates']
+        o = feature['properties']
+        o[x_field] = point[0]
+        o[y_field] = point[1]
+
+        yield o
