@@ -160,7 +160,7 @@ class TestInfo(cmdtest.CmdTest):
     def test_sorted(self):
         infile = os.path.join(self.dir, "rows.mmsi=123.json")
         with open(infile, "w") as f:
-            w = gpsd_format.io.GPSDWriter(f)
+            w = gpsd_format.io.GPSDWriter.open(f)
             for row in self.rows:
                 w.writerow(row)
             for x in six.moves.range(0, self.num_invalid_rows):
@@ -175,11 +175,16 @@ class TestInfo(cmdtest.CmdTest):
         self.rows[0:2] = [self.rows[1], self.rows[0]]
         infile = os.path.join(self.dir, "rows.mmsi=123.json")
         with open(infile, "w") as f:
-            w = gpsd_format.io.GPSDWriter(f)
+            w = gpsd_format.io.GPSDWriter.open(f)
             for row in self.rows:
                 w.writerow(row)
             for x in six.moves.range(0, self.num_invalid_rows):
                 f.write("N")
+
+        with open(infile) as f:
+            print "XXXXXZZZZZZZZZZZZZZZZZZZZZZZ"
+            print f.read()
+            print "XXXXXZZZZZZZZZZZZZZZZZZZZZZZ"
 
         self.expected[u'file'] = str(infile)
         self.expected['is_sorted'] = False
@@ -190,7 +195,7 @@ class TestInfo(cmdtest.CmdTest):
     def test_nonjson(self):
         infile = os.path.join(self.dir, "rows.mmsi=123.json")
         with open(infile, "w") as f:
-            w = gpsd_format.io.GPSDWriter(f)
+            w = gpsd_format.io.GPSDWriter.open(f)
             for row in self.rows:
                 w.writerow(row)
             for x in six.moves.range(0, self.num_invalid_rows):
