@@ -15,42 +15,41 @@ import six
 from . import schema
 
 
-__all__ = ['GPSDReader', 'GPSDWriter']
+__all__ = ['ContainerFormat', 'GPSDReader', 'GPSDWriter']
 
 
-def json_reader(f):
-    for line in f:
-        try:
-            yield json.loads(line.strip())
-        except Exception as e:
-            yield {"__invalid__": {"__content__": line}}
+class ContainerFormat(object):
+    """Container format registry
 
+    Each container format has a reader and a writer class.
 
-class _MsgPackWriter(object):
-    def __init__(self, f):
-        self.f = f
+    The reader class should be an iterator, and the writer have the
+    method writerow(dict) and optionally writeheader()
 
-    def writerow(self, row):
-        msgpack.dump(row, self.f)
+    In addition both classes should have the method close() and the
+    attributes closed (bool) and name (str)
+    """
 
+    formats = {}
 
-class _JSONWriter(object):
-    def __init__(self, f):
-        self.f = f
+    @classmethod
+    def register(cls, name, reader, writer):
+        cls.formats[name] = {'reader':reader, 'writer': writer}
 
-    def writerow(self, row):
-        json.dump(row, self.f)
-        self.f.write("\n")
+    @classmethod
+    def get(cls, format, usage='reader'):
+        return cls.formats[format][usage]
 
+    @classmethod
+    def open(cls, file, options={}, format=None, usage='reader'):
+        if format is None and hasattr(file, 'name'):
+            format = file.name.rsplit(".", 1)[1]
+        if format is None:
+            format = 'json'
+        return cls.get(format, usage)(file, **options)
 
 class GPSDReader(object):
-    container_formats = {
-        'msg': msgpack.Unpacker,
-        'msgpack': msgpack.Unpacker,
-        'json': json_reader
-        }
-
-    def __init__(self, f, force_message=False, keep_fields=True, throw_exceptions=True, convert=True, container=None,
+    def __init__(self, reader, force_message=False, keep_fields=True, throw_exceptions=True, convert=True,
                  *args, **kwargs):
         """
         Read the GPSD format. The API mimics that of
@@ -58,8 +57,9 @@ class GPSDReader(object):
 
         Parameters
         ----------
-        f : file
-            An open file object
+        reader : iterator over dictionaries
+            An iterator over dictionaries, possibly loaded using some container format
+            (See the ContainerFormat class)
         force_message : bool
             Force rows being read to adhere to their specified AIS message
             type.  See `gpsd_format.schema.row2message()` for more information
@@ -72,9 +72,6 @@ class GPSDReader(object):
         convert: bool
             If false, don't convert attribute values not natively converted by the
             container format (e.g. dates)
-        container: function
-            A function that iterates over a file handle producing a messages (dictionaries).
-            Default depends on the file extension in f.name
         *args
             Collect and ignore additional positional arguments so the reader can
             be swapped with other readers that might take additional arguments
@@ -82,18 +79,32 @@ class GPSDReader(object):
             See `args`
         """
 
-        self.f = f
-        if container is None:
-            if hasattr(f, 'name'):
-                container = self.container_formats.get(f.name.rsplit(".", 1)[1])
-            else:
-                container = self.container_formats['json']
-        self.container = container
-        self.reader = self.container(self.f)
+        self.reader = reader
         self.convert = convert
         self.force_message = force_message
         self.keep_fields = keep_fields
         self.throw_exceptions = throw_exceptions
+
+    @classmethod
+    def open(cls, f, format=None, format_options={}, *args, **kwargs):
+        """
+        Read the GPSD format from a file using one of the registered container formats.
+
+        Parameters
+        ----------
+        f : file
+            An open file object
+        format: 'json' | 'msgpack'
+            The name of a container format registered with ContainerFormat
+        format_options: dict
+            Dictionary with optional arguments for the container format reader
+        Any additional arguments are passed directly on to __init__.
+
+        """
+
+        return cls(
+            ContainerFormat.open(f, format=format, usage='reader'),
+            *args, **kwargs)
 
     def __iter__(self):
         return self
@@ -117,7 +128,7 @@ class GPSDReader(object):
         bool
         """
 
-        return self.f.closed
+        return self.reader.closed
 
     def next(self):
         """
@@ -140,7 +151,7 @@ class GPSDReader(object):
             raise
         except Exception as e:
             if self.throw_exceptions:
-                raise Exception("%s: %s: %s" % (self.f.name, type(e), e))
+                raise Exception("%s: %s: %s" % (getattr(self.reader, 'name', 'Unknown'), type(e), e))
             return {"__invalid__": {"__content__": line}}
 
     def close(self):
@@ -153,17 +164,11 @@ class GPSDReader(object):
         None
         """
 
-        self.f.close()
+        self.reader.close()
 
 
 class GPSDWriter(object):
-    container_formats = {
-        'msg': _MsgPackWriter,
-        'msgpack': _MsgPackWriter,
-        'json': _JSONWriter
-        }
-
-    def __init__(self, f, force_message=False, keep_fields=True, throw_exceptions=True, convert=True, container=None,
+    def __init__(self, writer, force_message=False, keep_fields=True, throw_exceptions=True, convert=True,
                  *args, **kwargs):
         """
         Write the GPSD format. The API mimics that of
@@ -171,8 +176,8 @@ class GPSDWriter(object):
 
         Parameters
         ----------
-        f : file
-            An open file object equivalent to f = open(path, mode)
+        writer : object with method writerow(dict)
+            An object to send encoded dictionaries to
         force_message : bool
             Force rows being written to adhere to their specified AIS message
             type.  See `gpsd_format.schema.row2message()` for more information
@@ -185,9 +190,6 @@ class GPSDWriter(object):
         convert: bool
             If false, don't convert attribute values not natively converted by the
             container format (e.g. dates)
-        container: class
-            A class that takes a file handle and provides a writerow() function
-            Default depends on the file extension in f.name
         *args
             Collect and ignore additional positional arguments so the reader can
             be swapped with other readers that might take additional arguments
@@ -195,18 +197,32 @@ class GPSDWriter(object):
             See `args`
         """
 
-        self.f = f
-        if container is None:
-            if hasattr(f, 'name'):
-                container = self.container_formats.get(f.name.rsplit(".", 1)[1])
-            else:
-                container = self.container_formats['json']
-        self.container = container
-        self.writer = self.container(self.f)
+        self.writer = writer
         self.force_message = force_message
         self.convert = convert
         self.keep_fields = keep_fields
         self.throw_exceptions = throw_exceptions
+
+    @classmethod
+    def open(cls, f, format=None, format_options={}, *args, **kwargs):
+        """
+        Write the GPSD format to a file using one of the registered container formats.
+
+        Parameters
+        ----------
+        f : file
+            An open file object
+        format: 'json' | 'msgpack'
+            The name of a container format registered with ContainerFormat
+        format_options: dict
+            Dictionary with optional arguments for the container format writer
+        Any additional arguments are passed directly on to __init__.
+
+        """
+
+        return cls(
+            ContainerFormat.open(f, format=format, usage='writer'),
+            *args, **kwargs)
 
     def __enter__(self):
         return self
@@ -224,7 +240,7 @@ class GPSDWriter(object):
         bool
         """
 
-        return self.f.closed
+        return self.writer.closed
 
     def writeheader(self):
         """
@@ -276,7 +292,52 @@ class GPSDWriter(object):
         None
         """
 
+        self.writer.close()
+
+class _FileContainer(object):
+    def __init__(self, f):
+        self.f = f
+
+    @property
+    def name(self):
+        return getattr(self.f, 'name', 'Unknown')
+
+    @property
+    def closed(self):
+        return self.f.closed
+
+    def close(self):
         self.f.close()
+
+class _FileReader(_FileContainer):
+    def __iter__(self):
+        return self
+
+class _JSONReader(_FileContainer):
+    def next(self):
+        line = self.f.next()
+        try:
+            return json.loads(line.strip())
+        except Exception as e:
+            return {"__invalid__": {"__content__": line}}
+class _JSONWriter(_FileContainer):
+    def writerow(self, row):
+        json.dump(row, self.f)
+        self.f.write("\n")
+ContainerFormat.register("json", _JSONReader, _JSONWriter)
+
+
+class _MsgPackReader(_FileReader):
+    def __init__(self, *arg, **kw):
+        super(_MsgPackReader, self).__init__(*arg, **kw)
+        self.reader = msgpack.Unpacker(self.f)
+    def next(self):
+        return self.reader.next()
+class _MsgPackWriter(_FileContainer):
+    def writerow(self, row):
+        msgpack.dump(row, self.f)
+ContainerFormat.register("msg", _MsgPackReader, _MsgPackWriter)
+ContainerFormat.register("msgpack", _MsgPackReader, _MsgPackWriter)
 
 
 def as_geojson(iterator, x_field='longitude', y_field='latitude'):
