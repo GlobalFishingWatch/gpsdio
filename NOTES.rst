@@ -1,0 +1,65 @@
+Package Layout
+==============
+
+* GPSD Format
+    - gpsd_format
+        + __init__.py
+        + drivers.py
+        + io.py
+        + cli.py
+        + validate.py
+        + schema.py
+        + _schema_def.py
+    - LICENSE.txt
+    - MANIFEST.in
+    - tests
+        + __init__.py
+        + test_drivers.py
+        + test_io.py
+        + test_cli.py
+        + test_validate.py
+        + test_schema.py
+        + test__schema_def.py
+    - setup.py
+
+
+Drivers
+=======
+
+* Initial supported formats
+    - MsgPack
+    - Newline delmited JSON
+* Potential additions
+    - JSON (as a list)
+    - CSV (?)
+    - NMEA (via libais)
+    - Vectors via fiona?
+* Requirements
+    - Operate on a file stream
+    - Writers should have .write() function
+    - Do not perform any validation
+
+
+API Examples
+============
+
+.. code-block:: python
+
+    import gpsd_format
+
+    # Print all messages in a file
+    with gpsd_format.open("foo.msg", skip_faliures=True) as f:
+        for msg in f:
+            print(msg)
+
+    # Write two messages to a file as MsgPack
+    with gpsd_format.open("bar.msg", 'w', skip_failures=True) as f:
+        f.write({'type': 1, 'lat': 47, 'lon': 11})
+        f.write({'type': 1, 'lat': 48, 'lon': 12})
+
+    # Validate a message
+    gpsd_format.schema.validate_messages([{'type': 1, 'lat': 'nanananana'}], skip_failures=False)
+
+    # Get info about a collection of messages
+    with gpsd_format.open("foo.msg", skip_failures=False, force_message=False) as f:
+        print(gpsd_format.schema.collect_info(f))
