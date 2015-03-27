@@ -181,11 +181,6 @@ class TestInfo(cmdtest.CmdTest):
             for x in six.moves.range(0, self.num_invalid_rows):
                 f.write("N")
 
-        with open(infile) as f:
-            print "XXXXXZZZZZZZZZZZZZZZZZZZZZZZ"
-            print f.read()
-            print "XXXXXZZZZZZZZZZZZZZZZZZZZZZZ"
-
         self.expected[u'file'] = str(infile)
         self.expected['is_sorted'] = False
 

@@ -46,7 +46,6 @@ class ContainerFormat(object):
             format = file.name.rsplit(".", 1)[1]
         if format is None:
             format = 'json'
-        print "OPEN", file.name, format, usage
         return cls.get(format, usage)(file, **options)
 
 class GPSDReader(object):
