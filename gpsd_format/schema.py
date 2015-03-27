@@ -62,6 +62,14 @@ def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
                     vt = type(value)
                     t = fieldschema.get('type', str)
 
+                    # Hack to allow both UTF-encoded str and unicode
+                    # strings - this seems to be container dependent,
+                    # and actually converting using import/export
+                    # would be to expensive and this is generally not
+                    # that usefull
+                    if t is str or t is unicode:
+                        t = six.string_types
+
                     # Hack to allow ints where floats should be used,
                     # as the container format might convert whole
                     # numbers into ints under our feet.
