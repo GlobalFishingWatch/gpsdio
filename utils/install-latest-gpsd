@@ -2,7 +2,7 @@
 
 VERSION="$(wget -O - http://download-mirror.savannah.gnu.org/releases/gpsd/ 2>/dev/null | grep "gpsd-.*.tar.gz<" | sed -e "s+.*\(gpsd-.*.tar.gz\)<.*+\1+g" | tail -n 1)"
 DIR="$(pwd)/$(basename "$VERSION" .tar.gz)"
-LOG="$(mktemp)"
+LOG="$(mktemp -t tmp.XXXXXXXXXX)"
 
 if [ -e "$DIR/gpsdecode" ]; then
   echo "$DIR"
@@ -22,6 +22,7 @@ else
   {
     cat "$LOG" >&2
     rm "$DIR" -rf
-    rm "$LOG"
   }
+
+  rm "$LOG"
 fi
