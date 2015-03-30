@@ -1,0 +1,27 @@
+#! /bin/bash
+
+VERSION="$(wget -O - http://download-mirror.savannah.gnu.org/releases/gpsd/ 2>/dev/null | grep "gpsd-.*.tar.gz<" | sed -e "s+.*\(gpsd-.*.tar.gz\)<.*+\1+g" | tail -n 1)"
+DIR="$(pwd)/$(basename gpsd-3.14.tar.gz .tar.gz)"
+LOG="$(mktemp)"
+
+if [ -e "$DIR/gpsdecode" ]; then
+  echo "$DIR"
+else
+
+  {
+    wget "http://download-mirror.savannah.gnu.org/releases/gpsd/$VERSION" &&
+    tar -xvzf "$VERSION" &&
+
+    cd "$DIR" &&
+    scons &&
+    scons check
+  } > "$LOG" 2>&1 &&
+  {
+    echo "$DIR"
+  } ||
+  {
+    cat "$LOG" >&2
+    rm "$DIR" -rf
+    rm "$LOG"
+  }
+fi
