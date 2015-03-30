@@ -60,7 +60,7 @@ def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
                         res = False
                 else:
                     vt = type(value)
-                    t = fieldschema.get('type', str)
+                    origt = t = fieldschema.get('type', str)
 
                     # Hack to allow both UTF-encoded str and unicode
                     # strings - this seems to be container dependent,
@@ -77,7 +77,11 @@ def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
                         vt = float
 
                     if not issubclass(vt, t):
-                        add_invalid(key, (t.__name__, row.pop(key)))
+                        if isinstance(origt, (list, tuple)):
+                            name = [item.__name__ for item in origt]
+                        else:
+                            name = origt.__name__
+                        add_invalid(key, (name, row.pop(key)))
                         res = False
                     elif 'test' in fieldschema and not fieldschema['test'](value):
                         add_invalid(key, ('test failed', row.pop(key)))
