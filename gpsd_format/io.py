@@ -17,6 +17,50 @@ from . import schema
 
 __all__ = ['ContainerFormat', 'GPSDReader', 'GPSDWriter']
 
+def open(filename, mode = 'r', *args, **kwargs):
+    """
+        filename: str | file
+            A file path, the literal '-' meaning stdin/stdout, or an open file (like) object.
+        mode: 'r' | 'w' | 'a'
+            This flag has the same semantics and allowed values as the
+            Python builtin open() function
+        format: 'json' | 'msgpack'
+            The name of a container format registered with ContainerFormat
+        format_options: dict
+            Dictionary with optional arguments for the container format reader
+        force_message : bool
+            Force rows being read to adhere to their specified AIS message
+            type.  See `gpsd_format.schema.row2message()` for more information
+        keep_fields : list or None
+            Used by `gpsd_format.schema.row2message()` to allow keeping fields that
+            do not adhere to the row's message type
+        throw_exceptions: bool
+            If true, reading a row with an attribute value that does not match
+            the schema type for that attribute will cause an exception.
+        convert: bool
+            If false, don't convert attribute values not natively converted by the
+            container format (e.g. dates)
+        *args
+
+    if mode[0] == 'r':
+        cls = GPSDReader
+    elif mode[0] in ('w', 'a'):
+        cls = GPSDWriter
+    else:
+        raise ValueError('Unknown file mode %s' % (mode, ))
+
+    if file.hasattr('read'):
+        f = filename
+    else:
+        if filename == '-':
+            if mode[0] == 'r':
+                f = sys.stdin
+            else:
+                f = sys.stdout
+        else:
+            f = open(filename, mode)
+
+    return cls.open(f, *args, **kwargs)
 
 class ContainerFormat(object):
     """Container format registry
