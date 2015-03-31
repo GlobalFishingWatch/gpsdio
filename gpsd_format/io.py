@@ -41,6 +41,7 @@ def open(filename, mode = 'r', *args, **kwargs):
             If false, don't convert attribute values not natively converted by the
             container format (e.g. dates)
         *args
+    """
 
     if mode[0] == 'r':
         cls = GPSDReader
@@ -49,7 +50,7 @@ def open(filename, mode = 'r', *args, **kwargs):
     else:
         raise ValueError('Unknown file mode %s' % (mode, ))
 
-    if file.hasattr('read'):
+    if hasattr(file, 'read'):
         f = filename
     else:
         if filename == '-':

@@ -63,6 +63,11 @@ class TestGPSDReader(unittest.TestCase):
         with gpsd_format.io.GPSDReader.open(self.valid_f, force_message=False, keep_fields=True) as r:
             self.assertFalse(r.closed)
 
+    def test_generic_open(self):
+        reader = gpsd_format.io.open(self.valid_f, "r", force_message=False, keep_fields=True)
+        for expected, actual in zip(self.valid_rows, reader):
+            self.assertDictEqual(expected, actual)
+
     def test_no_normalize(self):
 
         """
@@ -170,6 +175,18 @@ class TestGPSDWriter(unittest.TestCase):
         w = gpsd_format.io.GPSDWriter.open(test_f, force_message=False, keep_fields=True)
         w.writeheader()
         w.close()
+
+    def test_generic_open(self):
+
+        test_f = StringIO()
+        writer = gpsd_format.io.open(test_f, "w", force_message=False, keep_fields=True)
+        writer.writerows(self.extended_rows)
+
+        test_f.seek(0)
+        reader = gpsd_format.io.open(test_f, "r", force_message=False, keep_fields=True)
+
+        for expected, actual in zip(self.extended_rows, reader):
+            self.assertDictEqual(expected, actual)
 
     def test_no_normalize(self):
 
