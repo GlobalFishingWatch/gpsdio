@@ -40,24 +40,24 @@ class TestValidateMessage(unittest.TestCase):
 
     def test_invalid(self):
         self.assertFalse(
-            gpsd_format.schema.validate_message(
+            gpsd_format.schema.validate_msg(
                 {'type': 5,
                  'shipname': None,
                  }))
 
     def test_invalid_type(self):
         msg = gpsd_format.schema.get_default_msg(1)
-        self.assertTrue(gpsd_format.schema.validate_message(msg))
+        self.assertTrue(gpsd_format.schema.validate_msg(msg))
         msg['lat'] = 'foo'
-        self.assertFalse(gpsd_format.schema.validate_message(msg))
+        self.assertFalse(gpsd_format.schema.validate_msg(msg))
 
     def test_valid(self):
         self.assertTrue(
-            gpsd_format.schema.validate_message(
+            gpsd_format.schema.validate_msg(
                 gpsd_format.schema.get_default_msg(1)))
 
     def test_error(self):
-        self.assertFalse(gpsd_format.schema.validate_message(None))
+        self.assertFalse(gpsd_format.schema.validate_msg(None))
 
 
 class TestRow2Message(unittest.TestCase):

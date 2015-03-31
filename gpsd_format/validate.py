@@ -214,12 +214,12 @@ def collect_info(infile, verbose=False, err=sys.stderr):
                     stats['is_sorted'] = False
 
             # num_invalid_rows
-            gpsd_format.schema.validate_message(row, ignore_missing=True, skip_failures=True)
+            gpsd_format.schema.validate_msg(row, ignore_missing=True, skip_failures=True)
             if '__invalid__' in row:
                 stats['num_invalid_rows'] += 1
                 if verbose:
                     err.write("ERROR: Invalid row: {row}".format(row=row) + os.linesep)
-            elif not gpsd_format.schema.validate_message(row, skip_failures=True):
+            elif not gpsd_format.schema.validate_msg(row, skip_failures=True):
                 stats['num_incomplete_rows'] += 1
                 if verbose:
                     err.write("WARNING: Incomplete row: {row}".format(row=row) + os.linesep)

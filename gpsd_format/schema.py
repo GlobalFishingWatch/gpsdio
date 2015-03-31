@@ -30,7 +30,7 @@ schema_cast_functions = schema_types.copy()
 schema_cast_functions.update(schema_import_functions)
 
 
-def validate_message(row, ignore_missing=False, skip_failures=False, schema=CURRENT):
+def validate_msg(row, ignore_missing=False, skip_failures=False, schema=CURRENT):
 
     """
     Validate that a row contains all fields required by its type and that they
