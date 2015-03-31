@@ -254,7 +254,10 @@ VERSIONS = {
             'good': 1022,
             'bad': 103,
             'description': '',
-            'units': ''
+            'units': '',
+            'required': False,
+            'import': None,
+            'export': None
         },
         'speed': {
             'default': 0.0,
@@ -308,13 +311,7 @@ VERSIONS = {
             'default': 'Unknown',
             'type': str,
             'units': 'N/A',
-            'description': 'Vessel type'
-        },
-        'shiptype_text': {
-            'default': 'Unknown',
-            'type': str,
-            'units': 'N/A',
-            'description': 'Vessel type'
+            'description': 'Vessel type',
         },
         'callsign': {
             'default': '',
@@ -369,13 +366,17 @@ VERSIONS = {
             'default': [],
             'description': '',
             'type': list,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'aid_type': {
             'default': 'Type of Aid to Navigation not specified',
             'description': '',
             'type': str,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'ais_version': {
             'default': 0,
@@ -385,27 +386,35 @@ VERSIONS = {
             # TODO: Should always be 0 right now.  The other vals are reserved.
             'test': lambda x: not isinstance(x, bool) and x in (0, 1, 2, 3),
             'good': 2,
-            'bad': True
+            'bad': True,
+            'import': None,
+            'export': None
         },
         'alt': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'alt_sensor': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'aton_status': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'band': {
             'default': 1,
@@ -415,37 +424,49 @@ VERSIONS = {
             # TODO: Switch to a more Pythonic bool?
             'test': lambda x: x in (0, 1),
             'good': 0,
-            'bad': 4
+            'bad': 4,
+            'import': None,
+            'export': None
         },
         'band_a': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'band_b': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'channel_a': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'channel_b': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'class': {
             'default': 'AIS',
             'description': '',
             'type': str,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'cs': {
             'default': 1,
@@ -455,46 +476,60 @@ VERSIONS = {
             # Not bool - state
             'test': lambda x: x in (0, 1),
             'good': 0,
-            'bad': 7
+            'bad': 7,
+            'import': None,
+            'export': None
         },
         'dac': {
             'default': 1,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'dest_mmsi': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'dest_mmsi_a': {
             'default': '',
             'description': '',
             'type': str,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'dest_mmsi_b': {
             'default': '',
             'description': '',
             'type': str,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'dest_msg_1_2': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'device': {
             'default': 'stdin',
             'description': '',
             'type': str,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'display': {
             'default': 0,
@@ -504,7 +539,9 @@ VERSIONS = {
             # Not bool - state
             'test': lambda x: x in (0, 1),
             'good': 1,
-            'bad': 'j'
+            'bad': 'j',
+            'import': None,
+            'export': None
         },
         'draught': {
             'default': 0,
@@ -513,7 +550,9 @@ VERSIONS = {
             'units': '',
             'test': lambda x: 0.0 < x <= 2 ** 8,
             'good': 1.0,
-            'bad': 2 ** 8 + 1
+            'bad': 2 ** 8 + 1,
+            'import': None,
+            'export': None
         },
         'dsc': {
             'default': 1,
@@ -523,7 +562,9 @@ VERSIONS = {
             # TODO: Switch to a more Pythonic bool?
             'test': lambda x: x in (0, 1),
             'good': 1,
-            'bad': -45
+            'bad': -45,
+            'import': None,
+            'export': None
         },
         'dte': {
             'default': 0,
@@ -533,117 +574,153 @@ VERSIONS = {
             # TODO: Switch to a more Pythonic bool if this is actually bolean and not a status
             'test': lambda x: x in (0, 1),
             'good': 0,
-            'bad': 8
+            'bad': 8,
+            'import': None,
+            'export': None
         },
         'duration_minutes': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'epfd': {
             'default': 'Unknown',
             'description': '',
             'type': str,
             'units': '',
+            'import': None,
+            'export': None
         },
         'fid': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'imo': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'increment1': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'increment2': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'increment3': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'increment4': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'interval_raw': {
             'default': 11,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'link_id': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'mmsi_1': {
             'default': '',
             'description': '',
             'type': str,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'mmsi_2': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'mmsi1': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'mmsi2': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'mmsi3': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'mmsi4': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'mode': {
             'default': False,
             'description': '',
             'type': bool,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'msg22': {
             'default': 1,
@@ -654,34 +731,44 @@ VERSIONS = {
             'test': lambda x: x in (0, 1),
             'good': 0,
             'bad': -2,
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'msg_1_1': {
             'default': 5,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'msg_2': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'msg_seq': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'name': {
             'default': '',
             'description': 'Aid-to-Navigation name',
             'type': str,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'ne_lat': {
             'default': 0.0,
@@ -690,7 +777,9 @@ VERSIONS = {
             # Stored as str in container for some reason
             'import': float,
             'export': str,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'ne_lon': {
             'default': 0.0,
@@ -699,91 +788,121 @@ VERSIONS = {
             # Stored as str in container for some reason
             'import': float,
             'export': str,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'notice_type': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'notice_type_str': {
             'default': 'Undefined',
             'description': '',
             'type': str,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'number1': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'number2': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'number3': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'number4': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'off_position': {
             'default': False,
             'description': '',
             'type': bool,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'offset1': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'offset2': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'offset3': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'offset4': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'part_num': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'power': {
             'default': False,
             'description': '',
             'type': bool,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'quiet': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'raim': {
             'default': False,
@@ -791,14 +910,18 @@ VERSIONS = {
             'type': bool,
             'units': '',
             'good': False,
-            'bad': -2
+            'bad': -2,
+            'import': None,
+            'export': None
         },
         'received_stations': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'repeat': {
             'default': 0,
@@ -807,19 +930,25 @@ VERSIONS = {
             'units': '',
             'test': lambda x: 0 <= x <= 2 ** 2,
             'good': 4,
-            'bad': -1
+            'bad': -1,
+            'import': None,
+            'export': None
         },
         'retransmit': {
             'default': True,
             'description': '',
             'type': bool,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'scaled': {
             'default': True,
             'description': '',
             'type': bool,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'second': {
             'default': 60,
@@ -834,63 +963,81 @@ VERSIONS = {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'slot_number': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'slot_offset': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'slot_offset_1_1': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'slot_offset_1_2': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'slot_offset_2': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'slot_timeout': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'spare': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'spare2': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
 
         },
         'spare3': {
@@ -898,7 +1045,9 @@ VERSIONS = {
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
 
         },
         'spare4': {
@@ -906,7 +1055,9 @@ VERSIONS = {
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
 
         },
         'maneuver': {
@@ -916,20 +1067,26 @@ VERSIONS = {
             'units': '',
             'test': lambda x: x in (0, 1, 2),
             'good': 2,
-            'bad': 3
+            'bad': 3,
+            'import': None,
+            'export': None
         },
         'station_type': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'sub_areas': {
             'default': [],
             'description': '',
             'type': list,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'sw_lon': {
             'default': 0.0,
@@ -938,7 +1095,7 @@ VERSIONS = {
             # Stored as str in container for some reason
             'import': float,
             'export': str,
-            'units': ''
+            'units': '',
         },
         'sw_lat': {
             'default': 0.0,
@@ -954,31 +1111,41 @@ VERSIONS = {
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'timeout1': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'timeout2': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'timeout3': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'timeout4': {
             'default': 0,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'to_bow': {
             'default': 0,
@@ -988,7 +1155,9 @@ VERSIONS = {
             # TODO: FIXME: This test is incorrect. value can not be > 511 according to AIS spec; check to_stern etc too
             'test': lambda x: 0 <= x <= 2 ** 9,
             'good': 1,
-            'bad': -1
+            'bad': -1,
+            'import': None,
+            'export': None
         },
         'to_starboard': {
             'default': 0,
@@ -997,7 +1166,9 @@ VERSIONS = {
             'units': '',
             'test': lambda x: 0 <= x <= 2 ** 6,
             'good': 0,
-            'bad': 'BAD'
+            'bad': 'BAD',
+            'import': None,
+            'export': None
         },
         'to_stern': {
             'default': 0,
@@ -1006,54 +1177,71 @@ VERSIONS = {
             'units': '',
             'test': lambda x: 0 <= x <= 2 ** 9,
             'good': 0,
-            'bad': tuple
+            'bad': tuple,
+            'import': None,
+            'export': None
         },
         'transmission_ctl': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'txrx': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'type_and_cargo': {
             'default': 0,
             'description': '',
             'type': int,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'unit': {
             'default': True,
             'description': '',
             'type': bool,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'virtual_aid': {
             'default': False,
             'description': '',
             'type': bool,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None,
+            'required': False
         },
         'y2': {
             'default': 0.0,
             'description': '',
             'type': float,
             'units': '',
-            'required': False
+            'required': False,
+            'import': None,
+            'export': None
         },
         'zonesize': {
             'default': 3,
             'description': '',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
 
 
@@ -1062,31 +1250,41 @@ VERSIONS = {
             'default': -1,
             'description': 'Track id for despoofed tracks',
             'type': int,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'measure_new_score': {
             'default': 0.0,
             'description': 'Score',
             'type': float,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'measure_coursestddev': {
             'default': 0.0,
             'description': 'Score',
             'type': float,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'measure_speedstddev': {
             'default': 0.0,
             'description': 'Score',
             'type': float,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'measure_speedavg': {
             'default': 0.0,
             'description': 'Score',
             'type': float,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         # TODO: FIXME: Provide types etc for these
         'radio': {
@@ -1095,17 +1293,23 @@ VERSIONS = {
             'good': 1,
             'bad': False,
             'description': '',
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'reserved': {
             'type': int,
             'description': '',
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'regional': {
             'type': int,
             'description': '',
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
 
         # Pulled from type 24 GPSD spec
@@ -1115,7 +1319,9 @@ VERSIONS = {
             'good': 0,
             'bad': -1,
             'description': '',
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'vendorid': {
             'type': str,
@@ -1123,7 +1329,9 @@ VERSIONS = {
             'good': 'this is a gooooooooood value',
             'bad': int,
             'description': '',
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'model': {
             'type': str,
@@ -1131,7 +1339,9 @@ VERSIONS = {
             'good': 'something',
             'bad': 333,
             'description': '',
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'serial': {
             'type': str,
@@ -1139,7 +1349,9 @@ VERSIONS = {
             'good': 'pawoeiras',
             'bad': -1,
             'description': '',
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'mothership_mmsi': {
             'type': str,
@@ -1147,38 +1359,51 @@ VERSIONS = {
             'good': 'done ... finally ...',
             'bad': -200,
             'description': '',
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'structured': {
             'default': False,
             'type': bool,
             'description': '',
-            'units': ''
+            'import': None,
+            'export': None,
+            'units': '',
+            'required': False
         },
         'app_id': {
             'default': 0,
             'type': int,
             'description': '',
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'addressed': {
             'default': False,
             'type': bool,
             'description': '',
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'data': {
             'default': '',
             'type': str,
             'description': '',
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
         'text': {
             'default': '',
             'type': str,
             'required': False,
             'description': '',
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
 
         # Pulled from type 27 GPSD spec
@@ -1190,7 +1415,9 @@ VERSIONS = {
             'good': 0,
             'bad': 3,
             'description': '',
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         },
 
         # libais extensions
@@ -1198,7 +1425,9 @@ VERSIONS = {
             'default': 'Unknown',
             'type': str,
             'units': 'N/A',
-            'description': 'Vessel type'
+            'description': 'Vessel type',
+            'import': None,
+            'export': None
         },
         'tagblock_timestamp': {
             'default': str2datetime('1970-01-01T00:00:00.0Z'),
@@ -1206,13 +1435,15 @@ VERSIONS = {
             'import': str2datetime,
             'export': datetime2str,
             'units': 'N/A',
-            'description': 'Timestamp from tagblock. Datetime format: {}'.format(DATETIME_FORMAT)
+            'description': 'Timestamp from tagblock. Datetime format: {}'.format(DATETIME_FORMAT),
         },
         'tagblock_station': {
             'default': '',
             'description': '',
             'type': str,
-            'units': ''
+            'units': '',
+            'import': None,
+            'export': None
         }
     }
 }
