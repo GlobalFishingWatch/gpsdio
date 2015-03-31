@@ -69,7 +69,7 @@ def merge_info(info_a, info_b):
         }
 
 
-def collect_info(infile, verbose=False, err=sys.stderr):
+def collect_info(input, verbose=False, err=sys.stderr):
 
     """
     Get a report about a chunk of AIS data.  Report is a dictionary with the
@@ -120,10 +120,8 @@ def collect_info(infile, verbose=False, err=sys.stderr):
 
     Parameters
     ----------
-    infile : file or iterable
-        An open file-like object containing data that should be in the standard
-        schema or an iterable that returns transformed messages, meaning that
-        every key has already been cast to its Python type.
+    input : iterable
+        An open GPSDReader or other iterable over messages
     verbose : bool, optional
         When an invalid row is encountered, print an error to `err`
     err : file, optional
@@ -151,14 +149,14 @@ def collect_info(infile, verbose=False, err=sys.stderr):
     }
 
     mmsi_declaration = None
-    if hasattr(infile, 'name') and 'mmsi=' in infile.name:
-        mmsi_declaration = re.findall(r"mmsi=([^,.]*)[.,]", infile.name)[0]
+    if input.name is not None and 'mmsi=' in input.name:
+        mmsi_declaration = re.findall(r"mmsi=([^,.]*)[.,]", input.name)[0]
         stats['mmsi_declaration'] = True
 
     # Note that this is the last row that did not throw an exception on decode and is
     # not necessarily the previous row in the input
     previous_timestamp = None
-    for row in gpsd_format.io.GPSDReader.open(infile, skip_failures=True, force_message=False):
+    for row in input:
 
         # num_rows
         stats['num_rows'] += 1

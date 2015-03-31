@@ -11,6 +11,7 @@ except ImportError:
     msgpack = None
 
 import six
+import __builtin__
 
 from . import schema
 
@@ -50,7 +51,7 @@ def open(filename, mode = 'r', *args, **kwargs):
     else:
         raise ValueError('Unknown file mode %s' % (mode, ))
 
-    if hasattr(file, 'read'):
+    if hasattr(filename, 'read'):
         f = filename
     else:
         if filename == '-':
@@ -59,7 +60,7 @@ def open(filename, mode = 'r', *args, **kwargs):
             else:
                 f = sys.stdout
         else:
-            f = open(filename, mode)
+            f = __builtin__.open(filename, mode)
 
     return cls.open(f, *args, **kwargs)
 
@@ -158,10 +159,14 @@ class GPSDReader(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+        self.reader.close()
 
     def __next__(self):
         return self.next()
+
+    @property
+    def name(self):
+        return self.reader.name
 
     @property
     def closed(self):
@@ -274,7 +279,11 @@ class GPSDWriter(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+        self.writer.close()
+
+    @property
+    def name(self):
+        return self.writer.name
 
     @property
     def closed(self):
@@ -350,7 +359,7 @@ class _FileContainer(object):
 
     @property
     def name(self):
-        return getattr(self.f, 'name', 'Unknown')
+        return getattr(self.f, 'name', None)
 
     @property
     def closed(self):
