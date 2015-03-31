@@ -58,8 +58,12 @@ API Examples
         f.write({'type': 1, 'lat': 48, 'lon': 12})
 
     # Validate a message
-    gpsd_format.schema.validate_messages([{'type': 1, 'lat': 'nanananana'}], skip_failures=False)
-
+    msg = {'type': 1, 'lat': 'nanananana'}
+    if gpsd_format.schema.validate_message(msg, skip_failures=True):
+        print "Is valid"
+    else:
+        print "Is invalid", msg['__invalid__']
+    
     # Get info about a collection of messages
     with gpsd_format.open("foo.msg", skip_failures=False, force_message=False) as f:
         print(gpsd_format.schema.collect_info(f))
