@@ -59,7 +59,7 @@ API Examples
 
     # Validate a message
     msg = {'type': 1, 'lat': 'nanananana'}
-    if gpsd_format.schema.validate_message(msg, skip_failures=True):
+    if gpsd_format.schema.validate_msg(msg, skip_failures=True):
         print "Is valid"
     else:
         print "Is invalid", msg['__invalid__']
