@@ -108,7 +108,7 @@ def validate_msg(row, ignore_missing=False, skip_failures=False, schema=CURRENT)
     return res
 
 
-def row2message(row, schema=CURRENT, keep_fields=False):
+def force_msg(row, schema=CURRENT, keep_fields=False):
 
     """
     Convert a row to a valid message type by removing unrecognized fields and

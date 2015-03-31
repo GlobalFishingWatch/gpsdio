@@ -30,9 +30,9 @@ def open(filename, mode = 'r', *args, **kwargs):
             Dictionary with optional arguments for the container format reader
         force_message : bool
             Force rows being read to adhere to their specified AIS message
-            type.  See `gpsd_format.schema.row2message()` for more information
+            type.  See `gpsd_format.schema.force_msg()` for more information
         keep_fields : list or None
-            Used by `gpsd_format.schema.row2message()` to allow keeping fields that
+            Used by `gpsd_format.schema.force_msg()` to allow keeping fields that
             do not adhere to the row's message type
         skip_failures: bool
             If False, reading a row with an attribute value that does not match
@@ -107,9 +107,9 @@ class GPSDReader(object):
             (See the ContainerFormat class)
         force_message : bool
             Force rows being read to adhere to their specified AIS message
-            type.  See `gpsd_format.schema.row2message()` for more information
+            type.  See `gpsd_format.schema.force_msg()` for more information
         keep_fields : list or None
-            Used by `gpsd_format.schema.row2message()` to allow keeping fields that
+            Used by `gpsd_format.schema.force_msg()` to allow keeping fields that
             do not adhere to the row's message type
         skip_failures: bool
             If False, reading a row with an attribute value that does not match
@@ -190,7 +190,7 @@ class GPSDReader(object):
             if self.convert:
                 loaded = schema.import_msg(line, skip_failures=self.skip_failures)
                 if self.force_message:
-                    loaded = schema.row2message(loaded, keep_fields=self.keep_fields)
+                    loaded = schema.force_msg(loaded, keep_fields=self.keep_fields)
             return loaded
         except StopIteration:
             raise
@@ -225,9 +225,9 @@ class GPSDWriter(object):
             An object to send encoded dictionaries to
         force_message : bool
             Force rows being written to adhere to their specified AIS message
-            type.  See `gpsd_format.schema.row2message()` for more information
+            type.  See `gpsd_format.schema.force_msg()` for more information
         keep_fields : list or None
-            Used by `gpsd_format.schema.row2message()` to allow keeping fields that
+            Used by `gpsd_format.schema.force_msg()` to allow keeping fields that
             do not adhere to the row's message type
         skip_failures: bool
             If true, writing a row with an attribute value that does not match
@@ -311,7 +311,7 @@ class GPSDWriter(object):
 
         if self.convert:
             if self.force_message:
-                row = schema.row2message(row, keep_fields=self.keep_fields)
+                row = schema.force_msg(row, keep_fields=self.keep_fields)
             row = schema.export_msg(row, skip_failures=self.skip_failures)
 
         self.writer.writerow(row)
