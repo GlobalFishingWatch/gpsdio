@@ -40,27 +40,27 @@ class TestValidateMessage(unittest.TestCase):
 
     def test_invalid(self):
         self.assertFalse(
-            gpsd_format.schema.validate_message(
+            gpsd_format.schema.validate_msg(
                 {'type': 5,
                  'shipname': None,
                  }))
 
     def test_invalid_type(self):
         msg = gpsd_format.schema.get_default_msg(1)
-        self.assertTrue(gpsd_format.schema.validate_message(msg))
+        self.assertTrue(gpsd_format.schema.validate_msg(msg))
         msg['lat'] = 'foo'
-        self.assertFalse(gpsd_format.schema.validate_message(msg))
+        self.assertFalse(gpsd_format.schema.validate_msg(msg))
 
     def test_valid(self):
         self.assertTrue(
-            gpsd_format.schema.validate_message(
+            gpsd_format.schema.validate_msg(
                 gpsd_format.schema.get_default_msg(1)))
 
     def test_error(self):
-        self.assertFalse(gpsd_format.schema.validate_message(None))
+        self.assertFalse(gpsd_format.schema.validate_msg(None))
 
 
-class TestRow2Message(unittest.TestCase):
+class TestForce_Msg(unittest.TestCase):
 
     def setUp(self):
         self.row = {
@@ -79,7 +79,7 @@ class TestRow2Message(unittest.TestCase):
         Row with a valid type
         """
 
-        actual = gpsd_format.schema.row2message(self.row)
+        actual = gpsd_format.schema.force_msg(self.row)
         self.assertDictEqual(self.expected, actual)
         for field, val in self.row.items():
             self.assertEqual(actual[field], val)
@@ -92,7 +92,7 @@ class TestRow2Message(unittest.TestCase):
 
         row = self.row.copy()
         row['NEW_FIELD'] = 'INVALID'
-        actual = gpsd_format.schema.row2message(self.row)
+        actual = gpsd_format.schema.force_msg(self.row)
         self.assertEqual(self.expected, actual)
 
     def test_keep_unrecognized_field(self):
@@ -108,11 +108,11 @@ class TestRow2Message(unittest.TestCase):
         expected['NEW_FIELD'] = 'KEEP'
 
         # Explicitly define fields
-        actual = gpsd_format.schema.row2message(self.row, keep_fields=['NEW_FIELD'])
+        actual = gpsd_format.schema.force_msg(self.row, keep_fields=['NEW_FIELD'])
         self.assertEqual(self.expected, actual)
 
         # Keep all fields
-        actual = gpsd_format.schema.row2message(self.row, keep_fields=True)
+        actual = gpsd_format.schema.force_msg(self.row, keep_fields=True)
         self.assertEqual(self.expected, actual)
 
     def test_invalid_type(self):
@@ -121,7 +121,7 @@ class TestRow2Message(unittest.TestCase):
         Row with an invalid AIS message type should raise an exception
         """
 
-        self.assertRaises(ValueError, gpsd_format.schema.row2message, {'type': ''})
+        self.assertRaises(ValueError, gpsd_format.schema.force_msg, {'type': ''})
 
 
 class TestCastRow(unittest.TestCase):
@@ -152,7 +152,7 @@ class TestCastRow(unittest.TestCase):
                 'type': 1,
                 'shipname': 'SS Test Ship',
                 'timestamp': 'late'
-            }, throw_exceptions=False
+            }, skip_failures=True
         )
         self.assertEqual(row['type'], 1)
         self.assertEqual(row['shipname'], 'SS Test Ship')
@@ -219,7 +219,7 @@ class TestExportRow(unittest.TestCase):
                 'type': 1,
                 'shipname': 'SS Test Ship',
                 'timestamp': 'late'
-            }, throw_exceptions=False
+            }, skip_failures=True
         )
         self.assertEqual(row['type'], 1)
         self.assertEqual(row['shipname'], 'SS Test Ship')

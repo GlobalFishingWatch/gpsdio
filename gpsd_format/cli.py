@@ -57,7 +57,7 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
     stats = {}
     for name in files:
         sys.stderr.write("Collecting stats for {infile} ...\n".format(infile=name))
-        with open(name) as f:
+        with gpsd_format.io.open(name, "r", skip_failures=True, force_message=False) as f:
             stats = gpsd_format.validate.merge_info(stats, gpsd_format.validate.collect_info(f, verbose=verbose))
 
     if print_json:
@@ -123,4 +123,4 @@ def convert(ctx, infile, outfile):
             reader = gpsd_format.io.GPSDReader(inf)
             writer = gpsd_format.io.GPSDWriter(of)
             for row in reader:
-                writer.writerow(row)
+                writer.write(row)
