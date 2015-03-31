@@ -152,7 +152,7 @@ class TestCastRow(unittest.TestCase):
                 'type': 1,
                 'shipname': 'SS Test Ship',
                 'timestamp': 'late'
-            }, throw_exceptions=False
+            }, skip_failures=True
         )
         self.assertEqual(row['type'], 1)
         self.assertEqual(row['shipname'], 'SS Test Ship')
@@ -219,7 +219,7 @@ class TestExportRow(unittest.TestCase):
                 'type': 1,
                 'shipname': 'SS Test Ship',
                 'timestamp': 'late'
-            }, throw_exceptions=False
+            }, skip_failures=True
         )
         self.assertEqual(row['type'], 1)
         self.assertEqual(row['shipname'], 'SS Test Ship')

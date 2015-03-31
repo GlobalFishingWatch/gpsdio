@@ -30,7 +30,7 @@ schema_cast_functions = schema_types.copy()
 schema_cast_functions.update(schema_import_functions)
 
 
-def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
+def validate_message(row, ignore_missing=False, skip_failures=False, schema=CURRENT):
 
     """
     Validate that a row contains all fields required by its type and that they
@@ -41,7 +41,7 @@ def validate_message(row, ignore_missing=False, modify=False, schema=CURRENT):
     res = True
 
     def add_invalid(key, value):
-        if modify:
+        if skip_failures:
             if '__invalid__' not in row:
                 row['__invalid__'] = {}
             row['__invalid__'][key] = value
@@ -148,7 +148,7 @@ def row2message(row, schema=CURRENT, keep_fields=False):
     return message
 
 
-def import_msg(row, throw_exceptions=True, cast_values=False):
+def import_msg(row, skip_failures=False, cast_values=False):
 
     """
     Cast all values in a row from their import types as defined by the
@@ -158,8 +158,8 @@ def import_msg(row, throw_exceptions=True, cast_values=False):
     ----------
     row : dict
         Input row with normalized field names
-    throw_exceptions: bool
-        If true, reading a row with an attribute value that does not match
+    skip_failures: bool
+        If False, reading a row with an attribute value that does not match
         the schema type for that attribute will cause an exception.
     cast_values: bool
         If true, an attempt will be made to cast values to the right types
@@ -184,7 +184,7 @@ def import_msg(row, throw_exceptions=True, cast_values=False):
             try:
                 output[field] = import_functions[field](val)
             except Exception as e:
-                if throw_exceptions:
+                if not skip_failures:
                     raise Exception("%s: %s: %s" % (field, type(e), e))
                 if '__invalid__' not in output:
                     output['__invalid__'] = {}
@@ -195,7 +195,7 @@ def import_msg(row, throw_exceptions=True, cast_values=False):
     return output
 
 
-def export_msg(row, throw_exceptions=True):
+def export_msg(row, skip_failures=False):
 
     """
     Cast all values in a row to their export types as defined by the
@@ -205,8 +205,8 @@ def export_msg(row, throw_exceptions=True):
     ----------
     row : dict
         Input row adhering to the GPSD schema
-    throw_exceptions: bool
-        If true, reading a row with an attribute value that does not match
+    skip_failures: bool
+        If False, reading a row with an attribute value that does not match
         the schema type for that attribute will cause an exception.
     """
 
@@ -219,7 +219,7 @@ def export_msg(row, throw_exceptions=True):
             try:
                 output[field] = schema_export_functions[field](val)
             except Exception as e:
-                if throw_exceptions:
+                if not skip_failures:
                     raise Exception("%s: %s: %s" % (field, type(e), e))
                 if '__invalid__' not in output:
                     output['__invalid__'] = {}

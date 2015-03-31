@@ -127,12 +127,12 @@ class TestGPSDReader(unittest.TestCase):
     def test_throw_exceptions(self):
         f = StringIO("nananan\n")
         f.name = "exception.msg"
-        reader = gpsd_format.io.GPSDReader.open(f, force_message=True, keep_fields=True, throw_exceptions=True)
+        reader = gpsd_format.io.GPSDReader.open(f, force_message=True, keep_fields=True, skip_failures=False)
         self.assertRaises(Exception, reader.next)
         reader.close()
 
     def test_survive_anything(self):
-        reader = gpsd_format.io.GPSDReader.open(self.invalid_f, force_message=True, keep_fields=True, throw_exceptions=False)
+        reader = gpsd_format.io.GPSDReader.open(self.invalid_f, force_message=True, keep_fields=True, skip_failures=True)
         bad_lines = 0
         bad_fields = 0
         for row in reader:

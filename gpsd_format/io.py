@@ -34,8 +34,8 @@ def open(filename, mode = 'r', *args, **kwargs):
         keep_fields : list or None
             Used by `gpsd_format.schema.row2message()` to allow keeping fields that
             do not adhere to the row's message type
-        throw_exceptions: bool
-            If true, reading a row with an attribute value that does not match
+        skip_failures: bool
+            If False, reading a row with an attribute value that does not match
             the schema type for that attribute will cause an exception.
         convert: bool
             If false, don't convert attribute values not natively converted by the
@@ -94,7 +94,7 @@ class ContainerFormat(object):
         return cls.get(format, usage)(file, **options)
 
 class GPSDReader(object):
-    def __init__(self, reader, force_message=False, keep_fields=True, throw_exceptions=True, convert=True,
+    def __init__(self, reader, force_message=False, keep_fields=True, skip_failures=False, convert=True,
                  *args, **kwargs):
         """
         Read the GPSD format. The API mimics that of
@@ -111,8 +111,8 @@ class GPSDReader(object):
         keep_fields : list or None
             Used by `gpsd_format.schema.row2message()` to allow keeping fields that
             do not adhere to the row's message type
-        throw_exceptions: bool
-            If true, reading a row with an attribute value that does not match
+        skip_failures: bool
+            If False, reading a row with an attribute value that does not match
             the schema type for that attribute will cause an exception.
         convert: bool
             If false, don't convert attribute values not natively converted by the
@@ -128,7 +128,7 @@ class GPSDReader(object):
         self.convert = convert
         self.force_message = force_message
         self.keep_fields = keep_fields
-        self.throw_exceptions = throw_exceptions
+        self.skip_failures = skip_failures
 
     @classmethod
     def open(cls, f, format=None, format_options={}, *args, **kwargs):
@@ -188,14 +188,14 @@ class GPSDReader(object):
         try:
             loaded = line = next(self.reader)
             if self.convert:
-                loaded = schema.import_msg(line, throw_exceptions=self.throw_exceptions)
+                loaded = schema.import_msg(line, skip_failures=self.skip_failures)
                 if self.force_message:
                     loaded = schema.row2message(loaded, keep_fields=self.keep_fields)
             return loaded
         except StopIteration:
             raise
         except Exception as e:
-            if self.throw_exceptions:
+            if not self.skip_failures:
                 raise Exception("%s: %s: %s" % (getattr(self.reader, 'name', 'Unknown'), type(e), e))
             return {"__invalid__": {"__content__": line}}
 
@@ -213,7 +213,7 @@ class GPSDReader(object):
 
 
 class GPSDWriter(object):
-    def __init__(self, writer, force_message=False, keep_fields=True, throw_exceptions=True, convert=True,
+    def __init__(self, writer, force_message=False, keep_fields=True, skip_failures=False, convert=True,
                  *args, **kwargs):
         """
         Write the GPSD format. The API mimics that of
@@ -229,7 +229,7 @@ class GPSDWriter(object):
         keep_fields : list or None
             Used by `gpsd_format.schema.row2message()` to allow keeping fields that
             do not adhere to the row's message type
-        throw_exceptions: bool
+        skip_failures: bool
             If true, writing a row with an attribute value that does not match
             the schema type for that attribute will cause an exception.
         convert: bool
@@ -246,7 +246,7 @@ class GPSDWriter(object):
         self.force_message = force_message
         self.convert = convert
         self.keep_fields = keep_fields
-        self.throw_exceptions = throw_exceptions
+        self.skip_failures = skip_failures
 
     @classmethod
     def open(cls, f, format=None, format_options={}, *args, **kwargs):
@@ -312,7 +312,7 @@ class GPSDWriter(object):
         if self.convert:
             if self.force_message:
                 row = schema.row2message(row, keep_fields=self.keep_fields)
-            row = schema.export_msg(row, throw_exceptions=self.throw_exceptions)
+            row = schema.export_msg(row, skip_failures=self.skip_failures)
 
         self.writer.writerow(row)
 
