@@ -34,7 +34,7 @@ class TestGPSDReader(unittest.TestCase):
         self.valid_rows = [d.copy() for d in VALID_ROWS]
         self.valid_f = StringIO()
         self.valid_f.name = "valid.msg"
-        gpsd_format.io.GPSDWriter.open(self.valid_f).writerows(self.valid_rows)
+        gpsd_format.io.GPSDWriter.open(self.valid_f).writelines(self.valid_rows)
         self.valid_f.seek(0)
 
         self.extended_rows = []
@@ -44,14 +44,14 @@ class TestGPSDReader(unittest.TestCase):
             self.extended_rows.append(row)
         self.extended_f = StringIO()
         self.extended_f.name = "extended.msg"
-        gpsd_format.io.GPSDWriter.open(self.extended_f).writerows(self.extended_rows)
+        gpsd_format.io.GPSDWriter.open(self.extended_f).writelines(self.extended_rows)
         self.extended_f.seek(0)
 
         self.invalid_f = StringIO()
         self.invalid_f.name = "invalid.msg"
-        gpsd_format.io.GPSDWriter.open(self.invalid_f).writerows(VALID_ROWS)
+        gpsd_format.io.GPSDWriter.open(self.invalid_f).writelines(VALID_ROWS)
         self.invalid_f.write("N")
-        gpsd_format.io.GPSDWriter.open(self.invalid_f, force_message=False, convert=False).writerows(INVALID_ROWS)
+        gpsd_format.io.GPSDWriter.open(self.invalid_f, force_message=False, convert=False).writelines(INVALID_ROWS)
         self.invalid_f.seek(0)
 
     def tearDown(self):
@@ -62,6 +62,11 @@ class TestGPSDReader(unittest.TestCase):
     def test_context(self):
         with gpsd_format.io.GPSDReader.open(self.valid_f, force_message=False, keep_fields=True) as r:
             self.assertFalse(r.closed)
+
+    def test_generic_open(self):
+        reader = gpsd_format.io.open(self.valid_f, "r", force_message=False, keep_fields=True)
+        for expected, actual in zip(self.valid_rows, reader):
+            self.assertDictEqual(expected, actual)
 
     def test_no_normalize(self):
 
@@ -122,12 +127,12 @@ class TestGPSDReader(unittest.TestCase):
     def test_throw_exceptions(self):
         f = StringIO("nananan\n")
         f.name = "exception.msg"
-        reader = gpsd_format.io.GPSDReader.open(f, force_message=True, keep_fields=True, throw_exceptions=True)
+        reader = gpsd_format.io.GPSDReader.open(f, force_message=True, keep_fields=True, skip_failures=False)
         self.assertRaises(Exception, reader.next)
         reader.close()
 
     def test_survive_anything(self):
-        reader = gpsd_format.io.GPSDReader.open(self.invalid_f, force_message=True, keep_fields=True, throw_exceptions=False)
+        reader = gpsd_format.io.GPSDReader.open(self.invalid_f, force_message=True, keep_fields=True, skip_failures=True)
         bad_lines = 0
         bad_fields = 0
         for row in reader:
@@ -171,6 +176,18 @@ class TestGPSDWriter(unittest.TestCase):
         w.writeheader()
         w.close()
 
+    def test_generic_open(self):
+
+        test_f = StringIO()
+        writer = gpsd_format.io.open(test_f, "w", force_message=False, keep_fields=True)
+        writer.writelines(self.extended_rows)
+
+        test_f.seek(0)
+        reader = gpsd_format.io.open(test_f, "r", force_message=False, keep_fields=True)
+
+        for expected, actual in zip(self.extended_rows, reader):
+            self.assertDictEqual(expected, actual)
+
     def test_no_normalize(self):
 
         """
@@ -179,7 +196,7 @@ class TestGPSDWriter(unittest.TestCase):
 
         test_f = StringIO()
         writer = gpsd_format.io.GPSDWriter.open(test_f, force_message=False, keep_fields=True)
-        writer.writerows(self.extended_rows)
+        writer.writelines(self.extended_rows)
 
         test_f.seek(0)
         reader = gpsd_format.io.GPSDReader.open(test_f, force_message=False, keep_fields=True)
@@ -197,7 +214,7 @@ class TestGPSDWriter(unittest.TestCase):
         writer = gpsd_format.io.GPSDWriter.open(test_f, force_message=False, keep_fields=False)
 
         for line in self.extended_rows:
-            writer.writerow(line)
+            writer.write(line)
 
         test_f.seek(0)
         reader = gpsd_format.io.GPSDReader.open(test_f, force_message=False, keep_fields=True)
@@ -217,14 +234,14 @@ class TestGPSDWriter(unittest.TestCase):
 
         for line in self.extended_rows:
             try:
-                writer.writerow(line)
+                writer.write(line)
             except:
                 raise
 
         test_f.seek(0)
         reader = gpsd_format.io.GPSDReader.open(test_f, force_message=False, keep_fields=True)
 
-        for expected, actual in zip([gpsd_format.schema.row2message(gpsd_format.schema.import_msg(row.copy()))
+        for expected, actual in zip([gpsd_format.schema.force_msg(gpsd_format.schema.import_msg(row.copy()))
                                      for row in self.valid_rows], reader):
             self.assertDictEqual(expected, actual)
 
@@ -239,12 +256,12 @@ class TestGPSDWriter(unittest.TestCase):
         writer = gpsd_format.io.GPSDWriter.open(test_f, force_message=True, keep_fields=True)
 
         for line in self.extended_rows:
-            writer.writerow(line)
+            writer.write(line)
 
         test_f.seek(0)
         reader = gpsd_format.io.GPSDReader.open(test_f, force_message=False, keep_fields=True)
 
         for expected, actual in zip(
-                [gpsd_format.schema.row2message(gpsd_format.schema.import_msg(row.copy()), keep_fields=True)
+                [gpsd_format.schema.force_msg(gpsd_format.schema.import_msg(row.copy()), keep_fields=True)
                  for row in self.extended_rows], reader):
             self.assertDictEqual(expected, actual)

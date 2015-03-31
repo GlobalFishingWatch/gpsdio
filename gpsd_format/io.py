@@ -11,12 +11,58 @@ except ImportError:
     msgpack = None
 
 import six
+import __builtin__
 
 from . import schema
 
 
 __all__ = ['ContainerFormat', 'GPSDReader', 'GPSDWriter']
 
+def open(filename, mode = 'r', *args, **kwargs):
+    """
+        filename: str | file
+            A file path, the literal '-' meaning stdin/stdout, or an open file (like) object.
+        mode: 'r' | 'w' | 'a'
+            This flag has the same semantics and allowed values as the
+            Python builtin open() function
+        format: 'json' | 'msgpack'
+            The name of a container format registered with ContainerFormat
+        format_options: dict
+            Dictionary with optional arguments for the container format reader
+        force_message : bool
+            Force rows being read to adhere to their specified AIS message
+            type.  See `gpsd_format.schema.force_msg()` for more information
+        keep_fields : list or None
+            Used by `gpsd_format.schema.force_msg()` to allow keeping fields that
+            do not adhere to the row's message type
+        skip_failures: bool
+            If False, reading a row with an attribute value that does not match
+            the schema type for that attribute will cause an exception.
+        convert: bool
+            If false, don't convert attribute values not natively converted by the
+            container format (e.g. dates)
+        *args
+    """
+
+    if mode[0] == 'r':
+        cls = GPSDReader
+    elif mode[0] in ('w', 'a'):
+        cls = GPSDWriter
+    else:
+        raise ValueError('Unknown file mode %s' % (mode, ))
+
+    if hasattr(filename, 'read'):
+        f = filename
+    else:
+        if filename == '-':
+            if mode[0] == 'r':
+                f = sys.stdin
+            else:
+                f = sys.stdout
+        else:
+            f = __builtin__.open(filename, mode)
+
+    return cls.open(f, *args, **kwargs)
 
 class ContainerFormat(object):
     """Container format registry
@@ -24,7 +70,7 @@ class ContainerFormat(object):
     Each container format has a reader and a writer class.
 
     The reader class should be an iterator, and the writer have the
-    method writerow(dict) and optionally writeheader()
+    method write(dict) and optionally writeheader()
 
     In addition both classes should have the method close() and the
     attributes closed (bool) and name (str)
@@ -49,7 +95,7 @@ class ContainerFormat(object):
         return cls.get(format, usage)(file, **options)
 
 class GPSDReader(object):
-    def __init__(self, reader, force_message=False, keep_fields=True, throw_exceptions=True, convert=True,
+    def __init__(self, reader, force_message=False, keep_fields=True, skip_failures=False, convert=True,
                  *args, **kwargs):
         """
         Read the GPSD format. The API mimics that of
@@ -62,12 +108,12 @@ class GPSDReader(object):
             (See the ContainerFormat class)
         force_message : bool
             Force rows being read to adhere to their specified AIS message
-            type.  See `gpsd_format.schema.row2message()` for more information
+            type.  See `gpsd_format.schema.force_msg()` for more information
         keep_fields : list or None
-            Used by `gpsd_format.schema.row2message()` to allow keeping fields that
+            Used by `gpsd_format.schema.force_msg()` to allow keeping fields that
             do not adhere to the row's message type
-        throw_exceptions: bool
-            If true, reading a row with an attribute value that does not match
+        skip_failures: bool
+            If False, reading a row with an attribute value that does not match
             the schema type for that attribute will cause an exception.
         convert: bool
             If false, don't convert attribute values not natively converted by the
@@ -83,7 +129,7 @@ class GPSDReader(object):
         self.convert = convert
         self.force_message = force_message
         self.keep_fields = keep_fields
-        self.throw_exceptions = throw_exceptions
+        self.skip_failures = skip_failures
 
     @classmethod
     def open(cls, f, format=None, format_options={}, *args, **kwargs):
@@ -113,10 +159,14 @@ class GPSDReader(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+        self.reader.close()
 
     def __next__(self):
         return self.next()
+
+    @property
+    def name(self):
+        return self.reader.name
 
     @property
     def closed(self):
@@ -143,15 +193,16 @@ class GPSDReader(object):
         try:
             loaded = line = next(self.reader)
             if self.convert:
-                loaded = schema.import_msg(line, throw_exceptions=self.throw_exceptions)
+                loaded = schema.import_msg(line, skip_failures=self.skip_failures)
                 if self.force_message:
-                    loaded = schema.row2message(loaded, keep_fields=self.keep_fields)
+                    loaded = schema.force_msg(loaded, keep_fields=self.keep_fields)
             return loaded
         except StopIteration:
             raise
         except Exception as e:
-            if self.throw_exceptions:
-                raise Exception("%s: %s: %s" % (getattr(self.reader, 'name', 'Unknown'), type(e), e))
+            if not self.skip_failures:
+                import traceback
+                raise Exception("%s: %s: %s\n%s" % (getattr(self.reader, 'name', 'Unknown'), type(e), e, "    " + traceback.format_exc().replace("\n", "\n    ")))
             return {"__invalid__": {"__content__": line}}
 
     def close(self):
@@ -168,7 +219,7 @@ class GPSDReader(object):
 
 
 class GPSDWriter(object):
-    def __init__(self, writer, force_message=False, keep_fields=True, throw_exceptions=True, convert=True,
+    def __init__(self, writer, force_message=False, keep_fields=True, skip_failures=False, convert=True,
                  *args, **kwargs):
         """
         Write the GPSD format. The API mimics that of
@@ -176,15 +227,15 @@ class GPSDWriter(object):
 
         Parameters
         ----------
-        writer : object with method writerow(dict)
+        writer : object with method write(dict)
             An object to send encoded dictionaries to
         force_message : bool
             Force rows being written to adhere to their specified AIS message
-            type.  See `gpsd_format.schema.row2message()` for more information
+            type.  See `gpsd_format.schema.force_msg()` for more information
         keep_fields : list or None
-            Used by `gpsd_format.schema.row2message()` to allow keeping fields that
+            Used by `gpsd_format.schema.force_msg()` to allow keeping fields that
             do not adhere to the row's message type
-        throw_exceptions: bool
+        skip_failures: bool
             If true, writing a row with an attribute value that does not match
             the schema type for that attribute will cause an exception.
         convert: bool
@@ -201,7 +252,7 @@ class GPSDWriter(object):
         self.force_message = force_message
         self.convert = convert
         self.keep_fields = keep_fields
-        self.throw_exceptions = throw_exceptions
+        self.skip_failures = skip_failures
 
     @classmethod
     def open(cls, f, format=None, format_options={}, *args, **kwargs):
@@ -228,7 +279,11 @@ class GPSDWriter(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+        self.writer.close()
+
+    @property
+    def name(self):
+        return self.writer.name
 
     @property
     def closed(self):
@@ -250,7 +305,7 @@ class GPSDWriter(object):
         if hasattr(self.writer, 'writeheader'):
             self.writer.writeheader()
 
-    def writerow(self, row):
+    def write(self, row):
         """
         Write a line to the output file minus any keys that do not appear in
         the ``fieldnames`` property.
@@ -266,14 +321,18 @@ class GPSDWriter(object):
 
         if self.convert:
             if self.force_message:
-                row = schema.row2message(row, keep_fields=self.keep_fields)
-            row = schema.export_msg(row, throw_exceptions=self.throw_exceptions)
+                row = schema.force_msg(row, keep_fields=self.keep_fields)
+            row = schema.export_msg(row, skip_failures=self.skip_failures)
 
-        self.writer.writerow(row)
+        self.writer.write(row)
 
-    def writerows(self, rows):
+    # DictWriter compatibility
+    writerow = write
+
+
+    def writelines(self, rows):
         """
-        Calls the ``writerow()`` method on a list of rows
+        Calls the ``write()`` method on a list of rows
 
         Returns
         -------
@@ -281,7 +340,7 @@ class GPSDWriter(object):
         """
 
         for row in rows:
-            self.writerow(row)
+            self.write(row)
 
     def close(self):
         """
@@ -300,7 +359,7 @@ class _FileContainer(object):
 
     @property
     def name(self):
-        return getattr(self.f, 'name', 'Unknown')
+        return getattr(self.f, 'name', None)
 
     @property
     def closed(self):
@@ -321,7 +380,7 @@ class _JSONReader(_FileContainer):
         except Exception as e:
             return {"__invalid__": {"__content__": line}}
 class _JSONWriter(_FileContainer):
-    def writerow(self, row):
+    def write(self, row):
         json.dump(row, self.f)
         self.f.write("\n")
 ContainerFormat.register("json", _JSONReader, _JSONWriter)
@@ -334,7 +393,7 @@ class _MsgPackReader(_FileReader):
     def next(self):
         return self.reader.next()
 class _MsgPackWriter(_FileContainer):
-    def writerow(self, row):
+    def write(self, row):
         msgpack.dump(row, self.f)
 ContainerFormat.register("msg", _MsgPackReader, _MsgPackWriter)
 ContainerFormat.register("msgpack", _MsgPackReader, _MsgPackWriter)
