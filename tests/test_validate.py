@@ -162,7 +162,7 @@ class TestInfo(cmdtest.CmdTest):
         with open(infile, "w") as f:
             w = gpsd_format.io.GPSDWriter.open(f)
             for row in self.rows:
-                w.writerow(row)
+                w.write(row)
             for x in six.moves.range(0, self.num_invalid_rows):
                 f.write("N")
 
@@ -177,7 +177,7 @@ class TestInfo(cmdtest.CmdTest):
         with open(infile, "w") as f:
             w = gpsd_format.io.GPSDWriter.open(f)
             for row in self.rows:
-                w.writerow(row)
+                w.write(row)
             for x in six.moves.range(0, self.num_invalid_rows):
                 f.write("N")
 
@@ -192,7 +192,7 @@ class TestInfo(cmdtest.CmdTest):
         with open(infile, "w") as f:
             w = gpsd_format.io.GPSDWriter.open(f)
             for row in self.rows:
-                w.writerow(row)
+                w.write(row)
             for x in six.moves.range(0, self.num_invalid_rows):
                 f.write("N\n")
 

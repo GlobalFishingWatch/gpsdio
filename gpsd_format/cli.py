@@ -123,4 +123,4 @@ def convert(ctx, infile, outfile):
             reader = gpsd_format.io.GPSDReader(inf)
             writer = gpsd_format.io.GPSDWriter(of)
             for row in reader:
-                writer.writerow(row)
+                writer.write(row)

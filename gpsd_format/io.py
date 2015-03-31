@@ -69,7 +69,7 @@ class ContainerFormat(object):
     Each container format has a reader and a writer class.
 
     The reader class should be an iterator, and the writer have the
-    method writerow(dict) and optionally writeheader()
+    method write(dict) and optionally writeheader()
 
     In addition both classes should have the method close() and the
     attributes closed (bool) and name (str)
@@ -221,7 +221,7 @@ class GPSDWriter(object):
 
         Parameters
         ----------
-        writer : object with method writerow(dict)
+        writer : object with method write(dict)
             An object to send encoded dictionaries to
         force_message : bool
             Force rows being written to adhere to their specified AIS message
@@ -295,7 +295,7 @@ class GPSDWriter(object):
         if hasattr(self.writer, 'writeheader'):
             self.writer.writeheader()
 
-    def writerow(self, row):
+    def write(self, row):
         """
         Write a line to the output file minus any keys that do not appear in
         the ``fieldnames`` property.
@@ -314,11 +314,15 @@ class GPSDWriter(object):
                 row = schema.force_msg(row, keep_fields=self.keep_fields)
             row = schema.export_msg(row, skip_failures=self.skip_failures)
 
-        self.writer.writerow(row)
+        self.writer.write(row)
 
-    def writerows(self, rows):
+    # DictWriter compatibility
+    writerow = write
+
+
+    def writelines(self, rows):
         """
-        Calls the ``writerow()`` method on a list of rows
+        Calls the ``write()`` method on a list of rows
 
         Returns
         -------
@@ -326,7 +330,7 @@ class GPSDWriter(object):
         """
 
         for row in rows:
-            self.writerow(row)
+            self.write(row)
 
     def close(self):
         """
@@ -366,7 +370,7 @@ class _JSONReader(_FileContainer):
         except Exception as e:
             return {"__invalid__": {"__content__": line}}
 class _JSONWriter(_FileContainer):
-    def writerow(self, row):
+    def write(self, row):
         json.dump(row, self.f)
         self.f.write("\n")
 ContainerFormat.register("json", _JSONReader, _JSONWriter)
@@ -379,7 +383,7 @@ class _MsgPackReader(_FileReader):
     def next(self):
         return self.reader.next()
 class _MsgPackWriter(_FileContainer):
-    def writerow(self, row):
+    def write(self, row):
         msgpack.dump(row, self.f)
 ContainerFormat.register("msg", _MsgPackReader, _MsgPackWriter)
 ContainerFormat.register("msgpack", _MsgPackReader, _MsgPackWriter)
