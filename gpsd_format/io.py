@@ -196,7 +196,8 @@ class GPSDReader(object):
             raise
         except Exception as e:
             if not self.skip_failures:
-                raise Exception("%s: %s: %s" % (getattr(self.reader, 'name', 'Unknown'), type(e), e))
+                import traceback
+                raise Exception("%s: %s: %s\n%s" % (getattr(self.reader, 'name', 'Unknown'), type(e), e, "    " + traceback.format_exc().replace("\n", "\n    ")))
             return {"__invalid__": {"__content__": line}}
 
     def close(self):

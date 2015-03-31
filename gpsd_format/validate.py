@@ -158,7 +158,7 @@ def collect_info(infile, verbose=False, err=sys.stderr):
     # Note that this is the last row that did not throw an exception on decode and is
     # not necessarily the previous row in the input
     previous_timestamp = None
-    for row in gpsd_format.io.GPSDReader.open(infile, throw_exceptions=False, force_message=False):
+    for row in gpsd_format.io.GPSDReader.open(infile, skip_failures=True, force_message=False):
 
         # num_rows
         stats['num_rows'] += 1
