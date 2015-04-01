@@ -18,13 +18,13 @@ default = {
 }
 
 schema_import_functions = {
-    field: CURRENT[field]['import'] for field in CURRENT if 'import' in CURRENT[field]
+    field: CURRENT[field]['import'] for field in CURRENT if CURRENT[field].get('import', None) is not None
 }
 schema_export_functions = {
-    field: CURRENT[field]['export'] for field in CURRENT if 'export' in CURRENT[field]
+    field: CURRENT[field]['export'] for field in CURRENT if CURRENT[field].get('export', None) is not None
 }
 schema_types = {
-    field: CURRENT[field]['type'] for field in CURRENT if 'type' in CURRENT[field]
+    field: CURRENT[field]['type'] for field in CURRENT if CURRENT[field].get('type', None) is not None
 }
 schema_cast_functions = schema_types.copy()
 schema_cast_functions.update(schema_import_functions)
