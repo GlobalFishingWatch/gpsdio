@@ -58,7 +58,17 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
     for name in files:
         sys.stderr.write("Collecting stats for {infile} ...\n".format(infile=name))
         with gpsd_format.io.open(name, "r", skip_failures=True, force_message=False) as f:
-            stats = gpsd_format.validate.merge_info(stats, gpsd_format.validate.collect_info(f, verbose=verbose))
+            if verbose:
+                def error_cb(type, msg, exc=None, trace=None):
+                    if exc:
+                        sys.stderr.write("%s: %s: %s: %s\n" % (name, type.title(), exc, msg))
+                        if trace:
+                            sys.stderr.write("%s\n" % (trace,))
+                    else:
+                        sys.stderr.write("%s: %s: %s\n" % (name, type.title(), msg))
+            else:
+                error_cb = None
+            stats = gpsd_format.validate.merge_info(stats, gpsd_format.validate.collect_info(f, error_cb=error_cb))
 
     if print_json:
         for key, value in six.iteritems(stats):

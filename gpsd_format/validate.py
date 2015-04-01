@@ -69,7 +69,7 @@ def merge_info(info_a, info_b):
         }
 
 
-def collect_info(input, verbose=False, err=sys.stderr):
+def collect_info(input, error_cb=None):
 
     """
     Get a report about a chunk of AIS data.  Report is a dictionary with the
@@ -122,10 +122,8 @@ def collect_info(input, verbose=False, err=sys.stderr):
     ----------
     input : iterable
         An open GPSDReader or other iterable over messages
-    verbose : bool, optional
-        When an invalid row is encountered, print an error to `err`
-    err : file, optional
-        Stream where errors are written if `verbose=True`
+    error_cb : function(type : str, msg : dict, exc=None : exception, trace=None : str)
+        Optional callback to be called for each incomplete or invalid row if given.
 
     Returns
     -------
@@ -215,12 +213,12 @@ def collect_info(input, verbose=False, err=sys.stderr):
             gpsd_format.schema.validate_msg(row, ignore_missing=True, skip_failures=True)
             if '__invalid__' in row:
                 stats['num_invalid_rows'] += 1
-                if verbose:
-                    err.write("ERROR: Invalid row: {row}".format(row=row) + os.linesep)
+                if error_cb:
+                    error_cb("invalid", row)
             elif not gpsd_format.schema.validate_msg(row, skip_failures=True):
                 stats['num_incomplete_rows'] += 1
-                if verbose:
-                    err.write("WARNING: Incomplete row: {row}".format(row=row) + os.linesep)
+                if error_cb:
+                    error_cb("incomplete", row)
 
             if 'timestamp' in row:
                 previous_timestamp = row['timestamp']
@@ -228,9 +226,8 @@ def collect_info(input, verbose=False, err=sys.stderr):
         # Encountered an error - keep track of how many
         except Exception as e:
             stats['num_invalid_rows'] += 1
-            if verbose:
-                err.write("Exception: `{msg}' - row: `{row}'".format(msg=e, row=row) + os.linesep)
-                import traceback
-                traceback.print_exc(1000, err)
+            if error_cb:
+                import traceback                    
+                error_cb("exception", row, e, traceback.format_exc(1000))
 
     return stats
