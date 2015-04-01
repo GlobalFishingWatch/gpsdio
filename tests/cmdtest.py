@@ -3,7 +3,7 @@ import tempfile
 import click.testing
 import shutil
 import gpsd_format.cli
-
+import sys
 
 class CmdTest(unittest.TestCase):
     keep_tree = False
@@ -19,4 +19,20 @@ class CmdTest(unittest.TestCase):
             shutil.rmtree(self.dir)
 
     def runcmd(self, *args):
-        return self.runner.invoke(gpsd_format.cli.main, args, catch_exceptions=False)
+        stderr = sys.stderr
+
+        main = gpsd_format.cli.main.main
+
+        def wrapper(*arg, **kw):
+            clickstderr = sys.stderr
+            sys.stderr = stderr
+            try:
+                return main(*arg, **kw)
+            finally:
+                sys.stderr = clickstderr
+
+        gpsd_format.cli.main.main = wrapper
+        try:
+            return self.runner.invoke(gpsd_format.cli.main, args, catch_exceptions=False)
+        finally:
+            gpsd_format.cli.main.main = main

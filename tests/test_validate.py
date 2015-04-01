@@ -168,7 +168,7 @@ class TestInfo(cmdtest.CmdTest):
 
         self.expected[u'file'] = str(infile)
 
-        actual = json.loads(self.runcmd("validate", "--print-json", infile).output.split("\n")[1])
+        actual = json.loads(self.runcmd("validate", "--print-json", infile).output)
         self.assertDictEqual(self.expected, actual)
 
     def test_unsorted(self):
@@ -184,7 +184,7 @@ class TestInfo(cmdtest.CmdTest):
         self.expected[u'file'] = str(infile)
         self.expected['is_sorted'] = False
 
-        actual = json.loads(self.runcmd("validate", "--print-json", infile).output.split("\n")[1])
+        actual = json.loads(self.runcmd("validate", "--print-json", infile).output)
         self.assertDictEqual(self.expected, actual)
 
     def test_nonjson(self):
