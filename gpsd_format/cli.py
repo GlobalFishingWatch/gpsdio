@@ -130,7 +130,7 @@ def convert(ctx, infile, outfile):
 
     with open(infile) as inf:
         with open(outfile, "w") as of:
-            reader = gpsd_format.io.GPSDReader(inf)
-            writer = gpsd_format.io.GPSDWriter(of)
+            reader = gpsd_format.io.GPSDReader.open(inf)
+            writer = gpsd_format.io.GPSDWriter.open(of)
             for row in reader:
                 writer.write(row)
