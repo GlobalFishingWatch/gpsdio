@@ -31,7 +31,7 @@ class TestGpsdCompatibility(cmdtest.CmdTest):
 
         os.system(cmd)
 
-        report = json.loads(self.runcmd("validate", "--print-json", "--verbose", outfile).output.split("\n")[1])
+        report = json.loads(self.runcmd("validate", "--print-json", "--verbose", outfile).output)
 
         self.assertEqual(report['num_invalid_rows'], 0)
         self.assertEqual(report['num_incomplete_rows'], 0)
