@@ -52,6 +52,9 @@ def merge_info(info_a, info_b):
     if not info_a:
         return info_b
 
+    is_sorted = info_a['is_sorted'] and info_b['is_sorted']
+    is_sorted_files = info_a['is_sorted_files'] and info_b['is_sorted_files'] and info_a['max_timestamp'] <= info_b['min_timestamp']
+
     return {
         'num_rows': info_a['num_rows'] + info_b['num_rows'],
         'num_incomplete_rows': info_a['num_incomplete_rows'] + info_b['num_incomplete_rows'],
@@ -62,7 +65,8 @@ def merge_info(info_a, info_b):
         'lon_max': maxnone(info_a['lon_max'], info_b['lon_max']),
         'min_timestamp': minnone(info_a['min_timestamp'], info_b['min_timestamp']),
         'max_timestamp': maxnone(info_a['max_timestamp'], info_b['max_timestamp']),
-        'is_sorted': info_a['is_sorted'] and info_b['is_sorted'],
+        'is_sorted': is_sorted,
+        'is_sorted_files': is_sorted_files,
         'mmsi_declaration': andnone(info_a['mmsi_declaration'], info_b['mmsi_declaration']),
         'mmsi_hist': merge_hist(info_a['mmsi_hist'], info_b['mmsi_hist']),
         'msg_type_hist': merge_hist(info_a['msg_type_hist'], info_b['msg_type_hist'])
@@ -101,6 +105,7 @@ def collect_info(infile, verbose=False, err=sys.stderr):
             'min_timestamp': datetime.datetime(2014, 11, 1, 7, 59, 23),
             'max_timestamp': datetime.datetime(2014, 11, 1, 7, 59, 31),
             'is_sorted': True,
+            'is_sorted_files': True,
             'mmsi_declaration': None,
             'mmsi_hist': {
                 '371067000': 1,
@@ -234,6 +239,8 @@ def collect_info(infile, verbose=False, err=sys.stderr):
                 err.write("Exception: `{msg}' - row: `{row}'".format(msg=e, row=row) + os.linesep)
                 import traceback
                 traceback.print_exc(1000, err)
+
+    stats['is_sorted_files'] = True
 
     return stats
 

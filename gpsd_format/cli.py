@@ -50,9 +50,11 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
     """
 
     if os.path.isdir(infile):
-        files = (os.path.join(infile, name) for name in os.listdir(infile))
+        files = [os.path.join(infile, name) for name in os.listdir(infile)]
     else:
         files = [infile]
+
+    files.sort()
 
     stats = {}
     for name in files:
@@ -73,6 +75,7 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
         click.echo("  Number of rows: %s" % stats['num_rows'])
         click.echo("  Number of incomplete rows: %s" % stats['num_incomplete_rows'])
         click.echo("  Number of invalid rows: %s" % stats['num_invalid_rows'])
+        click.echo("  All files are sorted: %s" % stats['is_sorted_files'])
         click.echo("  All rows are sorted: %s" % stats['is_sorted'])
         if stats['mmsi_declaration'] is not None:
             click.echo("  All rows match declared MMSI: %s" % stats['mmsi_declaration'])
