@@ -200,3 +200,43 @@ class TestInfo(cmdtest.CmdTest):
 
         self.assertIn("All rows are sorted: True", out)
         self.assertIn("->", out)
+
+
+class TestValidateMessage(unittest.TestCase):
+
+    def test_all_types(self):
+        for msg_type, msg_fields in gpsd_format.schema.fields_by_msg_type.items():
+
+            # Check type field individually since the other tests force it to be correct
+            assert not gpsd_format.schema.validate_msg({'field': 'val'})
+
+            for value in gpsd_format.schema.CURRENT['type']['bad']:
+                assert not gpsd_format.schema.validate_msg(
+                    {'type': value})
+
+            # Construct a good message
+            num_alterantives = max(*[len(gpsd_format.schema.CURRENT[f]['good'])
+                                     for f in msg_fields
+                                     if f != 'type' and 'good' in gpsd_format.schema.CURRENT[f]])
+
+            for alt in xrange(0, num_alterantives):
+                good_message = gpsd_format.schema.get_default_msg(int(msg_type))
+                good_message.update({f: gpsd_format.schema.CURRENT[f]['good'][alt]
+                                     for f in msg_fields
+                                     if f != 'type' and 'good' in gpsd_format.schema.CURRENT[f] and len(gpsd_format.schema.CURRENT[f]['good']) > alt})
+
+                assert gpsd_format.schema.validate_msg(good_message), \
+                    "Supposed 'good' msg failed validation: %s" % good_message
+
+            # Creating a bad message from all of the bad values is an insufficient test because the validator
+            # will start checking fields and as soon as it gets to a bad one it will flag the message as invalid.
+            # Every field is checked in every message and every bad field is logged but we can't validate individual
+            # fields without taking a good message and then changing one field at a time to a bad field.
+            for field in msg_fields:
+                if field != 'type' 'bad' in gpsd_format.schema.CURRENT[field]:
+                    for value in gpsd_format.schema.CURRENT[field]['bad']:
+                        bad_message = good_message.copy()
+                        bad_message[field] = value
+                        assert not gpsd_format.schema.validate_msg(bad_message), \
+                            "Field `%s' should have caused message to fail: %s" % (field, bad_message)
+
