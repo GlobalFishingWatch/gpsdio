@@ -190,8 +190,8 @@ VERSIONS = {
             'description': 'Course over ground - degrees from north',
             # TODO: Should -90 be a valid value?  Maybe `-90 < x` instead?
             'test': lambda x: 0.0 <= x < 360.0,
-            'good': 45.0,
-            'bad': 360.0
+            'good': [45.0],
+            'bad': [360.0]
         },
         'heading': {
             'default': 0,
@@ -199,8 +199,8 @@ VERSIONS = {
             'units': 'degrees',
             'description': 'True heading - degrees from north',
             'test': lambda x: 0 <= x <= 359 or x == 511,
-            'good': 511,
-            'bad': -102
+            'good': [511],
+            'bad': [-102]
         },
         'lat': {
             'default': 0.0,
@@ -208,8 +208,8 @@ VERSIONS = {
             'units': 'WGS84 degrees',
             'description': 'North/South coordinate in WGS84 degrees',
             'test': lambda x: -90 <= x <= 90 or x == 91,
-            'good': 91.0,
-            'bad': -100.0
+            'good': [91.0],
+            'bad': [-100.0]
         },
         'lon': {
             'default': 0.0,
@@ -218,8 +218,8 @@ VERSIONS = {
             'description': 'East/West coordinate in WGS84 degrees',
             # TODO: Should -180 be a valid value?  Maybe `-180 < x` instead?
             'test': lambda x: -180 <= x <= 180 or x == 181,
-            'good': 181.0,
-            'bad': -180.1
+            'good': [181.0],
+            'bad': [-180.1]
         },
         'mmsi': {
             'default': 1234567890,
@@ -227,8 +227,8 @@ VERSIONS = {
             'units': 'N/A',
             'description': 'Mobile Marine Service Identifier',
             'test': lambda x: not isinstance(x, bool),
-            'good': 123,
-            'bad': True
+            'good': [123],
+            'bad': [True]
         },
         'timestamp': {
             'default': str2datetime('1970-01-01T00:00:00.0Z'),
@@ -251,8 +251,8 @@ VERSIONS = {
         'sog': {
             'type': float,
             'test': lambda x: 0 <= x <= 102.2 or x == 1022,
-            'good': 1022,
-            'bad': 103,
+            'good': [1022],
+            'bad': [103],
             'description': '',
             'units': '',
             'required': False,
@@ -265,8 +265,8 @@ VERSIONS = {
             'units': 'kn/h',
             'description': 'Speed over ground in nautical miles per hour',
             'test': lambda x: 0 <= x <= 102.2 or x == 1022,
-            'good': 1022.0,
-            'bad': 103.0
+            'good': [1022.0],
+            'bad': [103.0]
         },
         'status': {
             'default': 'Not defined',
@@ -275,8 +275,8 @@ VERSIONS = {
             'description': 'Navigation status (e.g. at anchor, moored, aground, etc.)',
             # TODO: Should test if in list of allowed values
             'test': lambda x: x,
-            'good': 'Moored',
-            'bad': ''
+            'good': ['Moored'],
+            'bad': ['']
         },
         'turn': {
             'default': None,
@@ -285,8 +285,8 @@ VERSIONS = {
             'units': 'degrees/min',
             'description': 'Rate of turn',
             'test': lambda x: x in range(-127, 129),
-            'good': 125,
-            'bad': -1000
+            'good': [125],
+            'bad': [-1000]
         },
         'type': {
             'default': 0,
@@ -294,8 +294,8 @@ VERSIONS = {
             'units': 'N/A',
             'description': 'NMEA message code',
             'test': lambda x: x in range(1, 28),
-            'good': 5,
-            'bad': -1
+            'good': [5],
+            'bad': [-1]
         },
         'shipname': {
             'default': '',
@@ -303,8 +303,8 @@ VERSIONS = {
             'units': 'N/A',
             'description': 'Vessel name',
             'test': lambda x: len(x) <= 2 ** 120,
-            'good': 'good value',
-            'bad': False,
+            'good': ['good value'],
+            'bad': [False],
             'required': False
         },
         'shiptype': {
@@ -319,8 +319,8 @@ VERSIONS = {
             'units': 'N/A',
             'description': 'Vessel callsign',
             'test': lambda x: len(x) <= 2 ** 42,
-            'good': 'good',
-            'bad': 123
+            'good': ['good'],
+            'bad': [123]
         },
         'destination': {
             'default': '',
@@ -335,8 +335,8 @@ VERSIONS = {
             'description': 'Assigned-mode flag',
             # TODO: Switch to a more Pythonic bool?
             'test': lambda x: x in (0, 1),
-            'good': 1,
-            'bad': -33,
+            'good': [1],
+            'bad': [-33],
             'required': False
         },
         'to_port': {
@@ -345,16 +345,16 @@ VERSIONS = {
             'units': 'meters',
             'description': 'Dimension to port',
             'test': lambda x: 0 <= x <= 2 ** 6,
-            'good': 1,
-            'bad': -34
+            'good': [1],
+            'bad': [-34]
         },
         'accuracy': {
             'default': False,
             'description': '',
             'type': bool,
             'units': '',
-            'good': True,
-            'bad': 2
+            'good': [True],
+            'bad': [2]
         },
         'ack_required': {
             'default': False,
@@ -385,8 +385,8 @@ VERSIONS = {
             'units': '',
             # TODO: Should always be 0 right now.  The other vals are reserved.
             'test': lambda x: not isinstance(x, bool) and x in (0, 1, 2, 3),
-            'good': 2,
-            'bad': True,
+            'good': [2],
+            'bad': [True],
             'import': None,
             'export': None
         },
@@ -423,8 +423,8 @@ VERSIONS = {
             'units': '',
             # TODO: Switch to a more Pythonic bool?
             'test': lambda x: x in (0, 1),
-            'good': 0,
-            'bad': 4,
+            'good': [0],
+            'bad': [4],
             'import': None,
             'export': None
         },
@@ -475,8 +475,8 @@ VERSIONS = {
             'units': '',
             # Not bool - state
             'test': lambda x: x in (0, 1),
-            'good': 0,
-            'bad': 7,
+            'good': [0],
+            'bad': [7],
             'import': None,
             'export': None
         },
@@ -538,8 +538,8 @@ VERSIONS = {
             'units': '',
             # Not bool - state
             'test': lambda x: x in (0, 1),
-            'good': 1,
-            'bad': 'j',
+            'good': [1],
+            'bad': ['j'],
             'import': None,
             'export': None
         },
@@ -549,8 +549,8 @@ VERSIONS = {
             'type': float,
             'units': '',
             'test': lambda x: 0.0 < x <= 2 ** 8,
-            'good': 1.0,
-            'bad': 2 ** 8 + 1,
+            'good': [1.0],
+            'bad': [2 ** 8 + 1],
             'import': None,
             'export': None
         },
@@ -561,8 +561,8 @@ VERSIONS = {
             'units': '',
             # TODO: Switch to a more Pythonic bool?
             'test': lambda x: x in (0, 1),
-            'good': 1,
-            'bad': -45,
+            'good': [1],
+            'bad': [-45],
             'import': None,
             'export': None
         },
@@ -573,8 +573,8 @@ VERSIONS = {
             'units': '',
             # TODO: Switch to a more Pythonic bool if this is actually bolean and not a status
             'test': lambda x: x in (0, 1),
-            'good': 0,
-            'bad': 8,
+            'good': [0],
+            'bad': [8],
             'import': None,
             'export': None
         },
@@ -729,8 +729,8 @@ VERSIONS = {
             'units': '',
             # TODO: Switch to a more Pythonic bool?
             'test': lambda x: x in (0, 1),
-            'good': 0,
-            'bad': -2,
+            'good': [0],
+            'bad': [-2],
             'required': False,
             'import': None,
             'export': None
@@ -909,8 +909,8 @@ VERSIONS = {
             'description': '',
             'type': bool,
             'units': '',
-            'good': False,
-            'bad': -2,
+            'good': [False],
+            'bad': [-2],
             'import': None,
             'export': None
         },
@@ -929,8 +929,8 @@ VERSIONS = {
             'type': int,
             'units': '',
             'test': lambda x: 0 <= x <= 2 ** 2,
-            'good': 4,
-            'bad': -1,
+            'good': [4],
+            'bad': [-1],
             'import': None,
             'export': None
         },
@@ -956,8 +956,8 @@ VERSIONS = {
             'type': int,
             'units': '',
             'test': lambda x: x in range(0, 64),
-            'good': 63,
-            'bad': 64
+            'good': [63],
+            'bad': [64]
         },
         'seqno': {
             'default': 0,
@@ -1066,8 +1066,8 @@ VERSIONS = {
             'type': int,
             'units': '',
             'test': lambda x: x in (0, 1, 2),
-            'good': 2,
-            'bad': 3,
+            'good': [2],
+            'bad': [3],
             'import': None,
             'export': None
         },
@@ -1154,8 +1154,8 @@ VERSIONS = {
             'units': '',
             # TODO: FIXME: This test is incorrect. value can not be > 511 according to AIS spec; check to_stern etc too
             'test': lambda x: 0 <= x <= 2 ** 9,
-            'good': 1,
-            'bad': -1,
+            'good': [1],
+            'bad': [-1],
             'import': None,
             'export': None
         },
@@ -1165,8 +1165,8 @@ VERSIONS = {
             'type': int,
             'units': '',
             'test': lambda x: 0 <= x <= 2 ** 6,
-            'good': 0,
-            'bad': 'BAD',
+            'good': [0],
+            'bad': ['BAD'],
             'import': None,
             'export': None
         },
@@ -1176,8 +1176,8 @@ VERSIONS = {
             'type': int,
             'units': '',
             'test': lambda x: 0 <= x <= 2 ** 9,
-            'good': 0,
-            'bad': tuple,
+            'good': [0],
+            'bad': [tuple],
             'import': None,
             'export': None
         },
@@ -1290,8 +1290,8 @@ VERSIONS = {
         'radio': {
             # TODO: What will this value be?
             'type': int,
-            'good': 1,
-            'bad': False,
+            'good': [1],
+            'bad': [False],
             'description': '',
             'units': '',
             'import': None,
@@ -1316,8 +1316,8 @@ VERSIONS = {
         'partno': {  # TODO: FIXME: Which one of this and partnum is the correct field name?
             'type': int,
             'test': lambda x: x in (0, 1),
-            'good': 0,
-            'bad': -1,
+            'good': [0],
+            'bad': [-1],
             'description': '',
             'units': '',
             'import': None,
@@ -1326,8 +1326,8 @@ VERSIONS = {
         'vendorid': {
             'type': str,
             'test': lambda x: len(x) <= 2 ** 18,
-            'good': 'this is a gooooooooood value',
-            'bad': int,
+            'good': ['this is a gooooooooood value'],
+            'bad': [int],
             'description': '',
             'units': '',
             'import': None,
@@ -1336,8 +1336,8 @@ VERSIONS = {
         'model': {
             'type': str,
             'test': lambda x: len(x) <= 2 ** 4,
-            'good': 'something',
-            'bad': 333,
+            'good': ['something'],
+            'bad': [333],
             'description': '',
             'units': '',
             'import': None,
@@ -1346,8 +1346,8 @@ VERSIONS = {
         'serial': {
             'type': str,
             'test': lambda x: len(x) <= 2 ** 20,
-            'good': 'pawoeiras',
-            'bad': -1,
+            'good': ['pawoeiras'],
+            'bad': [-1],
             'description': '',
             'units': '',
             'import': None,
@@ -1356,8 +1356,8 @@ VERSIONS = {
         'mothership_mmsi': {
             'type': str,
             'test': lambda x: len(x) <= 2 ** 30,
-            'good': 'done ... finally ...',
-            'bad': -200,
+            'good': ['done ... finally ...'],
+            'bad': [-200],
             'description': '',
             'units': '',
             'import': None,
@@ -1412,8 +1412,8 @@ VERSIONS = {
             'type': int,
             # Not bool - state
             'test': lambda x: x in (0, 1),
-            'good': 0,
-            'bad': 3,
+            'good': [0],
+            'bad': [3],
             'description': '',
             'units': '',
             'import': None,
