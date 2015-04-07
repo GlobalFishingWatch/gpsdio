@@ -6,11 +6,14 @@ A collection of tools for working with the GPSD JSON format (or the same format 
 """
 
 
+import logging
+
+from .core import *
 from . import schema
-from . import io
 from . import validate
 
-from .io import open
+
+log = logging.getLogger('gpsd_format')
 
 
 __version__ = "0.2"
@@ -35,4 +38,3 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
