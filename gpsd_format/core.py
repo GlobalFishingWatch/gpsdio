@@ -5,10 +5,8 @@ that of csv.DictReader/DictWriter and uses gpsd_format.schema to get schema deta
 
 
 import logging
-try:
-    import queue
-except ImportError:
-    import Queue as queue
+
+import six
 
 from . import drivers
 from . import schema
@@ -21,7 +19,7 @@ log = logging.getLogger('gpsd_format')
 builtin_open = open
 
 
-__all__ = ['open', 'Stream', 'info']
+__all__ = ['open', 'Stream']
 
 
 def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None, do=None, co=None, **kwargs):
@@ -88,8 +86,8 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None, 
 
 class Stream(object):
 
-    def __init__(self, stream, mode='r', import_msg=True, export_msg=True, force_msg=False,
-                 keep_invalid=True, invalid_key=schema.DEFAULT_INVALID_KEY, skip_failures=False):
+    def __init__(self, stream, mode='r', force_msg=False, keep_fields=True, skip_failures=False, convert=True,
+                 *args, **kwargs):
 
         """
         Read or write a stream of AIS data.
@@ -108,10 +106,9 @@ class Stream(object):
         self.force_msg = force_msg
         self.skip_failures = skip_failures
         self._mode = mode
-        self.import_msg = import_msg
-        self.export_msg = export_msg
-        self.invalid_key = invalid_key
-        self.keep_invalid = keep_invalid
+        self.convert = convert
+        self.keep_fields = keep_fields
+        self.skip_failures = skip_failures
 
     def __iter__(self):
         return self
@@ -145,27 +142,21 @@ class Stream(object):
         elif self.closed:
             raise IOError("Can't operate on a closed stream")
 
-        msg = None
-        while msg is None:
-
-            try:
-
-                msg = next(self._stream)
-                if self.import_msg:
-                    msg = schema.import_msg(msg)
+        line = None
+        try:
+            loaded = line = next(self._stream)
+            if self.convert:
+                loaded = schema.import_msg(line, skip_failures=self.skip_failures)
                 if self.force_msg:
-                    msg = schema.force_msg(msg, keep_invalid=self.keep_invalid, invalid_key=self.invalid_key)
-
-            except StopIteration as e:
-                raise e
-
-            except Exception as e:
-                if self.skip_failures:
-                    log.exception(e)
-                else:
-                    raise e
-
-        return msg
+                    loaded = schema.force_msg(loaded, keep_fields=self.keep_fields)
+            return loaded
+        except StopIteration:
+            raise
+        except Exception as e:
+            if not self.skip_failures:
+                import traceback
+                raise Exception("%s: %s: %s\n%s" % (getattr(self._stream, 'name', 'Unknown'), type(e), e, "    " + traceback.format_exc().replace("\n", "\n    ")))
+            return {"__invalid__": {"__content__": line}}
 
     __next__ = next
 
@@ -194,30 +185,16 @@ class Stream(object):
         elif self.closed:
             raise IOError("Can't operate on a closed stream")
 
-        try:
+        if not self.keep_fields and 'type' in msg:
+            msg = {field: val for field, val in six.iteritems(msg)
+                   if field in schema.get_default_msg(msg['type'])}
 
-            if self.export_msg:
-                msg = schema.export_msg(msg)
+        if self.convert:
             if self.force_msg:
-                msg = schema.force_msg(msg, keep_invalid=self.keep_invalid, invalid_key=self.invalid_key)
-            return self._stream.write(msg)
+                msg = schema.force_msg(msg, keep_fields=self.keep_fields)
+            msg = schema.export_msg(msg, skip_failures=self.skip_failures)
 
-        except Exception as e:
-            if self.skip_failures:
-                log.exception(e)
-            else:
-                raise e
-
-    def timesort(self, **kwargs):
-
-        msg_queue = queue.PriorityQueue(**kwargs)
-        for msg in self.next():
-            msg_queue.put((msg['timestamp'], msg))
-
-        try:
-            yield msg_queue.get()
-        except queue.Empty:
-            raise StopIteration
+        self._stream.write(msg)
 
 
 # def info(stream, invalid_key=schema.DEFAULT_INVALID_KEY):
