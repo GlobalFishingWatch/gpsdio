@@ -9,7 +9,6 @@ import re
 
 import six
 
-import gpsd_format.io
 import gpsd_format.schema
 
 

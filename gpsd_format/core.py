@@ -135,6 +135,10 @@ class Stream(object):
     def mode(self):
         return self._mode
 
+    @property
+    def name(self):
+        return getattr(self._stream, 'name', None)
+
     def next(self):
 
         if self.mode != 'r':
