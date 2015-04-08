@@ -10,7 +10,7 @@ import sys
 import click
 import six
 
-import gpsd_format.io
+import gpsd_format
 import gpsd_format.schema
 import gpsd_format.validate
 
@@ -59,7 +59,7 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
     stats = {}
     for name in files:
         sys.stderr.write("Collecting stats for {infile} ...\n".format(infile=name))
-        with gpsd_format.io.open(name, "r", skip_failures=True, force_message=False) as f:
+        with gpsd_format.open(name, "r", skip_failures=True, force_message=False) as f:
             if verbose:
                 def error_cb(type, msg, exc=None, trace=None):
                     if exc:
@@ -133,7 +133,7 @@ def convert(ctx, infile, outfile):
 
     with open(infile) as inf:
         with open(outfile, "w") as of:
-            reader = gpsd_format.io.GPSDReader.open(inf)
-            writer = gpsd_format.io.GPSDWriter.open(of)
+            reader = gpsd_format.open(inf)
+            writer = gpsd_format.open(of)
             for row in reader:
                 writer.write(row)

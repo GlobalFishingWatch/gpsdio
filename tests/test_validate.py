@@ -13,8 +13,8 @@ import unittest
 import six
 
 from . import cmdtest
+import gpsd_format
 import gpsd_format.cli
-import gpsd_format.io
 import gpsd_format.schema
 import gpsd_format.validate
 
@@ -160,7 +160,7 @@ class TestInfo(cmdtest.CmdTest):
     def test_sorted(self):
         infile = os.path.join(self.dir, "rows.mmsi=123.json")
         with open(infile, "w") as f:
-            w = gpsd_format.io.GPSDWriter.open(f)
+            w = gpsd_format.open(f, 'w')
             for row in self.rows:
                 w.write(row)
             for x in six.moves.range(0, self.num_invalid_rows):
@@ -175,7 +175,7 @@ class TestInfo(cmdtest.CmdTest):
         self.rows[0:2] = [self.rows[1], self.rows[0]]
         infile = os.path.join(self.dir, "rows.mmsi=123.json")
         with open(infile, "w") as f:
-            w = gpsd_format.io.GPSDWriter.open(f)
+            w = gpsd_format.open(f, 'w')
             for row in self.rows:
                 w.write(row)
             for x in six.moves.range(0, self.num_invalid_rows):
@@ -190,7 +190,7 @@ class TestInfo(cmdtest.CmdTest):
     def test_nonjson(self):
         infile = os.path.join(self.dir, "rows.mmsi=123.json")
         with open(infile, "w") as f:
-            w = gpsd_format.io.GPSDWriter.open(f)
+            w = gpsd_format.open(f, 'w')
             for row in self.rows:
                 w.write(row)
             for x in six.moves.range(0, self.num_invalid_rows):

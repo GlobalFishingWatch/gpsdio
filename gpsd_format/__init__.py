@@ -7,7 +7,6 @@ A collection of tools for working with the GPSD JSON format (or the same format 
 
 
 from .core import open
-from .core import Stream
 from . import schema
 from . import validate
 
