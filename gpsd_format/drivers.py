@@ -5,8 +5,6 @@ Drivers for reading and writing a variety of formats and compression.
 """
 
 
-import gzip
-
 from .pycompat import *
 
 import msgpack
@@ -119,17 +117,16 @@ def detect_compression_type(path):
     else:
         raise ValueError("Can't determine compression: %s" % path)
 
-
 class BaseDriver(object):
-
     by_name = {}
     by_extension = {}
 
-    class __metaclass__(type):
+    register = False
 
+    class __metaclass__(type):
         def __init__(driver, name, bases, members):
             type.__init__(driver, name, bases, members)
-            if name != 'BaseDriver':
+            if members.get('register', True):
                 driver.register_driver()
 
         def register_driver(driver):
@@ -148,22 +145,12 @@ class BaseDriver(object):
 
             return True
 
-    def __init__(self, f, mode='r', modes=None, name=None, reader=None, writer=None, **kwargs):
-
-        if isinstance(f, string_types):
-            f = open(f, mode=mode)
-
+    def __init__(self, f, mode='r', modes=None, name=None, **kwargs):
         self._f = f
         self._modes = modes
         self._mode = mode
         self._name = name
-        if mode == 'r':
-            self.obj = reader(self._f, **kwargs)
-        elif mode in ('w', 'a'):
-            self.obj = writer(self._f, **kwargs)
-        else:
-            raise ValueError(
-                "Mode `%s' is unsupported for driver %s: %s" % (mode, name, ', '.join(modes)) if modes else None)
+        self.obj = None
 
     def __repr__(self):
         return "<%s driver %s, mode '%s', connected to '%r' at %s>" % (
@@ -214,120 +201,126 @@ class BaseDriver(object):
         return self.obj.read(size)
 
 
-class NewlineJSON(BaseDriver):
+class FileDriver(BaseDriver):
+    register = False
 
-    name = 'newlinejson'
-    extensions = ('json', 'nljson')
-    modes = ('r', 'w', 'a')
-    compression = False
+    def __init__(self, *args, **kwargs):
+        BaseDriver.__init__(self, *args, **kwargs)
 
-    def __init__(self, f, mode='r', **kwargs):
+        if isinstance(self._f, string_types):
+            self._f = open(self._f, mode=self.mode)
 
-        BaseDriver.__init__(
-            self,
-            f=f, mode=mode,
-            reader=newlinejson.Reader,
-            writer=newlinejson.Writer,
-            modes=self.modes,
-            name=self.name,
-            **kwargs
-        )
-
-    @property
-    def closed(self):
-        return self._f.closed
-
-    def close(self):
-        self._f.close()
-
-
-class MsgPack(BaseDriver):
-
-    name = 'msgpack'
-    extensions = ('msg', 'msgpack')
-    modes = ('r', 'w', 'a')
-    compression = False
-
-    def __init__(self, f, mode='r', **kwargs):
-
-        class MsgPackWriter(object):
-
-            def __init__(self, f, mode='r', **kwargs):
-                self._f = f
-                self.packer = msgpack.Packer(**kwargs)
-
-            def write(self, msg):
-                self._f.write(self.packer.pack(msg))
-
-        BaseDriver.__init__(
-            self,
-            f=f, mode=mode,
-            reader=msgpack.Unpacker,
-            writer=MsgPackWriter,
-            modes=self.modes,
-            name=self.name,
-            **kwargs
-        )
-
-    def close(self):
-        self._f.close()
-
-    @property
-    def closed(self):
-        return self._f.closed
-
-
-class GZIP(BaseDriver):
-
-    name = 'gzip'
-    extensions = 'gz',
-    modes = ('r', 'w', 'a')
-    compression = True
-
-    def __init__(self, f, mode='r', **kwargs):
-
-        def reader(f, **kwargs):
-            return gzip.GzipFile(fileobj=f, mode=mode, **kwargs)
-
-        def writer(f, **kwargs):
-            return gzip.GzipFile(fileobj=f, mode=mode, **kwargs)
-
-        BaseDriver.__init__(
-            self,
-            f=f, mode=mode,
-            reader=reader,
-            writer=writer,
-            modes=self.modes,
-            name=self.name,
-            **kwargs
-        )
+        if self.mode == 'r':
+            self.obj = self.reader(self._f, **kwargs)
+        elif self.mode in ('w', 'a'):
+            self.obj = self.writer(self._f, **kwargs)
+        else:
+            raise ValueError(
+                "Mode `%s' is unsupported for driver %s: %s" % (self.mode, self.name, ', '.join(self.modes)) if self.modes else None)
 
     def close(self):
         self.obj.close()
         self._f.close()
 
 
-# class BZ2(BaseDriver):
-#
-#     name = 'bz2'
-#     extensions = 'bz2',
-#     modes = ('r', 'w', 'a')
-#     compression = True
-#
-#     def __init__(self, f, mode='r', **kwargs):
-#
-#         BaseDriver.__init__(
-#             self,
-#             f=f, mode=mode,
-#             reader=bz2.BZ2File,
-#             writer=bz2.BZ2File,
-#             modes=self.modes,
-#             name=self.name,
-#             **kwargs
-#         )
-#
-#
-# class TAR(BaseDriver):
+class NewlineJSON(FileDriver):
+    name = 'newlinejson'
+    extensions = ('json', 'nljson')
+    modes = ('r', 'w', 'a')
+    compression = False
+
+    def reader(self, f, *args, **kwargs):
+        return newlinejson.Reader(f)
+
+    def writer(self, f, *args, **kwargs):
+        return newlinejson.Writer(f)
+
+    @property
+    def closed(self):
+        return self._f.closed
+
+    def close(self):
+        self._f.close()
+
+
+class MsgPack(FileDriver):
+    name = 'msgpack'
+    extensions = ('msg', 'msgpack')
+    modes = ('r', 'w', 'a')
+    compression = False
+
+
+    class MsgPackWriter(object):
+        def __init__(self, f, mode='r', **kwargs):
+            self._f = f
+            self.packer = msgpack.Packer(**kwargs)
+
+        def write(self, msg):
+            self._f.write(self.packer.pack(msg))
+
+
+    def reader(self, f, *args, **kwargs):
+        return msgpack.Unpacker(f)
+
+    def writer(self, f, *args, **kwargs):
+        return self.MsgPackWriter(f, *args, **kwargs)
+
+    def close(self):
+        self._f.close()
+
+    @property
+    def closed(self):
+        return self._f.closed
+
+try:
+    import gzip
+except:
+    pass
+else:
+    class GZIP(FileDriver):
+        name = 'gzip'
+        extensions = 'gz',
+        modes = ('r', 'w', 'a')
+        compression = True
+
+        def reader(self, f, *args, **kwargs):
+            return gzip.GzipFile(fileobj=f, *args, **kwargs)
+
+        def writer(self, f, *args, **kwargs):
+            return gzip.GzipFile(fileobj=f, *args, **kwargs)
+
+try:
+    import lzma
+except:
+    pass
+else:
+    class LZMA(BaseDriver):
+        name = 'lzma'
+        extensions = 'xz',
+        modes = ('r', 'w', 'a')
+        compression = True
+
+        def __init__(self, f, mode='r', **kwargs):
+            BaseDriver.__init__(self, f, mode=mode, **kwargs)
+            self.obj = lzma.LZMAFile(self._f, mode)
+            
+
+try:
+    import bz2
+except:
+    pass
+else:
+    class BZ2(BaseDriver):
+        name = 'bz2'
+        extensions = 'bz2',
+        modes = ('r', 'w', 'a')
+        compression = True
+
+        def __init__(self, f, mode='r', **kwargs):
+            BaseDriver.__init__(self, f, mode=mode, **kwargs)
+            self.obj = bz2.BZ2File(self._f, mode, **kwargs)
+
+# class TAR(FileDriver):
 #
 #     name = 'tar'
 #     extensions = 'tar',
@@ -336,7 +329,7 @@ class GZIP(BaseDriver):
 #
 #     def __init__(self, f, mode='r', **kwargs):
 #
-#         BaseDriver.__init__(
+#         FileDriver.__init__(
 #             self,
 #             f=f, mode=mode,
 #             reader=tarfile.open,
@@ -361,7 +354,7 @@ class GZIP(BaseDriver):
 # TODO: Make this a function that does some baseline driver validation and logs when a driver can't be registered
 # Keep track of every driver that is registered, just the ones the normal API cares about, and just the ones that are
 # used for compression IO.
-# ALL_REGISTERED_DRIVERS = BaseDriver.__subclasses__()
+# ALL_REGISTERED_DRIVERS = FileDriver.__subclasses__()
 # REGISTERED_DRIVERS = [
 #     d for d in ALL_REGISTERED_DRIVERS if getattr(d, 'register', True) and not getattr(d, 'compression', False)]
 # COMPRESSION_DRIVERS = [d for d in ALL_REGISTERED_DRIVERS if getattr(d, 'compression', False)]
