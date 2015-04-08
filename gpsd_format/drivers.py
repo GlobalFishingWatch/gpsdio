@@ -17,59 +17,6 @@ import ujson
 newlinejson.JSON = ujson
 
 
-# def get_driver(name):
-#
-#     """
-#     Accepts a string and returns the driver class associated with that name.
-#     """
-#
-#     for d in REGISTERED_DRIVERS:
-#         if d.name == name:
-#             return d
-#     else:
-#         raise ValueError("Unrecognized driver name: %s" % name)
-#
-#
-# def get_compression(name):
-#
-#     """
-#     Accepts a string and returns the driver class associated with that name.
-#     """
-#
-#     for d in COMPRESSION_DRIVERS:
-#         if d.name == name:
-#             return d
-#     else:
-#         raise ValueError("Unrecognized compression name: %s" % name)
-#
-#
-# def detect_file_type(path):
-#
-#     """
-#     Given an file path, attempt to determine appropriate driver.
-#     """
-#
-#     for d in REGISTERED_DRIVERS:
-#         for ext in path.split('.')[-2:]:
-#             if ext in d.extensions:
-#                 return d
-#     else:
-#         raise ValueError("Can't determine driver: %s" % path)
-#
-#
-# def detect_compression_type(path):
-#
-#     """
-#     Given a file path, attempt to determine the appropriate compression driver.
-#     """
-#
-#     for d in COMPRESSION_DRIVERS:
-#         if path.rpartition('.')[-1] in d.extensions:
-#             return d
-#     else:
-#         raise ValueError("Can't determine compression: %s" % path)
-
-
 def get_driver(name):
 
     """
@@ -345,23 +292,3 @@ class GZIP(BaseDriver):
 #             name=self.name,
 #             **kwargs
 #         )
-
-
-# def validate_driver(driver):
-#     assert isinstance(driver.name, str)
-#     assert isinstance(driver.extensions, (tuple, list))
-#     assert isinstance(driver.modes, (tuple, list))
-#     for attr in (
-#             '__iter__', '__next__', 'read', 'write', 'from_path', 'modes', 'name', 'write', 'close', 'closed', 'read'):
-#         assert hasattr(driver, attr)
-#
-#     return True
-
-
-# TODO: Make this a function that does some baseline driver validation and logs when a driver can't be registered
-# Keep track of every driver that is registered, just the ones the normal API cares about, and just the ones that are
-# used for compression IO.
-# ALL_REGISTERED_DRIVERS = BaseDriver.__subclasses__()
-# REGISTERED_DRIVERS = [
-#     d for d in ALL_REGISTERED_DRIVERS if getattr(d, 'register', True) and not getattr(d, 'compression', False)]
-# COMPRESSION_DRIVERS = [d for d in ALL_REGISTERED_DRIVERS if getattr(d, 'compression', False)]
