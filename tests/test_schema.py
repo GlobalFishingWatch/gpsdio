@@ -30,9 +30,9 @@ class TestCurrentSchema(unittest.TestCase):
             self.assertIsInstance(definition['type'], type)
             self.assertIsInstance(definition['description'], str)
             self.assertIsInstance(definition['units'], str)
-            if 'import' in definition:
+            if definition['import'] is not None:
                 self.assertTrue(hasattr(definition['import'], '__call__'))
-            if 'export' in definition:
+            if definition['export'] is not None:
                 self.assertTrue(hasattr(definition['export'], '__call__'))
 
 

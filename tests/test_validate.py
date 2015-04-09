@@ -35,6 +35,7 @@ class TestInfoDetails(cmdtest.CmdTest):
             'min_timestamp': datetime.datetime(1970, 1, 2, 0, 0, 0),
             'max_timestamp': datetime.datetime(1971, 3, 4, 5, 6, 7),
             'is_sorted': True,
+            'is_sorted_files': True,
             'mmsi_declaration': True,
             'mmsi_hist': {
                 '111111111': 1,
@@ -57,6 +58,7 @@ class TestInfoDetails(cmdtest.CmdTest):
             'min_timestamp': datetime.datetime(1970, 1, 1, 0, 0, 0),
             'max_timestamp': datetime.datetime(1971, 2, 1, 0, 0, 0),
             'is_sorted': True,
+            'is_sorted_files': True,
             'mmsi_declaration': True,
             'mmsi_hist': {
                 '111111111': 1,
@@ -70,6 +72,7 @@ class TestInfoDetails(cmdtest.CmdTest):
 
         expected = {
             'is_sorted': True,
+            'is_sorted_files': False,
             'lat_max': 8,
             'lat_min': 5,
             'lon_max': 13,
@@ -142,6 +145,7 @@ class TestInfo(cmdtest.CmdTest):
             u'mmsi_hist': {},
             u'msg_type_hist': {},
             u'is_sorted': True,
+            u'is_sorted_files': True,
             u'mmsi_declaration': False
         }
         for row in self.rows:
