@@ -1,16 +1,12 @@
-"""
-Unittests for gpsd_format._io
-"""
+"""Unittests for gpsd_format._io."""
 
-import os
 import itertools
 import json
+import os
 import tempfile
 import unittest
-try:
-    from io import StringIO
-except ImportError:
-    from StringIO import StringIO
+
+import six
 
 from . import compare_msg
 import gpsd_format
@@ -95,7 +91,7 @@ class TestStream(unittest.TestCase):
 
     def test_attrs(self):
         with gpsd_format.open(TYPES_MSG_FILE) as stream:
-            self.assertIsInstance(stream.__repr__(), gpsd_format.pycompat.string_types)
+            self.assertIsInstance(stream.__repr__(), six.string_types)
             self.assertTrue(hasattr(stream, '__next__'))
 
     def test_io_on_closed_stream(self):

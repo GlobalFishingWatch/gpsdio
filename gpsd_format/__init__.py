@@ -1,20 +1,15 @@
 # encoding:utf-8
-
-
-"""
-A collection of tools for working with the GPSD JSON format (or the same format in a msgpack container).
-"""
-
+"""Tools for working with the GPSD format in JSON or msgpack."""
 
 from .core import open
 from . import schema
 from . import validate
 
 
-__version__ = "0.2"
-__author__ = "Egil Moeller, Kevin Wurster"
-__email__ = "egil@skytruth.org, kevin@skytruth.org"
-__source__ = "https://github.com/SkyTruth/gpsd_format.git"
+__version__ = '0.2'
+__author__ = 'Egil Moeller, Kevin Wurster'
+__email__ = 'egil@skytruth.org, kevin@skytruth.org'
+__source__ = 'https://github.com/SkyTruth/gpsd_format.git'
 __license__ = """
 Copyright 2014-2015 SkyTruth
 Authors:

@@ -1,7 +1,4 @@
-"""
-Test/sample data needed by unittests
-"""
-
+"""Test/sample data needed by unittests."""
 
 import os
 

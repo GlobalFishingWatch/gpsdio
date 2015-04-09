@@ -243,4 +243,3 @@ class TestValidateMessage(unittest.TestCase):
                         bad_message[field] = value
                         assert not gpsd_format.schema.validate_msg(bad_message), \
                             "Field `%s' should have caused message to fail: %s" % (field, bad_message)
-
