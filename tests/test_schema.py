@@ -12,15 +12,12 @@ import gpsd_format.schema
 class TestCurrentSchema(unittest.TestCase):
 
     def test_requirements(self):
+        # Make sure the current schema contains required fields
 
-        """
-        Make sure the current schema contains required fields
+        # Helps to make sure that when a new field definition is added it actually
+        # has the required elements
 
-        Helps to make sure that when a new field definition is added it actually
-        has the required elements
-        """
-
-        required = {'default', 'type', 'units', 'description'}
+        required = {'default', 'type', 'units', 'description', 'import', 'export'}
         for field, definition in gpsd_format.schema.CURRENT.items():
             req = required.copy()
             if definition.get('required', True):
@@ -74,10 +71,7 @@ class TestForce_Msg(unittest.TestCase):
                 self.expected[field] = gpsd_format.schema.CURRENT[field]['default']
 
     def test_standard(self):
-
-        """
-        Row with a valid type
-        """
+        # Row with a valid type
 
         actual = gpsd_format.schema.force_msg(self.row)
         self.assertDictEqual(self.expected, actual)
@@ -85,10 +79,7 @@ class TestForce_Msg(unittest.TestCase):
             self.assertEqual(actual[field], val)
 
     def test_drop_unrecognized_field(self):
-
-        """
-        Row with a valid type but has an unrecognized field that should be dropped
-        """
+        # Row with a valid type but has an unrecognized field that should be dropped
 
         row = self.row.copy()
         row['NEW_FIELD'] = 'INVALID'
@@ -96,10 +87,7 @@ class TestForce_Msg(unittest.TestCase):
         self.assertEqual(self.expected, actual)
 
     def test_keep_unrecognized_field(self):
-
-        """
-        Row with a valid type but has an unrecognized field that should be kept
-        """
+        # Row with a valid type but has an unrecognized field that should be kept
 
         row = self.row.copy()
         row['NEW_FIELD'] = 'KEEP'
@@ -116,10 +104,7 @@ class TestForce_Msg(unittest.TestCase):
         self.assertEqual(self.expected, actual)
 
     def test_invalid_type(self):
-
-        """
-        Row with an invalid AIS message type should raise an exception
-        """
+        # Row with an invalid AIS message type should raise an exception
 
         self.assertRaises(ValueError, gpsd_format.schema.force_msg, {'type': ''})
 
@@ -176,10 +161,7 @@ class TestGetMessageDefault(unittest.TestCase):
                 self.assertEqual(actual[field], gpsd_format.schema.CURRENT[field]['default'])
 
     def test_invalid_msg_type(self):
-
-        """
-        Try to get a row for a message type that does not exist
-        """
+        # Try to get a row for a message type that does not exist
 
         msg_types = [None, -1, -1.23, 10000000, '', [], {}]
         for mt in msg_types:
@@ -231,10 +213,7 @@ class TestExportRow(unittest.TestCase):
 class TestFieldDefaults(unittest.TestCase):
 
     def test_field_check(self):
-
-        """
-        Make sure all default fields are defined in the schema
-        """
+        # Make sure all default fields are defined in the schema
 
         for fields in gpsd_format.schema.fields_by_msg_type.values():
             for f in fields:
