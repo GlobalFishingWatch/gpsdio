@@ -1,9 +1,12 @@
-import unittest
-import tempfile
-import click.testing
 import shutil
-import gpsd_format.cli
 import sys
+import tempfile
+import unittest
+
+import click.testing
+
+import gpsd_format.cli
+
 
 class CmdTest(unittest.TestCase):
     keep_tree = False

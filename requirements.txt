@@ -1,4 +1,6 @@
 click
 msgpack-python
+newlinejson
 python-dateutil
 six
+ujson

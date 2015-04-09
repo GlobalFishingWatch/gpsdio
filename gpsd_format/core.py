@@ -1,6 +1,7 @@
-"""
-Read and write the GPSD format. The API mimics
-that of csv.DictReader/DictWriter and uses gpsd_format.schema to get schema details
+"""Read and write the GPSD format.
+
+The API mimics that of csv.DictReader/DictWriter and uses
+gpsd_format.schema to get schema details.
 """
 
 
@@ -10,8 +11,6 @@ import six
 
 from . import drivers
 from . import schema
-from .pycompat import *
-
 
 log = logging.getLogger('gpsd_format')
 
@@ -22,7 +21,8 @@ builtin_open = open
 __all__ = ['open', 'Stream']
 
 
-def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None, do=None, co=None, **kwargs):
+def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
+         do=None, co=None, **kwargs):
 
     """
     Return a `Stream`() instance that is set up to read or write with the
@@ -50,18 +50,12 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None, 
     Stream
         A loaded instance of stream ready for I/O operations.
     """
+    do = do or {}  # Driver options
+    co = co or {}  # Compression options
+    dmode = dmode or mode  # Driver mode
+    cmode = cmode or mode  # Compression mode
 
-    # Normalize driver options, compression options, driver mode, and compression mode
-    if do is None:
-        do = {}
-    if co is None:
-        co = {}
-    if dmode is None:
-        dmode = mode
-    if cmode is None:
-        cmode = mode
-
-    if isinstance(compression, string_types):
+    if isinstance(compression, six.string_types):
         comp_driver = drivers.get_compression(compression)
     elif compression is None:
         try:
@@ -71,7 +65,7 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None, 
     else:
         comp_driver = None
 
-    if isinstance(driver, string_types):
+    if isinstance(driver, six.string_types):
         io_driver = drivers.get_driver(driver)
     else:
         io_driver = drivers.detect_file_type(getattr(path, 'name', path))
