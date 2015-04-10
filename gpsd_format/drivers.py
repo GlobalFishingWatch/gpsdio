@@ -78,12 +78,12 @@ class BaseDriver(object):
 
         def register_driver(driver):
             driver.validate_driver()
-            BaseDriver.by_name[driver.name] = driver
+            BaseDriver.by_name[driver.driver_name] = driver
             for ext in driver.extensions:
                 BaseDriver.by_extension[ext] = driver
 
         def validate_driver(driver):
-            assert isinstance(driver.name, str)
+            assert isinstance(driver.driver_name, str)
             assert isinstance(driver.extensions, (tuple, list))
             assert isinstance(driver.modes, (tuple, list))
             for attr in (
@@ -98,6 +98,11 @@ class BaseDriver(object):
         self._mode = mode
         self._name = name
         self.obj = None
+        if self._name is None:
+            if isinstance(f, (str, unicode)):
+                self._name = f
+            else:
+                self._name = getattr(f, 'name', None)
 
     def __repr__(self):
         return "<%s driver %s, mode '%s', connected to '%r' at %s>" % (
@@ -171,7 +176,7 @@ class FileDriver(BaseDriver):
 
 
 class NewlineJSON(FileDriver):
-    name = 'newlinejson'
+    driver_name = 'newlinejson'
     extensions = ('json', 'nljson')
     modes = ('r', 'w', 'a')
     compression = False
@@ -191,7 +196,7 @@ class NewlineJSON(FileDriver):
 
 
 class MsgPack(FileDriver):
-    name = 'msgpack'
+    driver_name = 'msgpack'
     extensions = ('msg', 'msgpack')
     modes = ('r', 'w', 'a')
     compression = False
@@ -225,7 +230,7 @@ except:
     pass
 else:
     class GZIP(FileDriver):
-        name = 'gzip'
+        driver_name = 'gzip'
         extensions = 'gz',
         modes = ('r', 'w', 'a')
         compression = True
@@ -242,7 +247,7 @@ except:
     pass
 else:
     class LZMA(BaseDriver):
-        name = 'lzma'
+        driver_name = 'lzma'
         extensions = 'xz',
         modes = ('r', 'w', 'a')
         compression = True
@@ -258,7 +263,7 @@ except:
     pass
 else:
     class BZ2(BaseDriver):
-        name = 'bz2'
+        driver_name = 'bz2'
         extensions = 'bz2',
         modes = ('r', 'w', 'a')
         compression = True
@@ -269,7 +274,7 @@ else:
 
 # class TAR(FileDriver):
 #
-#     name = 'tar'
+#     driver_name = 'tar'
 #     extensions = 'tar',
 #     modes = ('r', 'w', 'a')
 #     compression = True
