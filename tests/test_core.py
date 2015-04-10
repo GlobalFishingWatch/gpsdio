@@ -125,7 +125,7 @@ class TestStream(unittest.TestCase):
 def test_get_driver():
 
     for d in [_d for _d in gpsd_format.drivers.BaseDriver.by_name.values() if not _d.compression]:
-        rd = gpsd_format.drivers.get_driver(d.name)
+        rd = gpsd_format.drivers.get_driver(d.driver_name)
         assert rd == d, "%r != %r" % (d, rd)
     try:
         gpsd_format.drivers.get_driver('__---Invalid---__')
@@ -181,12 +181,12 @@ class TestBaseDriver(unittest.TestCase):
 
     def test_driver_context_manager(self):
         with tempfile.NamedTemporaryFile(mode='r') as tfile:
-            with gpsd_format.drivers.BaseDriver(tfile, mode='r', reader=lambda x: x, writer=None):
+            with gpsd_format.drivers.NewlineJSON(tfile, mode='r'):
                 pass
 
     def test_invalid_mode(self):
         with self.assertRaises(ValueError):
-            gpsd_format.drivers.BaseDriver(None, mode='invalid')
+            gpsd_format.drivers.FileDriver(None, mode='invalid')
 
     def test_instantiated_properties(self):
         modes = ('r', 'w', 'a')
