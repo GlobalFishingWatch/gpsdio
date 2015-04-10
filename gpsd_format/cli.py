@@ -131,9 +131,7 @@ def convert(ctx, infile, outfile):
     Converts between JSON and msgpack container formats
     """
 
-    with open(infile) as inf:
-        with open(outfile, "w") as of:
-            reader = gpsd_format.open(inf)
-            writer = gpsd_format.open(of)
+    with gpsd_format.open(infile) as reader:
+        with gpsd_format.open(outfile, 'w') as writer:
             for row in reader:
                 writer.write(row)
