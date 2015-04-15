@@ -193,3 +193,11 @@ class Stream(object):
             msg = schema.export_msg(msg, skip_failures=self.skip_failures)
 
         self._stream.write(msg)
+
+    def writelines(self, msgs):
+        for msg in msgs:
+            self.write(msg)
+
+    # csv.DictWriter compatibility, don't remove :)
+    writerow = write
+    writerows = writelines
