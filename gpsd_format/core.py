@@ -12,7 +12,8 @@ import six
 from . import drivers
 from . import schema
 
-log = logging.getLogger('gpsd_format')
+
+log = logging.getLogger('gpsd_format_core')
 
 
 builtin_open = open
