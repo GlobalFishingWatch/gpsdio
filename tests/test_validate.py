@@ -162,7 +162,7 @@ class TestInfo(cmdtest.CmdTest):
                 self.expected[u'msg_type_hist'][msgtype] = 1
 
     def test_sorted(self):
-        infile = os.path.join(self.dir, "rows.mmsi=123.json")
+        infile = os.path.join(self.dir, "rows.mmsi=123.msg")
         with open(infile, "w") as f:
             w = gpsd_format.open(f, 'w')
             for row in self.rows:
@@ -173,11 +173,11 @@ class TestInfo(cmdtest.CmdTest):
         self.expected[u'file'] = str(infile)
 
         actual = json.loads(self.runcmd("validate", "--print-json", infile).output)
-        self.assertDictEqual(self.expected, actual)
+        self.assertDictEqual(json.loads(json.dumps(self.expected)), actual)
 
     def test_unsorted(self):
         self.rows[0:2] = [self.rows[1], self.rows[0]]
-        infile = os.path.join(self.dir, "rows.mmsi=123.json")
+        infile = os.path.join(self.dir, "rows.mmsi=123.msg")
         with open(infile, "w") as f:
             w = gpsd_format.open(f, 'w')
             for row in self.rows:
@@ -192,7 +192,7 @@ class TestInfo(cmdtest.CmdTest):
         self.assertDictEqual(self.expected, actual)
 
     def test_nonjson(self):
-        infile = os.path.join(self.dir, "rows.mmsi=123.json")
+        infile = os.path.join(self.dir, "rows.mmsi=123.msg")
         with open(infile, "w") as f:
             w = gpsd_format.open(f, 'w')
             for row in self.rows:

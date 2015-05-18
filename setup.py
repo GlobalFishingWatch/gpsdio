@@ -37,7 +37,7 @@ setup(
     #     'msgpack': ["msgpack-python>=0.4.2"],
     #     'test': ["nose", "coverage"]
     # },
-    version="0.0.2",
+    version="0.0.3",
     author="Egil Moeller, Kevin Wurster",
     author_email="egil@skytruth.org, kevin@skytruth.org",
     license="GPL",

@@ -20,11 +20,13 @@ def datetime2str(datetime_obj):
         A loaded datetime object
     """
 
+    if datetime_obj is None:
+        return "0000-00-00T24:60:60Z"
+
     return datetime_obj.strftime(DATETIME_FORMAT)
 
 
 def str2datetime(string):
-
     """
     Convert a normalized Benthos timestamp to a datetime object
 
@@ -33,6 +35,9 @@ def str2datetime(string):
     string : str
         String to convert
     """
+
+    if string == "0000-00-00T24:60:60Z":
+        return None
 
     ms = string[20:-1]
     ms += "000000"[:6 - len(ms)]

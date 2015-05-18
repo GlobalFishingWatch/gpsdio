@@ -4,6 +4,7 @@ Commandline interface for gpsd_format
 
 import datetime
 import json
+import logging
 import os
 import sys
 
@@ -13,6 +14,9 @@ import six
 import gpsd_format
 import gpsd_format.schema
 import gpsd_format.validate
+
+
+logger = logging.getLogger('gpsd_format_cli')
 
 
 @click.group()
@@ -58,16 +62,16 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
 
     stats = {}
     for name in files:
-        sys.stderr.write("Collecting stats for {infile} ...\n".format(infile=name))
+        logger.exception("Collecting stats for {infile} ...\n".format(infile=name))
         with gpsd_format.open(name, "r", skip_failures=True, force_message=False) as f:
             if verbose:
                 def error_cb(type, msg, exc=None, trace=None):
                     if exc:
-                        sys.stderr.write("%s: %s: %s: %s\n" % (name, type.title(), exc, msg))
+                        logger.exception("%s: %s: %s: %s\n" % (name, type.title(), exc, msg))
                         if trace:
-                            sys.stderr.write("%s\n" % (trace,))
+                            logger.exception("%s\n" % (trace,))
                     else:
-                        sys.stderr.write("%s: %s: %s\n" % (name, type.title(), msg))
+                        logger.exception("%s: %s: %s\n" % (name, type.title(), msg))
             else:
                 error_cb = None
             stats = gpsd_format.validate.merge_info(stats, gpsd_format.validate.collect_info(f, error_cb=error_cb))
@@ -77,7 +81,7 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
             if isinstance(value, datetime.datetime):
                 stats[key] = value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         stats['file'] = infile
-        sys.stdout.write(json.dumps(stats) + "\n")
+        click.echo(json.dumps(stats) + "\n")
         sys.exit(0)
     else:
         click.echo("")
@@ -131,9 +135,7 @@ def convert(ctx, infile, outfile):
     Converts between JSON and msgpack container formats
     """
 
-    with open(infile) as inf:
-        with open(outfile, "w") as of:
-            reader = gpsd_format.open(inf)
-            writer = gpsd_format.open(of)
+    with gpsd_format.open(infile) as reader:
+        with gpsd_format.open(outfile, 'w') as writer:
             for row in reader:
                 writer.write(row)

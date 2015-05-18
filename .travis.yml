@@ -2,15 +2,12 @@ language: python
 
 python:
   - '2.7'
-  - '3.3'
-  - '3.4'
 
 install:
-  - pip install -r requirements-dev.txt
-  - pip install -e .
+  - pip install nose coverage coveralls --upgrade -e .
 
 script:
-  - nosetests --with-coverage
+  - nosetests --with-coverage -I test_compatibility
 
 after_success:
   - coveralls
