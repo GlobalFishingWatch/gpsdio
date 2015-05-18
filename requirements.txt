@@ -1,6 +1,6 @@
 click
 msgpack-python
-newlinejson
+newlinejson<=0.2
 python-dateutil
 six
 ujson
