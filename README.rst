@@ -55,11 +55,13 @@ open
 --------
 
 .. code-block:: python
+
     with gpsd_format.open('infile.msg') as src:
         for msg in src:
             print msg
 
 .. code-block:: python
+
     with gpsd_format.open('outfile.msg', 'w') as dst:
         dst.write(msg)
 
@@ -68,6 +70,7 @@ Opens a file containing gpsd format data in any of the supported container forma
 Currently supported container formats are newline delimited JSON and MsgPack and currently supported compression formats are GZIP and XZ. When possible the container format and compression types are sniffed out based on the file extensions.  These parameters can be explicitly provided via `driver` and `compression`.  Additional driver specific or compression specific options can be supplied by passing a dictionary to `do` and/or `co`.  For example, the GZIP driver uses `gzip.GzipFile()` internally so if the user wants to specify `GzipFile()`'s 'compresslevel' keyword argument they would do:
 
 .. code-block:: python
+
     with gpsd_format.open('infile.msg.gz', co={'compresslevel': 9}) as src:
         for msg in src:
             pass
@@ -75,6 +78,7 @@ Currently supported container formats are newline delimited JSON and MsgPack and
 Additionally, some drivers and compression formats support additional modes that compliment r, w, a.  If the user wants to pass a more specific mode to a compression driver, they would do:
 
 .. code-block:: python
+
     with gpsd_format.open('outfile.msg.gz', 'w', cmode='wb') as dst:
         dst.write(msg)
 
@@ -84,6 +88,7 @@ Simple Conversion Examples
 Read from newline delimited JSON and write to GZIP compressed MsgPack:
 
 .. code-block:: python
+
     import gpsd_format
     with gpsd_format.open('input.json') as src:
         with gpsd_format.open('output.msg.gz', 'w') as dst:
@@ -93,6 +98,7 @@ Read from newline delimited JSON and write to GZIP compressed MsgPack:
 Read MsgPack compressed with GZIP and write to newline JSON with XZ compression without using file extensions:
 
 .. code-block:: python
+
     import gpsd_format
     with gpsd_format.open('input', driver='msgpack', compression='gzip') as src:
         with gpsd_format.open('output', 'w', driver='newlinejson', compression='xz'):
