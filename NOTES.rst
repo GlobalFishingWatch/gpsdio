@@ -2,7 +2,7 @@ Package Layout
 ==============
 
 * GPSD Format
-    - gpsd_format
+    - gpsdio
         + __init__.py
         + drivers.py
         + io.py
@@ -45,25 +45,25 @@ API Examples
 
 .. code-block:: python
 
-    import gpsd_format
+    import gpsdio
 
     # Print all messages in a file
-    with gpsd_format.open("foo.msg", skip_faliures=True) as f:
+    with gpsdio.open("foo.msg", skip_faliures=True) as f:
         for msg in f:
             print(msg)
 
     # Write two messages to a file as MsgPack
-    with gpsd_format.open("bar.msg", 'w', skip_failures=True) as f:
+    with gpsdio.open("bar.msg", 'w', skip_failures=True) as f:
         f.write({'type': 1, 'lat': 47, 'lon': 11})
         f.write({'type': 1, 'lat': 48, 'lon': 12})
 
     # Validate a message
     msg = {'type': 1, 'lat': 'nanananana'}
-    if gpsd_format.schema.validate_msg(msg, skip_failures=True):
+    if gpsdio.schema.validate_msg(msg, skip_failures=True):
         print "Is valid"
     else:
         print "Is invalid", msg['__invalid__']
     
     # Get info about a collection of messages
-    with gpsd_format.open("foo.msg", skip_failures=False, force_message=False) as f:
-        print(gpsd_format.schema.collect_info(f))
+    with gpsdio.open("foo.msg", skip_failures=False, force_message=False) as f:
+        print(gpsdio.schema.collect_info(f))

@@ -1,6 +1,7 @@
 """
-Commandline interface for gpsd_format
+Commandline interface for `gpsdio`.
 """
+
 
 import datetime
 import json
@@ -11,12 +12,12 @@ import sys
 import click
 import six
 
-import gpsd_format
-import gpsd_format.schema
-import gpsd_format.validate
+import gpsdio
+import gpsdio.schema
+import gpsdio.validate
 
 
-logger = logging.getLogger('gpsd_format_cli')
+logger = logging.getLogger('gpsdio_cli')
 
 
 @click.group()
@@ -63,7 +64,7 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
     stats = {}
     for name in files:
         logger.exception("Collecting stats for {infile} ...\n".format(infile=name))
-        with gpsd_format.open(name, "r", skip_failures=True, force_message=False) as f:
+        with gpsdio.open(name, "r", skip_failures=True, force_message=False) as f:
             if verbose:
                 def error_cb(type, msg, exc=None, trace=None):
                     if exc:
@@ -74,7 +75,7 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
                         logger.exception("%s: %s: %s\n" % (name, type.title(), msg))
             else:
                 error_cb = None
-            stats = gpsd_format.validate.merge_info(stats, gpsd_format.validate.collect_info(f, error_cb=error_cb))
+            stats = gpsdio.validate.merge_info(stats, gpsdio.validate.collect_info(f, error_cb=error_cb))
 
     if print_json:
         for key, value in six.iteritems(stats):
@@ -102,11 +103,11 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
         click.echo("  Y Max: %s" % stats['lat_max'])
         click.echo("")
         if stats['min_timestamp'] is not None:
-            _min_t = gpsd_format.schema.datetime2str(stats['min_timestamp'])
+            _min_t = gpsdio.schema.datetime2str(stats['min_timestamp'])
         else:
             _min_t = None
         if stats['max_timestamp'] is not None:
-            _max_t = gpsd_format.schema.datetime2str(stats['max_timestamp'])
+            _max_t = gpsdio.schema.datetime2str(stats['max_timestamp'])
         else:
             _max_t = None
         click.echo("  Min timestamp: %s" % _min_t)
@@ -135,7 +136,7 @@ def convert(ctx, infile, outfile):
     Converts between JSON and msgpack container formats
     """
 
-    with gpsd_format.open(infile) as reader:
-        with gpsd_format.open(outfile, 'w') as writer:
+    with gpsdio.open(infile) as reader:
+        with gpsdio.open(outfile, 'w') as writer:
             for row in reader:
                 writer.write(row)

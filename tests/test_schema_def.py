@@ -1,5 +1,5 @@
 """
-Unittests for: gpsd_format._schema_def
+Unittests for: `gpsdio._schema_def`
 """
 
 
@@ -8,8 +8,8 @@ import unittest
 
 import six
 
-import gpsd_format.schema
-import gpsd_format._schema_def
+import gpsdio.schema
+import gpsdio._schema_def
 
 
 class TestDatetime2Str(unittest.TestCase):
@@ -23,14 +23,14 @@ class TestDatetime2Str(unittest.TestCase):
         now = datetime.datetime.now()
 
         # Manually export datetime to the expected string format
-        expected_string = now.strftime(gpsd_format.schema.DATETIME_FORMAT)
+        expected_string = now.strftime(gpsdio.schema.DATETIME_FORMAT)
 
         # Convert the datetime object to a string with the function
-        converted = gpsd_format._schema_def.datetime2str(now)
+        converted = gpsdio._schema_def.datetime2str(now)
         self.assertEqual(expected_string, converted)
 
         # Reload the string with datetime and make sure everything matches
-        reloaded = datetime.datetime.strptime(converted, gpsd_format.schema.DATETIME_FORMAT)
+        reloaded = datetime.datetime.strptime(converted, gpsdio.schema.DATETIME_FORMAT)
         self.assertEqual(now.year, reloaded.year)
         self.assertEqual(now.month, reloaded.month)
         self.assertEqual(now.day, reloaded.day)
@@ -49,9 +49,9 @@ class TestStr2Datetime(unittest.TestCase):
         """
 
         string = '2014-12-19T15:29:36.479005Z'
-        expected = datetime.datetime.strptime(string, gpsd_format.schema.DATETIME_FORMAT)
-        converted = gpsd_format._schema_def.str2datetime(string)
-        self.assertEqual(string, converted.strftime(gpsd_format.schema.DATETIME_FORMAT))
+        expected = datetime.datetime.strptime(string, gpsdio.schema.DATETIME_FORMAT)
+        converted = gpsdio._schema_def.str2datetime(string)
+        self.assertEqual(string, converted.strftime(gpsdio.schema.DATETIME_FORMAT))
 
         self.assertEqual(expected.year, converted.year)
         self.assertEqual(expected.month, converted.month)
@@ -62,7 +62,7 @@ class TestStr2Datetime(unittest.TestCase):
 
 
 def test_fields_by_msg_type():
-    for msg_type, fields in six.iteritems(gpsd_format._schema_def.fields_by_msg_type):
-        for version, definition in six.iteritems(gpsd_format._schema_def.VERSIONS):
+    for msg_type, fields in six.iteritems(gpsdio._schema_def.fields_by_msg_type):
+        for version, definition in six.iteritems(gpsdio._schema_def.VERSIONS):
             for f in fields:
                 assert f in definition

@@ -1,7 +1,7 @@
 """Read and write the GPSD format.
 
 The API mimics that of csv.DictReader/DictWriter and uses
-gpsd_format.schema to get schema details.
+`gpsdio.schema` to get schema details.
 """
 
 
@@ -13,7 +13,7 @@ from . import drivers
 from . import schema
 
 
-log = logging.getLogger('gpsd_format_core')
+log = logging.getLogger('gpsdio_core')
 
 
 builtin_open = open

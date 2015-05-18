@@ -1,5 +1,5 @@
 """
-Unittests for: gpsd_format.validate
+Unittests for: `gpsdio.validate`
 """
 
 
@@ -13,17 +13,17 @@ import unittest
 import six
 
 from . import cmdtest
-import gpsd_format
-import gpsd_format.cli
-import gpsd_format.schema
-import gpsd_format.validate
+import gpsdio
+import gpsdio.cli
+import gpsdio.schema
+import gpsdio.validate
 
 
 class TestInfoDetails(cmdtest.CmdTest):
 
     def test_extend(self):
         data = {"foo": 1}
-        self.assertDictEqual(data, gpsd_format.validate.merge_info({}, data))
+        self.assertDictEqual(data, gpsdio.validate.merge_info({}, data))
         d1 = {
             'num_rows': 3,
             'num_incomplete_rows': 1,
@@ -87,7 +87,7 @@ class TestInfoDetails(cmdtest.CmdTest):
             'num_rows': 8
             }
 
-        self.assertDictEqual(expected, gpsd_format.validate.merge_info(d1, d2))
+        self.assertDictEqual(expected, gpsdio.validate.merge_info(d1, d2))
 
 
 class TestInfo(cmdtest.CmdTest):
@@ -97,7 +97,7 @@ class TestInfo(cmdtest.CmdTest):
     epoch = datetime.datetime(1970, 1, 1)
 
     def _random_row(self):
-        msg_types = list(gpsd_format.schema.fields_by_msg_type.keys())
+        msg_types = list(gpsdio.schema.fields_by_msg_type.keys())
         msg_type = msg_types[random.randint(0, len(msg_types) - 1)]
 
         return {
@@ -164,7 +164,7 @@ class TestInfo(cmdtest.CmdTest):
     def test_sorted(self):
         infile = os.path.join(self.dir, "rows.mmsi=123.msg")
         with open(infile, "w") as f:
-            w = gpsd_format.open(f, 'w')
+            w = gpsdio.open(f, 'w')
             for row in self.rows:
                 w.write(row)
             for x in six.moves.range(0, self.num_invalid_rows):
@@ -179,7 +179,7 @@ class TestInfo(cmdtest.CmdTest):
         self.rows[0:2] = [self.rows[1], self.rows[0]]
         infile = os.path.join(self.dir, "rows.mmsi=123.msg")
         with open(infile, "w") as f:
-            w = gpsd_format.open(f, 'w')
+            w = gpsdio.open(f, 'w')
             for row in self.rows:
                 w.write(row)
             for x in six.moves.range(0, self.num_invalid_rows):
@@ -194,7 +194,7 @@ class TestInfo(cmdtest.CmdTest):
     def test_nonjson(self):
         infile = os.path.join(self.dir, "rows.mmsi=123.msg")
         with open(infile, "w") as f:
-            w = gpsd_format.open(f, 'w')
+            w = gpsdio.open(f, 'w')
             for row in self.rows:
                 w.write(row)
             for x in six.moves.range(0, self.num_invalid_rows):
@@ -209,27 +209,27 @@ class TestInfo(cmdtest.CmdTest):
 class TestValidateMessage(unittest.TestCase):
 
     def test_all_types(self):
-        for msg_type, msg_fields in gpsd_format.schema.fields_by_msg_type.items():
+        for msg_type, msg_fields in gpsdio.schema.fields_by_msg_type.items():
 
             # Check type field individually since the other tests force it to be correct
-            assert not gpsd_format.schema.validate_msg({'field': 'val'})
+            assert not gpsdio.schema.validate_msg({'field': 'val'})
 
-            for value in gpsd_format.schema.CURRENT['type']['bad']:
-                assert not gpsd_format.schema.validate_msg(
+            for value in gpsdio.schema.CURRENT['type']['bad']:
+                assert not gpsdio.schema.validate_msg(
                     {'type': value})
 
             # Construct a good message
-            num_alterantives = max(*[len(gpsd_format.schema.CURRENT[f]['good'])
+            num_alterantives = max(*[len(gpsdio.schema.CURRENT[f]['good'])
                                      for f in msg_fields
-                                     if f != 'type' and 'good' in gpsd_format.schema.CURRENT[f]])
+                                     if f != 'type' and 'good' in gpsdio.schema.CURRENT[f]])
 
             for alt in xrange(0, num_alterantives):
-                good_message = gpsd_format.schema.get_default_msg(int(msg_type))
-                good_message.update({f: gpsd_format.schema.CURRENT[f]['good'][alt]
+                good_message = gpsdio.schema.get_default_msg(int(msg_type))
+                good_message.update({f: gpsdio.schema.CURRENT[f]['good'][alt]
                                      for f in msg_fields
-                                     if f != 'type' and 'good' in gpsd_format.schema.CURRENT[f] and len(gpsd_format.schema.CURRENT[f]['good']) > alt})
+                                     if f != 'type' and 'good' in gpsdio.schema.CURRENT[f] and len(gpsdio.schema.CURRENT[f]['good']) > alt})
 
-                assert gpsd_format.schema.validate_msg(good_message), \
+                assert gpsdio.schema.validate_msg(good_message), \
                     "Supposed 'good' msg failed validation: %s" % good_message
 
             # Creating a bad message from all of the bad values is an insufficient test because the validator
@@ -237,9 +237,9 @@ class TestValidateMessage(unittest.TestCase):
             # Every field is checked in every message and every bad field is logged but we can't validate individual
             # fields without taking a good message and then changing one field at a time to a bad field.
             for field in msg_fields:
-                if field != 'type' 'bad' in gpsd_format.schema.CURRENT[field]:
-                    for value in gpsd_format.schema.CURRENT[field]['bad']:
+                if field != 'type' 'bad' in gpsdio.schema.CURRENT[field]:
+                    for value in gpsdio.schema.CURRENT[field]['bad']:
                         bad_message = good_message.copy()
                         bad_message[field] = value
-                        assert not gpsd_format.schema.validate_msg(bad_message), \
+                        assert not gpsdio.schema.validate_msg(bad_message), \
                             "Field `%s' should have caused message to fail: %s" % (field, bad_message)

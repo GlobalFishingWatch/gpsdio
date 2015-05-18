@@ -9,7 +9,7 @@ from . import validate
 __version__ = '0.2'
 __author__ = 'Egil Moeller, Kevin Wurster'
 __email__ = 'egil@skytruth.org, kevin@skytruth.org'
-__source__ = 'https://github.com/SkyTruth/gpsd_format.git'
+__source__ = 'https://github.com/SkyTruth/gpsdio'
 __license__ = """
 Copyright 2014-2015 SkyTruth
 Authors:
