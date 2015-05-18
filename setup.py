@@ -2,6 +2,22 @@
 
 
 from setuptools import setup
+from setuptools.command.test import test as TestCommand
+
+
+# From http://fgimian.github.io/blog/2014/04/27/running-nose-tests-with-plugins-using-the-python-setuptools-test-command/
+# and https://pytest.org/latest/goodpractises.html
+class NoseTestCommand(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        # Run nose ensuring that argv simulates running nosetests directly
+        import nose
+        nose.run_exit(argv=['nosetests'])
+
 
 
 with open('requirements.txt') as f:
@@ -28,6 +44,7 @@ with open('gpsdio/__init__.py') as f:
 
 setup(
     name="gpsdio",
+    cmdclass={'test': NoseTestCommand},
     description="A library and command line tool to read, write and validate "
                 "AIS and GPS messages in the GPSD JSON format (or the same format in a msgpack container).",
     keywords="gpsd",
