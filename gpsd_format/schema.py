@@ -200,7 +200,7 @@ def import_msg(row, skip_failures=False, cast_values=False):
                 output[field] = import_functions[field](val)
             except Exception as e:
                 if not skip_failures:
-                    raise Exception("%s: %s: %s" % (field, type(e), e))
+                    raise Exception("%s=%s: %s: %s" % (field, repr(val), type(e), e))
                 if '__invalid__' not in output:
                     output['__invalid__'] = {}
                 output['__invalid__'][field] = val
