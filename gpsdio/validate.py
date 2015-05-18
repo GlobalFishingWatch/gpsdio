@@ -9,7 +9,7 @@ import re
 
 import six
 
-import gpsd_format.schema
+import gpsdio.schema
 
 
 def merge_info(info_a, info_b):
@@ -214,12 +214,12 @@ def collect_info(input, error_cb=None):
                     stats['is_sorted'] = False
 
             # num_invalid_rows
-            gpsd_format.schema.validate_msg(row, ignore_missing=True, skip_failures=True)
+            gpsdio.schema.validate_msg(row, ignore_missing=True, skip_failures=True)
             if '__invalid__' in row:
                 stats['num_invalid_rows'] += 1
                 if error_cb:
                     error_cb("invalid", row)
-            elif not gpsd_format.schema.validate_msg(row, skip_failures=True):
+            elif not gpsdio.schema.validate_msg(row, skip_failures=True):
                 stats['num_incomplete_rows'] += 1
                 if error_cb:
                     error_cb("incomplete", row)

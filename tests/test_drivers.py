@@ -1,5 +1,5 @@
 """
-Unittests for gpsd_format.drivers
+Unittests for `gpsdio.drivers`.
 """
 
 
@@ -9,7 +9,7 @@ import itertools
 import tempfile
 
 from . import compare_msg
-from gpsd_format import drivers
+from gpsdio import drivers
 from .sample_files import *
 
 

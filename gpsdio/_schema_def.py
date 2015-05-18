@@ -1,5 +1,5 @@
 """
-The schema definitions are very long and make reading gpsd_format/schema.py difficult
+The schema definitions are very long and make reading `gpsdio/schema.py` difficult
 """
 
 
