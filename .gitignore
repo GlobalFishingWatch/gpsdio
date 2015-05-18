@@ -10,3 +10,4 @@ dist
 *.msg
 *.json
 *.msgpack
+.eggs/

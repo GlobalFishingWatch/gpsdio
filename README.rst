@@ -36,7 +36,7 @@ Developing
     $ virtualenv venv
     $ source venv/bin/activate
     $ pip install -e .
-    $ nosetests --with-coverage
+    $ nosetests --with-coverage -I test_compatibility
 
 
 Command line tools
