@@ -16,6 +16,7 @@ import gpsd_format.schema
 import gpsd_format.validate
 
 
+logging.basicConfig()
 logger = logging.getLogger('gpsd_format_cli')
 
 
