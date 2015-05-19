@@ -182,10 +182,10 @@ class NewlineJSON(FileDriver):
     compression = False
 
     def reader(self, f, *args, **kwargs):
-        return newlinejson.Reader(f)
+        return newlinejson.open(f)
 
     def writer(self, f, *args, **kwargs):
-        return newlinejson.Writer(f)
+        return newlinejson.open(f, 'w')
 
     @property
     def closed(self):
