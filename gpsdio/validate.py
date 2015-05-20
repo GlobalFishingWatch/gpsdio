@@ -199,17 +199,17 @@ def collect_info(input, error_cb=None):
                     stats['msg_type_hist'][row['type']] = 1
 
             # min_timestamp
-            if 'timestamp' in row and (stats['min_timestamp'] is None or row['timestamp'] < stats['min_timestamp']):
+            if row.get('timestamp', None) and (stats['min_timestamp'] is None or row['timestamp'] < stats['min_timestamp']):
                 stats['min_timestamp'] = row['timestamp']
 
             # max_timestamp
-            if 'timestamp' in row and (stats['max_timestamp'] is None or row['timestamp'] > stats['max_timestamp']):
+            if row.get('timestamp', None) and (stats['max_timestamp'] is None or row['timestamp'] > stats['max_timestamp']):
                 stats['max_timestamp'] = row['timestamp']
 
             # is_sorted
             # This only executes if stats['is_sorted'] = True in order to gain
             # a little optimization.  No need to test if we already know its not sorted.
-            if previous_timestamp is not None and stats['is_sorted'] and 'timestamp' in row:
+            if previous_timestamp is not None and stats['is_sorted'] and row.get('timestamp', None):
                 if not row['timestamp'] >= previous_timestamp:
                     stats['is_sorted'] = False
 
@@ -224,7 +224,7 @@ def collect_info(input, error_cb=None):
                 if error_cb:
                     error_cb("incomplete", row)
 
-            if 'timestamp' in row:
+            if row.get('timestamp', None):
                 previous_timestamp = row['timestamp']
 
         # Encountered an error - keep track of how many
