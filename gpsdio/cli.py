@@ -17,6 +17,7 @@ import gpsdio.schema
 import gpsdio.validate
 
 
+logging.basicConfig()
 logger = logging.getLogger('gpsdio_cli')
 
 
