@@ -3,6 +3,7 @@ Commandline interface for `gpsdio`.
 """
 
 
+import code
 import datetime
 import json
 import logging
@@ -13,6 +14,7 @@ import click
 import six
 
 import gpsdio
+import gpsdio.drivers
 import gpsdio.schema
 import gpsdio.validate
 
@@ -21,14 +23,69 @@ logging.basicConfig()
 logger = logging.getLogger('gpsdio_cli')
 
 
+def _cb_key_val(ctx, param, value):
+
+    """
+    Some options like `-ro` take `key=val` pairs that need to be transformed
+    into `{'key': 'val}`.  This function can be used as a callback to handle
+    all options for a specific flag, for example if the user specifies 3 reader
+    options like `-ro key1=val1 -ro key2=val2 -ro key3=val3` then `click` uses
+    this function to produce `{'key1': 'val1', 'key2': 'val2', 'key3': 'val3'}`.
+    Parameters
+    ----------
+    ctx : click.Context
+        Ignored
+    param : click.Option
+        Ignored
+    value : tuple
+        All collected key=val values for an option.
+    Returns
+    -------
+    dict
+    """
+
+    output = {}
+    for pair in value:
+        if '=' not in pair:
+            raise click.BadParameter("incorrect syntax for KEY=VAL argument: `%s'" % pair)
+        else:
+            key, val = pair.split('=')
+            output[key] = val
+
+    return output
+
+
 @click.group()
+@click.option(
+    '--input-driver', metavar='NAME', default=None, help='Specify the input driver.',
+    type=click.Choice(list(gpsdio.drivers.BaseDriver.by_name.keys()))
+)
+@click.option(
+    '--output-driver', metavar='NAME', default=None, help='Specify the output driver.',
+    type=click.Choice(list(gpsdio.drivers.BaseDriver.by_name.keys()))
+)
+@click.option(
+    '--input-compression', metavar='NAME', default=None,
+    help='Specify the compression format for the input data.',
+    type=click.Choice(list(gpsdio.drivers.BaseCompressionDriver.by_name.keys()))
+)
+@click.option(
+    '--output-compression', metavar='NAME', default=None,
+    help='Specify the compression format for the output data.',
+    type=click.Choice(list(gpsdio.drivers.BaseCompressionDriver.by_name.keys()))
+)
 @click.pass_context
-def main(ctx):
+def main(ctx, input_driver, output_driver, input_compression, output_compression):
     """
     A collection of tools for working with the GPSD JSON format (or the same format in a msgpack container)
     """
 
-    pass
+    ctx.obj = {
+        'i_driver': input_driver,
+        'o_driver': output_driver,
+        'i_compression': input_compression,
+        'o_compression': output_compression
+    }
 
 
 @main.command()
@@ -141,3 +198,77 @@ def convert(ctx, infile, outfile):
         with gpsdio.open(outfile, 'w') as writer:
             for row in reader:
                 writer.write(row)
+
+
+@main.command()
+@click.argument('infile', required=True)
+@click.pass_context
+def cat(ctx, infile):
+
+    """
+    Print messages to stdout as JSON.
+    """
+
+    with gpsdio.open(infile, driver=ctx.obj['i_driver'],
+                     compression=ctx.obj['i_compression']) as src, \
+            gpsdio.open('-', 'w', driver='NewlineJSON') as dst:
+        for msg in src:
+            dst.write(msg)
+
+
+@main.command()
+@click.argument('outfile', required=True)
+@click.pass_context
+def load(ctx, outfile):
+
+    """
+    Load messages from stdin into a file.
+    """
+
+    with gpsdio.open('-', driver='NewlineJSON', compression=False) as src, \
+            gpsdio.open(outfile, 'w', driver=ctx.obj['o_driver'],
+                        compression=ctx.obj['o_compression']) as dst:
+        for msg in src:
+            dst.write(msg)
+
+
+@main.command()
+@click.argument('infile', required=True)
+@click.option(
+    '--no-ipython', 'use_ipython', is_flag=True, default=True,
+    help="Don't use IPython, even if it is available."
+)
+@click.pass_context
+def insp(ctx, infile, use_ipython):
+
+    # A good idea borrowed from Fiona and Rasterio
+
+    """
+    Open a dataset in interactive mode.
+
+    IPython will be used if it can be imported and `--no-ipython` was not supplied.
+    """
+
+    header = os.linesep.join((
+        "gpsdio %s Interactive Inspector Session (Python %s)"
+        % (gpsdio.__version__, '.'.join(map(str, sys.version_info[:3]))),
+        "Try `help(stream)` or `next(stream)`."
+    ))
+
+    with gpsdio.open(infile, driver=ctx.obj['i_driver'],
+                     compression=ctx.obj['i_compression']) as src:
+
+        scope = {
+            'stream': src,
+            'gpsdio': gpsdio
+        }
+
+        try:
+            import IPython
+        except ImportError:
+            IPython = None
+
+        if use_ipython and IPython is not None:
+            IPython.embed(header=header, user_ns=scope)
+        else:
+            code.interact(header, local=scope)

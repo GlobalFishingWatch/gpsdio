@@ -6,6 +6,7 @@ The API mimics that of csv.DictReader/DictWriter and uses
 
 
 import logging
+import sys
 
 import six
 
@@ -51,6 +52,12 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
     Stream
         A loaded instance of stream ready for I/O operations.
     """
+
+    if path == '-' and 'r' in mode or 'a' in mode:
+        path = sys.stdin
+    elif path == '-' and 'w' in mode or 'a' in mode:
+        path = sys.stdout
+
     do = do or {}  # Driver options
     co = co or {}  # Compression options
     dmode = dmode or mode  # Driver mode
