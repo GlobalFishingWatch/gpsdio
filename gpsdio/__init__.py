@@ -1,4 +1,6 @@
 # encoding:utf-8
+
+
 """Tools for working with the GPSD format in JSON or msgpack."""
 
 from .core import open
@@ -6,15 +8,15 @@ from . import schema
 from . import validate
 
 
-__version__ = '0.2'
-__author__ = 'Egil Moeller, Kevin Wurster'
-__email__ = 'egil@skytruth.org, kevin@skytruth.org'
+__version__ = '0.0.1'
+__author__ = 'Kevin Wurster, Egil Moeller'
+__email__ = 'kevin@skytruth.org, egil@skytruth.org, '
 __source__ = 'https://github.com/SkyTruth/gpsdio'
 __license__ = """
 Copyright 2014-2015 SkyTruth
 Authors:
-Egil Möller <egil@skytruth-org>
 Kevin Wurster <kevin@skytruth.org>
+Egil Möller <egil@skytruth-org>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
