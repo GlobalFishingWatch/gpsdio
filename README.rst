@@ -1,14 +1,13 @@
-===========
 GPSD Format
 ===========
 
 
-.. image:: https://travis-ci.org/SkyTruth/gpsd_format.svg?branch=master
-    :target: https://travis-ci.org/SkyTruth/gpsd_format
+.. image:: https://travis-ci.org/SkyTruth/gpsdio.svg?branch=master
+    :target: https://travis-ci.org/SkyTruth/gpsdio
 
 
-.. image:: https://coveralls.io/repos/SkyTruth/gpsd_format/badge.svg?branch=master
-    :target: https://coveralls.io/r/SkyTruth/gpsd_format
+.. image:: https://coveralls.io/repos/SkyTruth/gpsdio/badge.svg?branch=master
+    :target: https://coveralls.io/r/SkyTruth/gpsdio
 
 
 A collection of tools for working with the GPSD JSON format (or the same format in a msgpack container).
@@ -20,49 +19,51 @@ Currently only a subset of message types are supported.
 
 
 Installation
-============
+------------
 
 .. code-block:: console
 
-    $ pip install https://github.com/skytruth/gpsd_format
+    $ pip install https://github.com/skytruth/gpsdio
 
 
 Developing
-==========
+----------
 
 .. code-block:: console
 
-    $ git clone https://github.com/SkyTruth/gpsd_format.git
-    $ cd gpsd_format
+    $ git clone https://github.com/SkyTruth/gpsdio.git
+    $ cd gpsdio
     $ virtualenv venv
     $ source venv/bin/activate
     $ pip install -e .
-    $ nosetests --with-coverage
+    $ nosetests --with-coverage -I test_compatibility
+
 
 Command line tools
-=================
+------------------
 
 .. code-block:: console
 
-    $ gpsd_format validate FILENAME.msg
-    $ gpsd_format validate FILENAME.json
-    $ gpsd_format convert FILENAME.msg FILENAME.json
-    $ gpsd_format convert FILENAME.json FILENAME.msg
+    $ gpsdio validate FILENAME.msg
+    $ gpsdio validate FILENAME.json
+    $ gpsdio convert FILENAME.msg FILENAME.json
+    $ gpsdio convert FILENAME.json FILENAME.msg
+
 
 API
-===
-open
---------
+---
+
+Opening a file:
 
 .. code-block:: python
 
-    with gpsd_format.open('infile.msg') as src:
+    with gpsdio.open('infile.msg') as src:
         for msg in src:
             print msg
 
 .. code-block:: python
 
-    with gpsd_format.open('outfile.msg', 'w') as dst:
+    with gpsdio.open('outfile.msg', 'w') as dst:
         dst.write(msg)
 
 Opens a file containing gpsd format data in any of the supported container formats and optionally compressed. The returned object can be used as a context manager, and in read mode it works as an iterator over the messages in the file.
@@ -71,7 +72,7 @@ Currently supported container formats are newline delimited JSON and MsgPack and
 
 .. code-block:: python
 
-    with gpsd_format.open('infile.msg.gz', co={'compresslevel': 9}) as src:
+    with gpsdio.open('infile.msg.gz', co={'compresslevel': 9}) as src:
         for msg in src:
             pass
 
@@ -79,19 +80,19 @@ Additionally, some drivers and compression formats support additional modes that
 
 .. code-block:: python
 
-    with gpsd_format.open('outfile.msg.gz', 'w', cmode='wb') as dst:
+    with gpsdio.open('outfile.msg.gz', 'w', cmode='wb') as dst:
         dst.write(msg)
 
 Simple Conversion Examples
-----------------------------------------
+--------------------------
 
 Read from newline delimited JSON and write to GZIP compressed MsgPack:
 
 .. code-block:: python
 
-    import gpsd_format
-    with gpsd_format.open('input.json') as src:
-        with gpsd_format.open('output.msg.gz', 'w') as dst:
+    import gpsdio
+    with gpsdio.open('input.json') as src:
+        with gpsdio.open('output.msg.gz', 'w') as dst:
             for msg in src:
                 dst.write(msg)
 
@@ -99,20 +100,20 @@ Read MsgPack compressed with GZIP and write to newline JSON with XZ compression 
 
 .. code-block:: python
 
-    import gpsd_format
-    with gpsd_format.open('input', driver='msgpack', compression='gzip') as src:
-        with gpsd_format.open('output', 'w', driver='newlinejson', compression='xz'):
+    import gpsdio
+    with gpsdio.open('input', driver='msgpack', compression='gzip') as src:
+        with gpsdio.open('output', 'w', driver='newlinejson', compression='xz'):
             for msg in src:
                 dst.write(msg)
 
 Stream
------------
+------
 
-A file-like object that reads, writes, and validates GPSD data. This is the type of object returned by `gpsd_format.open()`.
+A file-like object that reads, writes, and validates GPSD data. This is the type of object returned by ``gpsdio.open()``.
 
-When reading and writing `Stream()` can perform message manipulation and validation to ensure more uniform data - there are several key flags that change how `Stream()` reads and writes data:
+When reading and writing ``Stream()`` can perform message manipulation and validation to ensure more uniform data - there are several key flags that change how ``Stream()`` reads and writes data:
 
-* `skip_failures` : Bad field values are moved to a sub-object of the message under the key '__invalid__', and any parser or validation errors are recorded under the same key instead of raising exceptions.
-* `force_msg` : On read and write force the message being handled to be GPSD compliant by removing fields that do not belong and adding missing fields with default values.
-* `keep_fields` : On read and write don't remove unrecognized fields. Use together with `force_msg` to only add missing fields.
-* `convert` : When reading import date/time fields into an instance of `datetime.datetime` and export to a string when writing.  This can be expensive so if you can work with the dates and times as strings it is best to set this to `False`.
+* ``skip_failures`` : Bad field values are moved to a sub-object of the message under the key '__invalid__', and any parser or validation errors are recorded under the same key instead of raising exceptions.
+* ``force_msg`` : On read and write force the message being handled to be GPSD compliant by removing fields that do not belong and adding missing fields with default values.
+* ``keep_fields`` : On read and write don't remove unrecognized fields. Use together with ``force_msg`` to only add missing fields.
+* ``convert`` : When reading import date/time fields into an instance of ``datetime.datetime`` and export to a string when writing.  This can be expensive so if you can work with the dates and times as strings it is best to set this to `False`.

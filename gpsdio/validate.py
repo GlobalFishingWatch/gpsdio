@@ -9,7 +9,7 @@ import re
 
 import six
 
-import gpsd_format.schema
+import gpsdio.schema
 
 
 def merge_info(info_a, info_b):
@@ -199,32 +199,32 @@ def collect_info(input, error_cb=None):
                     stats['msg_type_hist'][row['type']] = 1
 
             # min_timestamp
-            if 'timestamp' in row and (stats['min_timestamp'] is None or row['timestamp'] < stats['min_timestamp']):
+            if row.get('timestamp', None) and (stats['min_timestamp'] is None or row['timestamp'] < stats['min_timestamp']):
                 stats['min_timestamp'] = row['timestamp']
 
             # max_timestamp
-            if 'timestamp' in row and (stats['max_timestamp'] is None or row['timestamp'] > stats['max_timestamp']):
+            if row.get('timestamp', None) and (stats['max_timestamp'] is None or row['timestamp'] > stats['max_timestamp']):
                 stats['max_timestamp'] = row['timestamp']
 
             # is_sorted
             # This only executes if stats['is_sorted'] = True in order to gain
             # a little optimization.  No need to test if we already know its not sorted.
-            if previous_timestamp is not None and stats['is_sorted'] and 'timestamp' in row:
+            if previous_timestamp is not None and stats['is_sorted'] and row.get('timestamp', None):
                 if not row['timestamp'] >= previous_timestamp:
                     stats['is_sorted'] = False
 
             # num_invalid_rows
-            gpsd_format.schema.validate_msg(row, ignore_missing=True, skip_failures=True)
+            gpsdio.schema.validate_msg(row, ignore_missing=True, skip_failures=True)
             if '__invalid__' in row:
                 stats['num_invalid_rows'] += 1
                 if error_cb:
                     error_cb("invalid", row)
-            elif not gpsd_format.schema.validate_msg(row, skip_failures=True):
+            elif not gpsdio.schema.validate_msg(row, skip_failures=True):
                 stats['num_incomplete_rows'] += 1
                 if error_cb:
                     error_cb("incomplete", row)
 
-            if 'timestamp' in row:
+            if row.get('timestamp', None):
                 previous_timestamp = row['timestamp']
 
         # Encountered an error - keep track of how many

@@ -1,4 +1,4 @@
-"""Unittests for gpsd_format."""
+"""Unittests for `gpsdio`."""
 
 
 from . import *

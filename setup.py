@@ -2,6 +2,22 @@
 
 
 from setuptools import setup
+from setuptools.command.test import test as TestCommand
+
+
+# From http://fgimian.github.io/blog/2014/04/27/running-nose-tests-with-plugins-using-the-python-setuptools-test-command/
+# and https://pytest.org/latest/goodpractises.html
+class NoseTestCommand(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        # Run nose ensuring that argv simulates running nosetests directly
+        import nose
+        nose.run_exit(argv=['nosetests'])
+
 
 
 with open('requirements.txt') as f:
@@ -12,7 +28,7 @@ version = None
 author = None
 email = None
 source = None
-with open('gpsd_format/__init__.py') as f:
+with open('gpsdio/__init__.py') as f:
     for line in f:
         if line.strip().startswith('__version__'):
             version = line.split('=')[1].strip().replace('"', '').replace("'", '')
@@ -27,7 +43,8 @@ with open('gpsd_format/__init__.py') as f:
 
 
 setup(
-    name="gpsd_format",
+    name="gpsdio",
+    cmdclass={'test': NoseTestCommand},
     description="A library and command line tool to read, write and validate "
                 "AIS and GPS messages in the GPSD JSON format (or the same format in a msgpack container).",
     keywords="gpsd",
@@ -41,12 +58,12 @@ setup(
     author="Egil Moeller, Kevin Wurster",
     author_email="egil@skytruth.org, kevin@skytruth.org",
     license="GPL",
-    url="https://github.com/SkyTruth/gpsd_format",
+    url="https://github.com/SkyTruth/gpsdio",
     include_package_data=True,
     install_requires=install_requires,
-    packages=['gpsd_format'],
+    packages=['gpsdio'],
     entry_points='''
         [console_scripts]
-        gpsd_format=gpsd_format.cli:main
+        gpsdio=gpsdio.cli:main
     '''
 )
