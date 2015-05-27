@@ -5,10 +5,13 @@ Drivers for reading and writing a variety of formats and compression.
 """
 
 
-from .pycompat import *
+import bz2
+from codecs import open as codecs_open
+import gzip
 
 import msgpack
 import newlinejson
+import six
 import ujson
 
 
@@ -21,7 +24,7 @@ def get_driver(name):
     Accepts a string and returns the driver class associated with that name.
     """
 
-    if name in BaseDriver.by_name and not BaseDriver.by_name[name].compression:
+    if name in BaseDriver.by_name:
         return BaseDriver.by_name[name]
     else:
         raise ValueError("Unrecognized driver name: %s" % name)
@@ -33,8 +36,8 @@ def get_compression(name):
     Accepts a string and returns the driver class associated with that name.
     """
 
-    if name in BaseDriver.by_name and BaseDriver.by_name[name].compression:
-        return BaseDriver.by_name[name]
+    if name in BaseCompressionDriver.by_name:
+        return BaseCompressionDriver.by_name[name]
     else:
         raise ValueError("Unrecognized compression name: %s" % name)
 
@@ -46,7 +49,7 @@ def detect_file_type(path):
     """
 
     for ext in path.split('.')[-2:]:
-        if ext in BaseDriver.by_extension and not BaseDriver.by_extension[ext].compression:
+        if ext in BaseDriver.by_extension:
             return BaseDriver.by_extension[ext]
     else:
         raise ValueError("Can't determine driver: %s" % path)
@@ -59,62 +62,79 @@ def detect_compression_type(path):
     """
 
     ext = path.rpartition('.')[-1]
-    if ext in BaseDriver.by_extension and BaseDriver.by_extension[ext].compression:
-        return BaseDriver.by_extension[ext]
+    if ext in BaseCompressionDriver.by_extension:
+        return BaseCompressionDriver.by_extension[ext]
     else:
         raise ValueError("Can't determine compression: %s" % path)
 
-class BaseDriver(object):
+
+class _RegisterDriver(type):
+
+    """
+    Keep track of drivers, their names, and extensions for easy retrieval later.
+    """
+
+    def __init__(driver, name, bases, members):
+        # TODO: Add validation.  What methods are required?
+        """
+        Register drivers by name in one dictionary and by extension in another.
+        """
+
+        type.__init__(driver, name, bases, members)
+        if members.get('register', True):
+            driver.by_name[driver.driver_name] = driver
+            for ext in driver.extensions:
+                driver.by_extension[ext] = driver
+
+
+class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
+
+    """
+    Provides driver registration and the baseline methods required for driver
+    operation.  All other non-compression drivers must subclass this class if
+    they want to be registered.  Compression drivers should subclass
+    `BaseCompressionDriver()`.
+
+
+    Creating a driver
+    -----------------
+
+    Generally speaking drivers behave just like an instance of `file`, except
+    they operate on data stored in a very specific way.  Drivers must handle file
+    opening, closing, reading, and writing, and must pass an object that behaves
+    like `file` to `BaseDriver.__init__()`.  The really critical methods are
+    `__iter__()` and `write()`.  The former must yield one dictionary per
+    iteration and the latter must accept a dictionary and write it to disk.
+
+    See the `NewlineJSON()` driver for an example of a really simple driver
+    and the `MsgPack()` driver for one that is more complex.
+    """
+
     by_name = {}
     by_extension = {}
-
     register = False
+    io_modes = ('r', 'w', 'a')
 
-    class __metaclass__(type):
-        def __init__(driver, name, bases, members):
-            type.__init__(driver, name, bases, members)
-            if members.get('register', True):
-                driver.register_driver()
+    def __init__(self, stream):
 
-        def register_driver(driver):
-            driver.validate_driver()
-            BaseDriver.by_name[driver.driver_name] = driver
-            for ext in driver.extensions:
-                BaseDriver.by_extension[ext] = driver
+        """
+        Creates an object that transparently interacts with all supported drivers
+        by calling `stream`'s methods.
 
-        def validate_driver(driver):
-            assert isinstance(driver.driver_name, str)
-            assert isinstance(driver.extensions, (tuple, list))
-            assert isinstance(driver.modes, (tuple, list))
-            for attr in (
-                    '__iter__', '__next__', 'read', 'write', 'modes', 'name', 'write', 'close', 'closed', 'read'):
-                assert hasattr(driver, attr)
+        Parameters
+        ----------
+        stream : <object>
+            An object provided by a driver that behaves like `file`.
+        """
 
-            return True
-
-    def __init__(self, f, mode='r', modes=None, name=None, **kwargs):
-        self._f = f
-        self._modes = modes
-        self._mode = mode
-        self._name = name
-        self.obj = None
-        if self._name is None:
-            if isinstance(f, (str, unicode)):
-                self._name = f
-            else:
-                self._name = getattr(f, 'name', None)
+        self._stream = stream
 
     def __repr__(self):
-        return "<%s driver %s, mode '%s', connected to '%r' at %s>" % (
+        return "<%s driver %s, mode '%s'>" % (
             'closed' if self.closed else 'open',
-            self.name,
-            self.mode,
-            self.obj,
-            hex(id(self))
+            self.driver_name,
+            self.mode
         )
-
-    def __iter__(self):
-        return self
 
     def __enter__(self):
         return self
@@ -122,171 +142,272 @@ class BaseDriver(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
+    def __iter__(self):
+        return iter(self.stream)
+
+    @property
+    def stream(self):
+
+        """
+        A handle to the underlying file-like object.  This can range from simply
+        being an instance of `file()` to being an instance of a compression
+        driver, which in turn has a `stream` property that is a driver class etc.
+        """
+
+        return self._stream
+
     def next(self):
-        return next(self.obj)
+
+        """
+        This method must be explicitly defined, otherwise the `__getattr__()`
+        method will return the `stream`'s `next()` method, which is not in the
+        same namespace as `__iter__()` so this class will appear to have the
+        necessary methods to be an iterator but will raise exceptions when
+        iterated over.
+        """
+
+        return next(self.stream)
 
     __next__ = next
 
-    @property
-    def modes(self):
-        return self._modes
+    def __getattr__(self, item):
 
-    @property
-    def mode(self):
-        return self._mode
+        """
+        For all other methods, just get it from the underlying `stream`.
+        """
 
-    @property
-    def name(self):
-        return self._name
-
-    def write(self, msg, **kwargs):
-        return self.obj.write(msg, **kwargs)
-
-    @property
-    def closed(self):
-        return self.obj.closed
-
-    def close(self):
-        self.obj.close()
-
-    def read(self, size):
-        return self.obj.read(size)
+        return getattr(self.stream, item)
 
 
-class FileDriver(BaseDriver):
-    register = False
+class NewlineJSON(BaseDriver):
 
-    def __init__(self, *args, **kwargs):
-        BaseDriver.__init__(self, *args, **kwargs)
+    """
+    Driver for accessing data stored as newline delimited JSON.
+    """
 
-        if isinstance(self._f, string_types):
-            self._f = open(self._f, mode=self.mode)
-
-        if self.mode == 'r':
-            self.obj = self.reader(self._f, **kwargs)
-        elif self.mode in ('w', 'a'):
-            self.obj = self.writer(self._f, **kwargs)
-        else:
-            raise ValueError(
-                "Mode `%s' is unsupported for driver %s: %s" % (self.mode, self.name, ', '.join(self.modes)) if self.modes else None)
-
-    def close(self):
-        self.obj.close()
-        self._f.close()
-
-
-class NewlineJSON(FileDriver):
-    driver_name = 'newlinejson'
+    driver_name = 'NewlineJSON'
     extensions = ('json', 'nljson')
-    modes = ('r', 'w', 'a')
-    compression = False
 
-    def reader(self, f, *args, **kwargs):
-        return newlinejson.open(f)
+    def __init__(self, f, mode='r', **kwargs):
 
-    def writer(self, f, *args, **kwargs):
-        return newlinejson.open(f, 'w')
+        """
+        The object returned by `newlinejson.open()` has all of the methods
+        required by `BaseDriver()` so this constructor is pretty sparse.  The
+        `newlinejson.open()` function handles all of the file opening/closing
+        and the returned object is passed directly to `BaseDriver()`.
 
-    @property
-    def closed(self):
-        return self._f.closed
+        Parameters
+        ----------
+        f : str or `newlinejson.Stream()`
+            Path to a file that can be opened by `newlinejson.open()` or a fully
+            instantiated `newlinejson.Stream()` object.
+        mode : str, optional
+            I/O mode for `newlinejson.open()`.
+        kwargs : **kwargs, optional
+            Additional keyword arguments for `newlinejson.open()`.
+        """
 
-    def close(self):
-        self._f.close()
+        BaseDriver.__init__(
+            self,
+            newlinejson.open(f, mode=mode, **kwargs)
+        )
 
 
-class MsgPack(FileDriver):
-    driver_name = 'msgpack'
+class MsgPack(BaseDriver):
+
+    """
+    Driver for accessing data stored as MsgPack.
+    """
+
+    driver_name = 'MsgPack'
     extensions = ('msg', 'msgpack')
-    modes = ('r', 'w', 'a')
-    compression = False
 
+    class _MsgPackWriter(object):
 
-    class MsgPackWriter(object):
-        def __init__(self, f, mode='r', **kwargs):
+        """
+        A helper class to give this driver a `write()` method.  MsgPack doesn't
+        offer a file-like object for writing and expects the user to do this:
+
+            >>> import msgpack
+            >>> packer = msgpack.Packer()
+            >>> with open('out.msg', 'w') as f:
+            ...     f.write(packer.pack({'key': 'val'}))
+
+        which doesn't fit into the `gpsdio` driver model.
+        """
+
+        def __init__(self, f, **kwargs):
+
+            """
+            Store the properties required to make this thing work.
+
+            Parameters
+            ----------
+            f : file
+                A file-like object open for writing.
+            kwargs : **kwargs, optional
+                Additional keyword arguments for `msgpack.Packer()`.
+            """
+
+            self._packer = msgpack.Packer(**kwargs)
             self._f = f
-            self.packer = msgpack.Packer(**kwargs)
 
         def write(self, msg):
-            self._f.write(self.packer.pack(msg))
+
+            """
+            Pack and write data to the underlying file-like object.
+            """
+
+            self._f.write(self._packer.pack(msg))
+
+        def __getattr__(self, item):
+
+            """
+            For all other methods default to the underlying file-like object.
+            """
+
+            return getattr(self._f, item)
+
+    class _MsgPackReader(msgpack.Unpacker):
+
+        """
+        A helper class to make `msgpack.Unpacker()` behave similarly to `file`.
+        """
+
+        def __init__(self, f, **kwargs):
+
+            """
+            Instantiate `msgpack.Unpacker()` from an open file-like object.
+
+            Parameters
+            ----------
+            f : file
+                A file-like object open for reading.
+            kwargs : **kwargs, optional
+                Additional keyword arguments for `msgpack.Unpacker()`.
+            """
+
+            self._f = f
+            msgpack.Unpacker.__init__(self, f, **kwargs)
+
+        def __getattr__(self, item):
+
+            """
+            For all other methods default to the underlying file-like object.
+            """
+
+            return getattr(self._f, item)
+
+    def __init__(self, f, mode='r', **kwargs):
+
+        """
+        Constructs the necessary objects for reading or writing and hands them
+        off to `BaseDriver()`.  When reading `msgpack.Unpacker()` is used but
+        when writing a special helper `_MsgPackWriter()` is used.
+
+        Parameters
+        ----------
+        f : str or file
+            Input file path or open file-like object.
+        mode : str, optional
+            Mode to open `f` with.
+        kwargs : **kwargs, optional
+            Additional keyword arguments for `msgpack.Unpacker()` or
+            `msgpack.Unpacker()`.
+        """
+
+        if isinstance(f, six.string_types):
+            self._f = codecs_open(f, mode=mode)
+        else:
+            self._f = f
+        if mode == 'r':
+            BaseDriver.__init__(
+                self,
+                self._MsgPackReader(self._f, **kwargs)
+            )
+        else:
+            BaseDriver.__init__(
+                self,
+                self._MsgPackWriter(self._f, **kwargs)
+            )
 
 
-    def reader(self, f, *args, **kwargs):
-        return msgpack.Unpacker(f)
+class BaseCompressionDriver(BaseDriver):
 
-    def writer(self, f, *args, **kwargs):
-        return self.MsgPackWriter(f, *args, **kwargs)
+    """
+    A slightly modified subclass of `BaseDriver()` to allow separation of normal
+    drivers and compression drivers.
+    """
 
-    def close(self):
-        self._f.close()
+    by_name = {}
+    by_extension = {}
+    register = False
 
-    @property
-    def closed(self):
-        return self._f.closed
 
-try:
-    import gzip
-except:
-    pass
-else:
-    class GZIP(FileDriver):
-        driver_name = 'gzip'
-        extensions = 'gz',
-        modes = ('r', 'w', 'a')
-        compression = True
+class GZIP(BaseCompressionDriver):
 
-        def reader(self, f, *args, **kwargs):
-            return gzip.GzipFile(fileobj=f, *args, **kwargs)
+    """
+    Driver for accessing data stored as GZIP.
+    """
 
-        def writer(self, f, *args, **kwargs):
-            return gzip.GzipFile(fileobj=f, *args, **kwargs)
+    driver_name = 'GZIP'
+    extensions = 'gz',
 
-try:
-    import lzma
-except:
-    pass
-else:
-    class LZMA(BaseDriver):
-        driver_name = 'lzma'
-        extensions = 'xz',
-        modes = ('r', 'w', 'a')
-        compression = True
+    def __init__(self, f, mode='r', **kwargs):
 
-        def __init__(self, f, mode='r', **kwargs):
-            BaseDriver.__init__(self, f, mode=mode, **kwargs)
-            self.obj = lzma.LZMAFile(self._f, mode)
-            
+        """
+        Creates an instance of `gzip.GzipFile()` and passes it to `BaseDriver()`.
 
-try:
-    import bz2
-except:
-    pass
-else:
-    class BZ2(BaseDriver):
-        driver_name = 'bz2'
-        extensions = 'bz2',
-        modes = ('r', 'w', 'a')
-        compression = True
+        If `f` is a string `gzip.open()` is used, otherwise `gzip.GzipFile()` is
+        instantiated directly.
 
-        def __init__(self, f, mode='r', **kwargs):
-            BaseDriver.__init__(self, f, mode=mode, **kwargs)
-            self.obj = bz2.BZ2File(self._f, mode, **kwargs)
+        Parameters
+        ----------
+        f : str or file
+            File path or open file-like object.
+        mode : str, optional
+            I/O mode for the `gzip` library.
+        kwargs : **kwargs, optional
+            Additional keyword arguments for `gzip.open()` or `gzip.GzipFile()`.
+        """
 
-# class TAR(FileDriver):
-#
-#     driver_name = 'tar'
-#     extensions = 'tar',
-#     modes = ('r', 'w', 'a')
-#     compression = True
-#
-#     def __init__(self, f, mode='r', **kwargs):
-#
-#         FileDriver.__init__(
-#             self,
-#             f=f, mode=mode,
-#             reader=tarfile.open,
-#             writer=tarfile.open,
-#             modes=self.modes,
-#             name=self.name,
-#             **kwargs
-#         )
+        if isinstance(f, six.string_types):
+            BaseDriver.__init__(
+                self,
+                gzip.open(f, mode=mode, **kwargs)
+            )
+        else:
+            BaseDriver.__init__(
+                self,
+                gzip.GzipFile(fileobj=f, mode=mode, **kwargs)
+            )
+
+
+class BZ2(BaseCompressionDriver):
+
+    """
+    Driver for accessing data stored as BZIP2.
+    """
+
+    driver_name = 'BZ2'
+    extensions = 'bz2',
+
+    def __init__(self, f, mode='r', **kwargs):
+
+        """
+        All arguments are passed directly to `bz2.BZFile()`.
+
+        Parameters
+        ----------
+        f : str or file
+            File path or open file-like object.
+        mode : str, optional
+            I/O mode for the `bz2` library.
+        kwargs : **kwargs, optional
+            Additional keyword arguments for `bz2.BZFile()`.
+        """
+
+        BaseDriver.__init__(
+            self,
+            bz2.BZ2File(f, mode=mode, **kwargs)
+        )
