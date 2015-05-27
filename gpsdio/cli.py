@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import sys
+import warnings
 
 import click
 import six
@@ -194,8 +195,11 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
 def convert(ctx, infile, outfile):
 
     """
-    Converts between JSON and msgpack container formats
+    DEPRECATED - use etl instead: Converts between JSON and msgpack container formats.
     """
+
+    warnings.warn("`gpsdio convert` is deprecated and will be removed before "
+                  "v1.0.  Switch to `gpsdio etl`.", DeprecationWarning, stacklevel=2)
 
     with gpsdio.open(infile) as reader:
         with gpsdio.open(outfile, 'w') as writer:
