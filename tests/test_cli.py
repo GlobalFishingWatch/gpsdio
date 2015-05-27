@@ -75,15 +75,18 @@ def test_load():
                 assert e == a
 
 
-def test_sort():
+def test_etl():
 
     driver = 'MsgPack'
     comp = 'BZ2'
+
+    # Process everything and sort on timestamp
     with tempfile.NamedTemporaryFile('r+') as f:
         result = CliRunner().invoke(gpsdio.cli.main, [
             '--output-driver', driver,
             '--output-compression', comp,
-            'sort',
+            'etl',
+            '--sort', 'timestamp',
             TYPES_MSG_GZ_FILE,
             f.name
         ])
@@ -91,23 +94,21 @@ def test_sort():
 
         assert result.exit_code is 0
 
-        # Only two examples messages have timestamps
         prev = None
-        output = []
         with gpsdio.open(f.name, driver=driver, compression=comp) as actual:
             for msg in actual:
-                output.append(msg)
                 if prev is None:
                     prev = msg
                 else:
                     assert msg['timestamp'] >= prev['timestamp']
 
+    # Process everything and sort on mmsi
     with tempfile.NamedTemporaryFile('r+') as f:
         result = CliRunner().invoke(gpsdio.cli.main, [
             '--output-driver', driver,
             '--output-compression', comp,
-            'sort',
-            '--field', 'mmsi',
+            'etl',
+            '--sort', 'mmsi',
             TYPES_MSG_GZ_FILE,
             f.name
         ])
@@ -115,13 +116,33 @@ def test_sort():
 
         assert result.exit_code is 0
 
-        # Every message has an MMSI
         prev = None
-        output = []
         with gpsdio.open(f.name, driver=driver, compression=comp) as actual:
             for msg in actual:
-                output.append(msg)
                 if prev is None:
                     prev = msg
                 else:
                     assert msg['mmsi'] >= prev['mmsi']
+
+    # Filter and process
+    with tempfile.NamedTemporaryFile('r+') as f:
+        result = CliRunner().invoke(gpsdio.cli.main, [
+            '--output-driver', driver,
+            '--output-compression', comp,
+            'etl',
+            '--filter', "lat and lon",
+            '--sort', 'lat',
+            TYPES_MSG_GZ_FILE,
+            f.name
+        ])
+        f.seek(0)
+
+        assert result.exit_code is 0
+
+        prev = None
+        with gpsdio.open(f.name, driver=driver, compression=comp) as actual:
+            for msg in actual:
+                if prev is None:
+                    prev = msg
+                else:
+                    assert msg['lat'] >= prev['lat']

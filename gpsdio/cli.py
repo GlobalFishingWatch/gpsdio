@@ -313,21 +313,61 @@ def env(item):
 @click.argument('infile', required=True)
 @click.argument('outfile', required=True)
 @click.option(
-    '--field', metavar='NAME', default='timestamp',
-    help="Sort messages by this field.  (default: timestamp)"
+    '-f', '--filter', 'filter_expr', metavar='EXPR', multiple=True,
+    help="Apply a filtering expression to the messages."
+)
+@click.option(
+    '--sort', 'sort_field', metavar='FIELD',
+    help="Sort output messages by field.  Holds the entire file in memory and drops messages "
+         "lacking the specified field."
 )
 @click.pass_context
-def sort(ctx, infile, outfile, field):
+def etl(ctx, infile, outfile, filter_expr, sort_field):
 
     """
-    Sort messages by a specified field.
+    Format conversion, filtering, and sorting.
 
-    Requires the entire file to be held in memory.
+    Data is filtered before sorting to limit the amount of data kept in memory.
+
+    Filtering expressions take the form of Python boolean expressions and provide
+    access to fields and the entire message via a custom scope.  Each field name
+    can be referenced directly and the entire messages is available via a `msg`
+    variable.  It is important to remember that `gpsdio` converts `timestamps` to
+    `datetime.datetime()` objects internally.
+
+    Since fields differ by message type any expression that raises a `NameError`
+    when evaluated is considered a failure.
+
+    Any Python expression that evalues as `True` or `False` can be used so so
+    expressions can be combined into a single filter using `and` or split into
+    multiple by using one instance of `--filter` for each side of the `and`.
+
+    Only process messages containing a timestamp:
+
+    \b
+        $ gpsdio ${INFILE} ${OUTFILE} \\
+            -f "'timestamp' in msg"
+
+    Only process messages from May 2010 for a specific MMSI:
+
+    \b
+        $ gpsdio ${INFIE} ${OUTFILE} \\
+            -f "timestamp.month == 5 and timestamp.year == 2010"" \\
+            -f "mmsi == 123456789"
+
+    Filter and sort:
+
+    \b
+        $ gpsdio ${INFILE} ${OUTFILE} \\
+            -f "timestamp.year == 2010" \\
+            --sort timestamp
     """
 
     with gpsdio.open(infile, driver=ctx.obj['i_driver'],
                      compression=ctx.obj['i_compression']) as src, \
             gpsdio.open(outfile, 'w', driver=ctx.obj['o_driver'],
                         compression=ctx.obj['o_compression']) as dst:
-        for msg in gpsdio.sort(src, field):
+
+        iterator = gpsdio.filter(src, filter_expr) if filter_expr else src
+        for msg in gpsdio.sort(iterator, sort_field) if sort_field else iterator:
             dst.write(msg)
