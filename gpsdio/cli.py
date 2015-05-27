@@ -307,3 +307,27 @@ def env(item):
             click.echo("%s - %s" % (name, driver.io_modes))
     else:
         raise click.BadParameter('A flag is required.')
+
+
+@main.command()
+@click.argument('infile', required=True)
+@click.argument('outfile', required=True)
+@click.option(
+    '--field', metavar='NAME', default='timestamp',
+    help="Sort messages by this field.  (default: timestamp)"
+)
+@click.pass_context
+def sort(ctx, infile, outfile, field):
+
+    """
+    Sort messages by a specified field.
+
+    Requires the entire file to be held in memory.
+    """
+
+    with gpsdio.open(infile, driver=ctx.obj['i_driver'],
+                     compression=ctx.obj['i_compression']) as src, \
+            gpsdio.open(outfile, 'w', driver=ctx.obj['o_driver'],
+                        compression=ctx.obj['o_compression']) as dst:
+        for msg in gpsdio.sort(src, field):
+            dst.write(msg)

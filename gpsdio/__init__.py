@@ -6,6 +6,7 @@
 
 from .core import open
 from .core import filter
+from .core import sort
 from . import schema
 from . import validate
 

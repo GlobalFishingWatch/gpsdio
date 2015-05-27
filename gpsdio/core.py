@@ -277,3 +277,26 @@ def filter(stream, expressions):
                 break
         else:
             yield msg
+
+
+def sort(stream, field='timestamp'):
+
+    """
+    A generator to sort data by the specified field.  Requires the entire stream
+    to be held in memory.  Messages lacking the specified field are dropped.
+
+    Parameters
+    ----------
+    stream : iter
+        Iterator producing one message per iteration.
+    field : str, optional
+        Field to sort by.  Defaults to sorting by `timestamp`.
+    """
+
+    queue = six.moves.queue.PriorityQueue()
+    for msg in stream:
+        if field in msg:
+            queue.put((msg[field], msg))
+
+    while not queue.empty():
+        yield queue.get()[1]

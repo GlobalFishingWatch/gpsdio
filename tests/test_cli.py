@@ -45,6 +45,11 @@ def test_env():
     for name in gpsdio.drivers.BaseCompressionDriver.by_name.keys():
         assert name in result.output
 
+    result = CliRunner().invoke(gpsdio.cli.main, [
+        'env',
+    ])
+    assert result.exit_code is not 0
+
 
 def test_load():
 
@@ -68,3 +73,55 @@ def test_load():
                 gpsdio.open(dst.name, driver='NewlineJSON', compression='GZIP') as actual:
             for e, a in zip(expected, actual):
                 assert e == a
+
+
+def test_sort():
+
+    driver = 'MsgPack'
+    comp = 'BZ2'
+    with tempfile.NamedTemporaryFile('r+') as f:
+        result = CliRunner().invoke(gpsdio.cli.main, [
+            '--output-driver', driver,
+            '--output-compression', comp,
+            'sort',
+            TYPES_MSG_GZ_FILE,
+            f.name
+        ])
+        f.seek(0)
+
+        assert result.exit_code is 0
+
+        # Only two examples messages have timestamps
+        prev = None
+        output = []
+        with gpsdio.open(f.name, driver=driver, compression=comp) as actual:
+            for msg in actual:
+                output.append(msg)
+                if prev is None:
+                    prev = msg
+                else:
+                    assert msg['timestamp'] >= prev['timestamp']
+
+    with tempfile.NamedTemporaryFile('r+') as f:
+        result = CliRunner().invoke(gpsdio.cli.main, [
+            '--output-driver', driver,
+            '--output-compression', comp,
+            'sort',
+            '--field', 'mmsi',
+            TYPES_MSG_GZ_FILE,
+            f.name
+        ])
+        f.seek(0)
+
+        assert result.exit_code is 0
+
+        # Every message has an MMSI
+        prev = None
+        output = []
+        with gpsdio.open(f.name, driver=driver, compression=comp) as actual:
+            for msg in actual:
+                output.append(msg)
+                if prev is None:
+                    prev = msg
+                else:
+                    assert msg['mmsi'] >= prev['mmsi']
