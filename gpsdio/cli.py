@@ -57,21 +57,23 @@ def _cb_key_val(ctx, param, value):
 
 @click.group()
 @click.option(
-    '--input-driver', metavar='NAME', default=None, help='Specify the input driver.',
+    '--input-driver', metavar='NAME', default=None,
+    help='Specify the input driver.  Normally auto-detected from file path.',
     type=click.Choice(list(gpsdio.drivers.BaseDriver.by_name.keys()))
 )
 @click.option(
-    '--output-driver', metavar='NAME', default=None, help='Specify the output driver.',
+    '--output-driver', metavar='NAME', default=None,
+    help='Specify the output driver.  Normally auto-detected from file path.',
     type=click.Choice(list(gpsdio.drivers.BaseDriver.by_name.keys()))
 )
 @click.option(
     '--input-compression', metavar='NAME', default=None,
-    help='Specify the compression format for the input data.',
+    help='Input compression format.  Normally auto-detected from file path.',
     type=click.Choice(list(gpsdio.drivers.BaseCompressionDriver.by_name.keys()))
 )
 @click.option(
     '--output-compression', metavar='NAME', default=None,
-    help='Specify the compression format for the output data.',
+    help='Output compression format.  Normally auto-detected from file path.',
     type=click.Choice(list(gpsdio.drivers.BaseCompressionDriver.by_name.keys()))
 )
 @click.pass_context
@@ -190,6 +192,7 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
 @click.argument("outfile", metavar="OUTPUT_FILENAME")
 @click.pass_context
 def convert(ctx, infile, outfile):
+
     """
     Converts between JSON and msgpack container formats
     """
@@ -206,7 +209,7 @@ def convert(ctx, infile, outfile):
 def cat(ctx, infile):
 
     """
-    Print messages to stdout as JSON.
+    Print messages to stdout as newline JSON.
     """
 
     with gpsdio.open(infile, driver=ctx.obj['i_driver'],
@@ -222,7 +225,7 @@ def cat(ctx, infile):
 def load(ctx, outfile):
 
     """
-    Load messages from stdin into a file.
+    Load newline JSON messages from stdin to a file.
     """
 
     with gpsdio.open('-', driver='NewlineJSON', compression=False) as src, \
@@ -244,9 +247,16 @@ def insp(ctx, infile, use_ipython):
     # A good idea borrowed from Fiona and Rasterio
 
     """
-    Open a dataset in interactive mode.
+    Open a dataset in an interactive inspector.
 
-    IPython will be used if it can be imported and `--no-ipython` was not supplied.
+    IPython will be used if it can be imported unless otherwise specified.
+
+    Analogous to doing:
+
+        \b
+        >>> import gpsdio
+        >>> with gpsdio.open(infile) as stream:
+        ...     # Operations
     """
 
     header = os.linesep.join((
@@ -272,3 +282,28 @@ def insp(ctx, infile, use_ipython):
             IPython.embed(header=header, user_ns=scope)
         else:
             code.interact(header, local=scope)
+
+
+@main.command()
+@click.option(
+    '--drivers', 'item', flag_value='drivers',
+    help="List of registered drivers and their I/O modes."
+)
+@click.option(
+    '--compression', 'item', flag_value='compression',
+    help='List of registered compression drivers and their I/O modes.'
+)
+def env(item):
+
+    """
+    Information about the gpsdio environment.
+    """
+
+    if item == 'drivers':
+        for name, driver in gpsdio.drivers.BaseDriver.by_name.items():
+            click.echo("%s - %s" % (name, driver.io_modes))
+    elif item == 'compression':
+        for name, driver in gpsdio.drivers.BaseCompressionDriver.by_name.items():
+            click.echo("%s - %s" % (name, driver.io_modes))
+    else:
+        raise click.BadParameter('A flag is required.')
