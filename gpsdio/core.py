@@ -53,6 +53,9 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
         A loaded instance of stream ready for I/O operations.
     """
 
+    if path == '-' and not driver and not compression:
+        driver = 'NewlineJSON'
+
     if path == '-' and 'r' in mode or 'a' in mode:
         path = sys.stdin
     elif path == '-' and 'w' in mode or 'a' in mode:
@@ -70,7 +73,7 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
     elif compression is None:
         try:
             comp_driver = drivers.detect_compression_type(getattr(path, 'name', path))
-        except ValueError:
+        except Exception:
             comp_driver = None
     else:
         comp_driver = None
