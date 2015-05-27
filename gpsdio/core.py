@@ -58,6 +58,8 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
     elif path == '-' and 'w' in mode or 'a' in mode:
         path = sys.stdout
 
+    log.debug("Opening: %s" % path)
+
     do = do or {}  # Driver options
     co = co or {}  # Compression options
     dmode = dmode or mode  # Driver mode
@@ -73,15 +75,21 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
     else:
         comp_driver = None
 
+    log.debug("Compression driver: %s" % comp_driver)
+
     if isinstance(driver, six.string_types):
         io_driver = drivers.get_driver(driver)
     else:
         io_driver = drivers.detect_file_type(getattr(path, 'name', path))
 
+    log.debug("Driver: %s" % io_driver)
+
     if comp_driver:
         stream = io_driver(comp_driver(path, mode=cmode, **co), mode=dmode, **do)
     else:
         stream = io_driver(path, mode=dmode, **do)
+
+    log.debug("Built base I/O stream: %s" % stream)
 
     return Stream(stream, mode=mode, **kwargs)
 
@@ -209,3 +217,63 @@ class Stream(object):
     # csv.DictWriter compatibility, don't remove :)
     writerow = write
     writerows = writelines
+
+
+def filter(stream, expressions):
+
+    """
+    A generator to filter a stream of data with boolean Pythonic expressions.
+    Multiple expressions can be provided but only messages that evaluate as
+    `True` for all will be yielded.
+
+    `eval()` is used for expression evaluation but it is given a modified global
+    scope that doesn't include some blacklisted items like `exec()`, `eval()`, etc.
+
+    Example:
+
+        >>> import gpsdio
+        >>> criteria = ("type in (1, 2, 3)", "lat' in msg", "mmsi == 366268061")
+        >>> with gpsdio.open('sample-data/types.msg.gz') as stream:
+        ...     for msg in gpsdio.filter(stream, criteria):
+        ...        # Do something
+
+    Parameter
+    ---------
+    stream : iter
+        An iterable producing one message per iteration.
+    expressions : str or tuple
+        A single expression or multiple expressions to be applied to each
+        message.  Only messages that pass all filters will be yielded
+
+    Yields
+    ------
+    dict
+        Messages that pass all expressions.
+    """
+
+    if isinstance(expressions, six.string_types):
+        expressions = expressions,
+
+    scope_blacklist = ('eval', 'compile', 'exec', 'execfile', 'builtin', 'builtins',
+                       '__builtin__', '__builtins__', 'globals', 'locals')
+
+    global_scope = {
+        k: v for k, v in globals().items() if k not in ('builtins', '__builtins__')}
+    global_scope['__builtins__'] = {
+        k: v for k, v in globals()['__builtins__'].items() if k not in scope_blacklist}
+    global_scope['builtins'] = global_scope['__builtins__']
+
+    for msg in stream:
+        local_scope = msg.copy()
+        local_scope['msg'] = msg
+        for expr in expressions:
+            try:
+                result = eval(expr, global_scope, local_scope)
+            except NameError:
+                # A message doesn't contain something in the expression so just force a failure
+                result = False
+
+            if not result:
+                break
+        else:
+            yield msg

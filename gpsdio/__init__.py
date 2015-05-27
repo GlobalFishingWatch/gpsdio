@@ -3,7 +3,9 @@
 
 """Tools for working with the GPSD format in JSON or msgpack."""
 
+
 from .core import open
+from .core import filter
 from . import schema
 from . import validate
 
