@@ -1,8 +1,7 @@
-"""Unittests for `gpsdio._io`."""
+"""Unittests for `gpsdio.core`."""
+
 
 import itertools
-import json
-import os
 import tempfile
 import unittest
 
@@ -172,6 +171,50 @@ def test_detect_compression_type():
         raise TypeError("Above line should have raised a ValueError.")
     except ValueError:
         pass
+
+
+def test_filter():
+
+    # Pass all through unaltered
+    with gpsdio.open(TYPES_MSG_GZ_FILE) as actual, gpsdio.open(TYPES_MSG_GZ_FILE) as expected:
+        for a, e in zip(gpsdio.filter(actual, "isinstance(mmsi, int)"), expected):
+            assert a == e
+
+    # Extract only types 1, 2, and 3
+    passed = []
+    with gpsdio.open(TYPES_MSG_GZ_FILE) as stream:
+        for msg in gpsdio.filter(stream, "type in (1,2,3)"):
+            passed.append(msg)
+            assert msg['type'] in (1, 2, 3)
+    assert len(passed) >= 3
+
+    # Filter out everything
+    with gpsdio.open(TYPES_MSG_GZ_FILE) as stream:
+        for msg in gpsdio.filter(stream, ("type is 5", "mmsi is -1000")):
+            assert False, "Above loop should not have executed because the filter should " \
+                          "not have yielded anything."
+
+    # Multiple expressions
+    passed = []
+    with gpsdio.open(TYPES_MSG_GZ_FILE) as stream:
+        for msg in gpsdio.filter(
+                stream, ("status == 'Under way using engine'", "mmsi is 366268061")):
+            passed.append(msg)
+            assert msg['mmsi'] is 366268061
+
+    # Reference the entire message
+    passed = []
+    with gpsdio.open(TYPES_JSON_GZ_FILE) as stream:
+        for msg in gpsdio.filter(stream, ("isinstance(msg, dict)", "'lat' in msg")):
+            passed.append(msg)
+            assert 'lat' in msg
+    assert len(passed) >= 9
+
+    # Multiple complex filters
+    criteria = ("turn is 0 and second is 0", "mmsi == 366268061", "'lat' in msg")
+    with gpsdio.open(TYPES_JSON_GZ_FILE) as stream:
+        passed = [m for m in gpsdio.filter(stream, criteria)]
+        assert len(passed) >= 1
 
 
 # class TestBaseDriver(unittest.TestCase):

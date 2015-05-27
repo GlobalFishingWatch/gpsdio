@@ -3,16 +3,19 @@ Commandline interface for `gpsdio`.
 """
 
 
+import code
 import datetime
 import json
 import logging
 import os
 import sys
+import warnings
 
 import click
 import six
 
 import gpsdio
+import gpsdio.drivers
 import gpsdio.schema
 import gpsdio.validate
 
@@ -21,14 +24,71 @@ logging.basicConfig()
 logger = logging.getLogger('gpsdio_cli')
 
 
+def _cb_key_val(ctx, param, value):
+
+    """
+    Some options like `-ro` take `key=val` pairs that need to be transformed
+    into `{'key': 'val}`.  This function can be used as a callback to handle
+    all options for a specific flag, for example if the user specifies 3 reader
+    options like `-ro key1=val1 -ro key2=val2 -ro key3=val3` then `click` uses
+    this function to produce `{'key1': 'val1', 'key2': 'val2', 'key3': 'val3'}`.
+    Parameters
+    ----------
+    ctx : click.Context
+        Ignored
+    param : click.Option
+        Ignored
+    value : tuple
+        All collected key=val values for an option.
+    Returns
+    -------
+    dict
+    """
+
+    output = {}
+    for pair in value:
+        if '=' not in pair:
+            raise click.BadParameter("incorrect syntax for KEY=VAL argument: `%s'" % pair)
+        else:
+            key, val = pair.split('=')
+            output[key] = val
+
+    return output
+
+
 @click.group()
+@click.option(
+    '--input-driver', metavar='NAME', default=None,
+    help='Specify the input driver.  Normally auto-detected from file path.',
+    type=click.Choice(list(gpsdio.drivers.BaseDriver.by_name.keys()))
+)
+@click.option(
+    '--output-driver', metavar='NAME', default=None,
+    help='Specify the output driver.  Normally auto-detected from file path.',
+    type=click.Choice(list(gpsdio.drivers.BaseDriver.by_name.keys()))
+)
+@click.option(
+    '--input-compression', metavar='NAME', default=None,
+    help='Input compression format.  Normally auto-detected from file path.',
+    type=click.Choice(list(gpsdio.drivers.BaseCompressionDriver.by_name.keys()))
+)
+@click.option(
+    '--output-compression', metavar='NAME', default=None,
+    help='Output compression format.  Normally auto-detected from file path.',
+    type=click.Choice(list(gpsdio.drivers.BaseCompressionDriver.by_name.keys()))
+)
 @click.pass_context
-def main(ctx):
+def main(ctx, input_driver, output_driver, input_compression, output_compression):
     """
     A collection of tools for working with the GPSD JSON format (or the same format in a msgpack container)
     """
 
-    pass
+    ctx.obj = {
+        'i_driver': input_driver,
+        'o_driver': output_driver,
+        'i_compression': input_compression,
+        'o_compression': output_compression
+    }
 
 
 @main.command()
@@ -133,11 +193,185 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
 @click.argument("outfile", metavar="OUTPUT_FILENAME")
 @click.pass_context
 def convert(ctx, infile, outfile):
+
     """
-    Converts between JSON and msgpack container formats
+    DEPRECATED - use etl instead: Converts between JSON and msgpack container formats.
     """
+
+    warnings.warn("`gpsdio convert` is deprecated and will be removed before "
+                  "v1.0.  Switch to `gpsdio etl`.", DeprecationWarning, stacklevel=2)
 
     with gpsdio.open(infile) as reader:
         with gpsdio.open(outfile, 'w') as writer:
             for row in reader:
                 writer.write(row)
+
+
+@main.command()
+@click.argument('infile', required=True)
+@click.pass_context
+def cat(ctx, infile):
+
+    """
+    Print messages to stdout as newline JSON.
+    """
+
+    with gpsdio.open(infile, driver=ctx.obj['i_driver'],
+                     compression=ctx.obj['i_compression']) as src, \
+            gpsdio.open('-', 'w', driver='NewlineJSON', compression=False) as dst:
+        for msg in src:
+            dst.write(msg)
+
+
+@main.command()
+@click.argument('outfile', required=True)
+@click.pass_context
+def load(ctx, outfile):
+
+    """
+    Load newline JSON messages from stdin to a file.
+    """
+
+    with gpsdio.open('-', driver='NewlineJSON', compression=False) as src, \
+            gpsdio.open(outfile, 'w', driver=ctx.obj['o_driver'],
+                        compression=ctx.obj['o_compression']) as dst:
+        for msg in src:
+            dst.write(msg)
+
+
+@main.command()
+@click.argument('infile', required=True)
+@click.option(
+    '--no-ipython', 'use_ipython', is_flag=True, default=True,
+    help="Don't use IPython, even if it is available."
+)
+@click.pass_context
+def insp(ctx, infile, use_ipython):
+
+    # A good idea borrowed from Fiona and Rasterio
+
+    """
+    Open a dataset in an interactive inspector.
+
+    IPython will be used if it can be imported unless otherwise specified.
+
+    Analogous to doing:
+
+        \b
+        >>> import gpsdio
+        >>> with gpsdio.open(infile) as stream:
+        ...     # Operations
+    """
+
+    header = os.linesep.join((
+        "gpsdio %s Interactive Inspector Session (Python %s)"
+        % (gpsdio.__version__, '.'.join(map(str, sys.version_info[:3]))),
+        "Try `help(stream)` or `next(stream)`."
+    ))
+
+    with gpsdio.open(infile, driver=ctx.obj['i_driver'],
+                     compression=ctx.obj['i_compression']) as src:
+
+        scope = {
+            'stream': src,
+            'gpsdio': gpsdio
+        }
+
+        try:
+            import IPython
+        except ImportError:
+            IPython = None
+
+        if use_ipython and IPython is not None:
+            IPython.embed(header=header, user_ns=scope)
+        else:
+            code.interact(header, local=scope)
+
+
+@main.command()
+@click.option(
+    '--drivers', 'item', flag_value='drivers',
+    help="List of registered drivers and their I/O modes."
+)
+@click.option(
+    '--compression', 'item', flag_value='compression',
+    help='List of registered compression drivers and their I/O modes.'
+)
+def env(item):
+
+    """
+    Information about the gpsdio environment.
+    """
+
+    if item == 'drivers':
+        for name, driver in gpsdio.drivers.BaseDriver.by_name.items():
+            click.echo("%s - %s" % (name, driver.io_modes))
+    elif item == 'compression':
+        for name, driver in gpsdio.drivers.BaseCompressionDriver.by_name.items():
+            click.echo("%s - %s" % (name, driver.io_modes))
+    else:
+        raise click.BadParameter('A flag is required.')
+
+
+@main.command()
+@click.argument('infile', required=True)
+@click.argument('outfile', required=True)
+@click.option(
+    '-f', '--filter', 'filter_expr', metavar='EXPR', multiple=True,
+    help="Apply a filtering expression to the messages."
+)
+@click.option(
+    '--sort', 'sort_field', metavar='FIELD',
+    help="Sort output messages by field.  Holds the entire file in memory and drops messages "
+         "lacking the specified field."
+)
+@click.pass_context
+def etl(ctx, infile, outfile, filter_expr, sort_field):
+
+    """
+    Format conversion, filtering, and sorting.
+
+    Data is filtered before sorting to limit the amount of data kept in memory.
+
+    Filtering expressions take the form of Python boolean expressions and provide
+    access to fields and the entire message via a custom scope.  Each field name
+    can be referenced directly and the entire messages is available via a `msg`
+    variable.  It is important to remember that `gpsdio` converts `timestamps` to
+    `datetime.datetime()` objects internally.
+
+    Since fields differ by message type any expression that raises a `NameError`
+    when evaluated is considered a failure.
+
+    Any Python expression that evalues as `True` or `False` can be used so so
+    expressions can be combined into a single filter using `and` or split into
+    multiple by using one instance of `--filter` for each side of the `and`.
+
+    Only process messages containing a timestamp:
+
+    \b
+        $ gpsdio ${INFILE} ${OUTFILE} \\
+            -f "'timestamp' in msg"
+
+    Only process messages from May 2010 for a specific MMSI:
+
+    \b
+        $ gpsdio ${INFIE} ${OUTFILE} \\
+            -f "timestamp.month == 5 and timestamp.year == 2010"" \\
+            -f "mmsi == 123456789"
+
+    Filter and sort:
+
+    \b
+        $ gpsdio ${INFILE} ${OUTFILE} \\
+            -f "timestamp.year == 2010" \\
+            --sort timestamp
+    """
+
+    with gpsdio.open(infile, driver=ctx.obj['i_driver'],
+                     compression=ctx.obj['i_compression']) as src, \
+            gpsdio.open(outfile, 'w', driver=ctx.obj['o_driver'],
+                        compression=ctx.obj['o_compression']) as dst:
+
+        iterator = gpsdio.filter(src, filter_expr) if filter_expr else src
+        for msg in gpsdio.sort(iterator, sort_field) if sort_field else iterator:
+            dst.write(msg)
