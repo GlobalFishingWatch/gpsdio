@@ -214,7 +214,7 @@ def cat(ctx, infile):
 
     with gpsdio.open(infile, driver=ctx.obj['i_driver'],
                      compression=ctx.obj['i_compression']) as src, \
-            gpsdio.open('-', 'w', driver='NewlineJSON') as dst:
+            gpsdio.open('-', 'w', driver='NewlineJSON', compression=False) as dst:
         for msg in src:
             dst.write(msg)
 
