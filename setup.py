@@ -2,6 +2,7 @@
 
 
 from setuptools import setup
+from setuptools import find_packages
 from setuptools.command.test import test as TestCommand
 
 
@@ -61,7 +62,7 @@ setup(
     url=source,
     include_package_data=True,
     install_requires=install_requires,
-    packages=['gpsdio'],
+    packages=find_packages(),
     entry_points='''
         [console_scripts]
         gpsdio=gpsdio.cli:main_group

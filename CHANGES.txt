@@ -1,0 +1,19 @@
+Changes
+=======
+
+
+0.0.2 (2015-05-28)
+------------------
+
+External CLI commands can now be registered via a `gpsdio.gpsdio_plugins` entry-point - #54
+`gpsdio.open()` can now read from `stdin` or write to `stdout` via '-' - #50
+Deprecated CLI command convert in favor of etl - #49
+New CLI commands: cat, env, etl, insp, and load - #49
+Better driver handling internally.
+
+
+0.0.1 (2015-05-26)
+------------------
+
+Rebranded as `gpsd_format` as `gpsdio`.
+Initial development.
