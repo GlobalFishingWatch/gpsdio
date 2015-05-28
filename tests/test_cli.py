@@ -58,8 +58,8 @@ def test_load():
         print(stdin_input)
 
         result = CliRunner().invoke(gpsdio.cli.main_group, [
-            '--output-driver', 'NewlineJSON',
-            '--output-compression', 'GZIP',
+            '--o-drv', 'NewlineJSON',
+            '--o-cmp', 'GZIP',
             'load',
             dst.name
 
@@ -83,8 +83,8 @@ def test_etl():
     # Process everything and sort on timestamp
     with tempfile.NamedTemporaryFile('r+') as f:
         result = CliRunner().invoke(gpsdio.cli.main_group, [
-            '--output-driver', driver,
-            '--output-compression', comp,
+            '--o-drv', driver,
+            '--o-cmp', comp,
             'etl',
             '--sort', 'timestamp',
             TYPES_MSG_GZ_FILE,
@@ -105,8 +105,8 @@ def test_etl():
     # Process everything and sort on mmsi
     with tempfile.NamedTemporaryFile('r+') as f:
         result = CliRunner().invoke(gpsdio.cli.main_group, [
-            '--output-driver', driver,
-            '--output-compression', comp,
+            '--o-drv', driver,
+            '--o-cmp', comp,
             'etl',
             '--sort', 'mmsi',
             TYPES_MSG_GZ_FILE,
@@ -127,8 +127,8 @@ def test_etl():
     # Filter and process
     with tempfile.NamedTemporaryFile('r+') as f:
         result = CliRunner().invoke(gpsdio.cli.main_group, [
-            '--output-driver', driver,
-            '--output-compression', comp,
+            '--o-drv', driver,
+            '--o-cmp', comp,
             'etl',
             '--filter', "lat and lon",
             '--sort', 'lat',

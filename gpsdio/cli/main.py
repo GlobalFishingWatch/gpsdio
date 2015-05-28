@@ -17,34 +17,34 @@ import gpsdio.drivers
     p for p in itertools.chain(*(iter_entry_points('gpsdio.gpsdio_commands'),
                                  iter_entry_points('gpsdio.gpsdio_plugins')))))
 @click.option(
-    '--input-driver', metavar='NAME', default=None,
+    '--i-drv', metavar='NAME', default=None,
     help='Specify the input driver.  Normally auto-detected from file path.',
     type=click.Choice(list(gpsdio.drivers.BaseDriver.by_name.keys()))
 )
 @click.option(
-    '--output-driver', metavar='NAME', default=None,
+    '--o-drv', metavar='NAME', default=None,
     help='Specify the output driver.  Normally auto-detected from file path.',
     type=click.Choice(list(gpsdio.drivers.BaseDriver.by_name.keys()))
 )
 @click.option(
-    '--input-compression', metavar='NAME', default=None,
+    '--i-cmp', metavar='NAME', default=None,
     help='Input compression format.  Normally auto-detected from file path.',
     type=click.Choice(list(gpsdio.drivers.BaseCompressionDriver.by_name.keys()))
 )
 @click.option(
-    '--output-compression', metavar='NAME', default=None,
+    '--o-cmp', metavar='NAME', default=None,
     help='Output compression format.  Normally auto-detected from file path.',
     type=click.Choice(list(gpsdio.drivers.BaseCompressionDriver.by_name.keys()))
 )
 @click.pass_context
-def main_group(ctx, input_driver, output_driver, input_compression, output_compression):
+def main_group(ctx, i_drv, o_drv, i_cmp, o_cmp):
     """
     A collection of tools for working with the GPSD JSON format (or the same format in a msgpack container)
     """
 
     ctx.obj = {
-        'i_driver': input_driver,
-        'o_driver': output_driver,
-        'i_compression': input_compression,
-        'o_compression': output_compression
+        'i_drv': i_drv,
+        'o_drv': o_drv,
+        'i_cmp': i_cmp,
+        'o_cmp': o_cmp
     }

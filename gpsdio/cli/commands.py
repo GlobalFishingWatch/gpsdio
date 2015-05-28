@@ -184,8 +184,8 @@ def cat(ctx, infile):
     Print messages to stdout as newline JSON.
     """
 
-    with gpsdio.open(infile, driver=ctx.obj['i_driver'],
-                     compression=ctx.obj['i_compression']) as src, \
+    with gpsdio.open(infile, driver=ctx.obj['i_drv'],
+                     compression=ctx.obj['i_cmp']) as src, \
             gpsdio.open('-', 'w', driver='NewlineJSON', compression=False) as dst:
         for msg in src:
             dst.write(msg)
@@ -201,8 +201,8 @@ def load(ctx, outfile):
     """
 
     with gpsdio.open('-', driver='NewlineJSON', compression=False) as src, \
-            gpsdio.open(outfile, 'w', driver=ctx.obj['o_driver'],
-                        compression=ctx.obj['o_compression']) as dst:
+            gpsdio.open(outfile, 'w', driver=ctx.obj['o_drv'],
+                        compression=ctx.obj['o_cmp']) as dst:
         for msg in src:
             dst.write(msg)
 
@@ -237,8 +237,8 @@ def insp(ctx, infile, use_ipython):
         "Try `help(stream)` or `next(stream)`."
     ))
 
-    with gpsdio.open(infile, driver=ctx.obj['i_driver'],
-                     compression=ctx.obj['i_compression']) as src:
+    with gpsdio.open(infile, driver=ctx.obj['i_drv'],
+                     compression=ctx.obj['i_cmp']) as src:
 
         scope = {
             'stream': src,
@@ -335,10 +335,10 @@ def etl(ctx, infile, outfile, filter_expr, sort_field):
             --sort timestamp
     """
 
-    with gpsdio.open(infile, driver=ctx.obj['i_driver'],
-                     compression=ctx.obj['i_compression']) as src, \
-            gpsdio.open(outfile, 'w', driver=ctx.obj['o_driver'],
-                        compression=ctx.obj['o_compression']) as dst:
+    with gpsdio.open(infile, driver=ctx.obj['i_drv'],
+                     compression=ctx.obj['i_cmp']) as src, \
+            gpsdio.open(outfile, 'w', driver=ctx.obj['o_drv'],
+                        compression=ctx.obj['o_cmp']) as dst:
 
         iterator = gpsdio.filter(src, filter_expr) if filter_expr else src
         for msg in gpsdio.sort(iterator, sort_field) if sort_field else iterator:
