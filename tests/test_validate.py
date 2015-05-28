@@ -10,6 +10,7 @@ import random
 import sys
 import unittest
 
+from click.testing import CliRunner
 import six
 
 from . import cmdtest
@@ -172,7 +173,14 @@ class TestInfo(cmdtest.CmdTest):
 
         self.expected[u'file'] = str(infile)
 
-        actual = json.loads(self.runcmd("validate", "--print-json", infile).output)
+        result = CliRunner().invoke(gpsdio.cli.main_group, [
+            'validate',
+            '--print-json',
+            infile
+        ])
+        self.assertEqual(result.exit_code, 0)
+
+        actual = json.loads(result.output)
         self.assertDictEqual(json.loads(json.dumps(self.expected)), actual)
 
     def test_unsorted(self):
@@ -188,7 +196,14 @@ class TestInfo(cmdtest.CmdTest):
         self.expected[u'file'] = str(infile)
         self.expected['is_sorted'] = False
 
-        actual = json.loads(self.runcmd("validate", "--print-json", infile).output)
+        result = CliRunner().invoke(gpsdio.cli.main_group, [
+            'validate',
+            '--print-json',
+            infile
+        ])
+        self.assertEqual(result.exit_code, 0)
+
+        actual = json.loads(result.output)
         self.assertDictEqual(self.expected, actual)
 
     def test_nonjson(self):

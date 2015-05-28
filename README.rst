@@ -18,6 +18,15 @@ Currently only a subset of message types are supported.
 * A command line tool to validate files in the format and give feedback on statistics and any errors found
 
 
+CLI Plugins
+-----------
+
+The ``gpsdio`` commandline utility supports loading plugins via `setuptools entry points <https://pythonhosted.org/setuptools/setuptools.html#dynamic-discovery-of-services-and-plugins>`_.
+Plugins should must be a `click <http://click.pocoo.org/4/>`_ command or group and should be
+registered to a ``gpsdio.gpsdio_plugins`` entry point.  An example plugin is `gpsdio-density <https://github.com/SkyTruth/gpsdio-density>`_
+which generates density rasters from positional AIS messages.
+
+
 Installation
 ------------
 

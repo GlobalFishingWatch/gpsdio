@@ -64,6 +64,15 @@ setup(
     packages=['gpsdio'],
     entry_points='''
         [console_scripts]
-        gpsdio=gpsdio.cli:main
+        gpsdio=gpsdio.cli:main_group
+
+        [gpsdio.gpsdio_commands]
+        cat=gpsdio.cli.commands:cat
+        convert=gpsdio.cli.commands:convert
+        env=gpsdio.cli.commands:env
+        etl=gpsdio.cli.commands:etl
+        insp=gpsdio.cli.commands:insp
+        load=gpsdio.cli.commands:load
+        validate=gpsdio.cli.commands:validate
     '''
 )
