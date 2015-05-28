@@ -11,7 +11,7 @@ from . import schema
 from . import validate
 
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 __author__ = 'Kevin Wurster, Egil Moeller'
 __email__ = 'kevin@skytruth.org, egil@skytruth.org, '
 __source__ = 'https://github.com/SkyTruth/gpsdio'
