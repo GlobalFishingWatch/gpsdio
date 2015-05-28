@@ -56,9 +56,9 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
     if path == '-' and not driver and not compression:
         driver = 'NewlineJSON'
 
-    if path == '-' and 'r' in mode or 'a' in mode:
+    if path == '-' and ('r' in mode or 'a' in mode):
         path = sys.stdin
-    elif path == '-' and 'w' in mode or 'a' in mode:
+    elif path == '-' and ('w' in mode or 'a' in mode):
         path = sys.stdout
 
     log.debug("Opening: %s" % path)
