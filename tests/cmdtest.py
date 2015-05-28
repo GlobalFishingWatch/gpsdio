@@ -24,18 +24,18 @@ class CmdTest(unittest.TestCase):
     def runcmd(self, *args):
         stderr = sys.stderr
 
-        main = gpsdio.cli.main.main
+        main = gpsdio.cli.main_group
 
-        def wrapper(*arg, **kw):
-            clickstderr = sys.stderr
-            sys.stderr = stderr
-            try:
-                return main(*arg, **kw)
-            finally:
-                sys.stderr = clickstderr
+        # def wrapper(*arg, **kw):
+        #     clickstderr = sys.stderr
+        #     sys.stderr = stderr
+        #     try:
+        #         return main(*arg, **kw)
+        #     finally:
+        #         sys.stderr = clickstderr
+        # gpsdio.cli.main_group = wrapper
 
-        gpsdio.cli.main.main = wrapper
         try:
-            return self.runner.invoke(gpsdio.cli.main, args, catch_exceptions=False)
+            return self.runner.invoke(gpsdio.cli.main_group, args, catch_exceptions=False)
         finally:
-            gpsdio.cli.main.main = main
+            gpsdio.cli.main_group = main

@@ -56,42 +56,10 @@ def _cb_key_val(ctx, param, value):
     return output
 
 
-@click.group()
-@click.option(
-    '--input-driver', metavar='NAME', default=None,
-    help='Specify the input driver.  Normally auto-detected from file path.',
-    type=click.Choice(list(gpsdio.drivers.BaseDriver.by_name.keys()))
-)
-@click.option(
-    '--output-driver', metavar='NAME', default=None,
-    help='Specify the output driver.  Normally auto-detected from file path.',
-    type=click.Choice(list(gpsdio.drivers.BaseDriver.by_name.keys()))
-)
-@click.option(
-    '--input-compression', metavar='NAME', default=None,
-    help='Input compression format.  Normally auto-detected from file path.',
-    type=click.Choice(list(gpsdio.drivers.BaseCompressionDriver.by_name.keys()))
-)
-@click.option(
-    '--output-compression', metavar='NAME', default=None,
-    help='Output compression format.  Normally auto-detected from file path.',
-    type=click.Choice(list(gpsdio.drivers.BaseCompressionDriver.by_name.keys()))
-)
-@click.pass_context
-def main(ctx, input_driver, output_driver, input_compression, output_compression):
-    """
-    A collection of tools for working with the GPSD JSON format (or the same format in a msgpack container)
-    """
-
-    ctx.obj = {
-        'i_driver': input_driver,
-        'o_driver': output_driver,
-        'i_compression': input_compression,
-        'o_compression': output_compression
-    }
 
 
-@main.command()
+
+@click.command()
 @click.argument("infile", metavar="INPUT_FILENAME")
 @click.option(
     '--print-json', is_flag=True,
@@ -188,7 +156,7 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
     sys.exit(0)
 
 
-@main.command()
+@click.command()
 @click.argument("infile", metavar="INPUT_FILENAME")
 @click.argument("outfile", metavar="OUTPUT_FILENAME")
 @click.pass_context
@@ -207,7 +175,7 @@ def convert(ctx, infile, outfile):
                 writer.write(row)
 
 
-@main.command()
+@click.command()
 @click.argument('infile', required=True)
 @click.pass_context
 def cat(ctx, infile):
@@ -223,7 +191,7 @@ def cat(ctx, infile):
             dst.write(msg)
 
 
-@main.command()
+@click.command()
 @click.argument('outfile', required=True)
 @click.pass_context
 def load(ctx, outfile):
@@ -239,7 +207,7 @@ def load(ctx, outfile):
             dst.write(msg)
 
 
-@main.command()
+@click.command()
 @click.argument('infile', required=True)
 @click.option(
     '--no-ipython', 'use_ipython', is_flag=True, default=True,
@@ -288,7 +256,7 @@ def insp(ctx, infile, use_ipython):
             code.interact(header, local=scope)
 
 
-@main.command()
+@click.command()
 @click.option(
     '--drivers', 'item', flag_value='drivers',
     help="List of registered drivers and their I/O modes."
@@ -313,7 +281,7 @@ def env(item):
         raise click.BadParameter('A flag is required.')
 
 
-@main.command()
+@click.command()
 @click.argument('infile', required=True)
 @click.argument('outfile', required=True)
 @click.option(

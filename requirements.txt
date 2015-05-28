@@ -4,3 +4,4 @@ newlinejson
 python-dateutil
 six
 ujson
+cligj>=0.2

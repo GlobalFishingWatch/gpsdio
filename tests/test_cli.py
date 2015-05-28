@@ -19,7 +19,7 @@ from sample_files import TYPES_JSON_FILE
 # and CliRunner() expects to do that itself.  Not sure what the work-around is.
 #
 # def test_cat():
-#     result = CliRunner().invoke(gpsdio.cli.main, [
+#     result = CliRunner().invoke(gpsdio.cli.main_group, [
 #         'cat',
 #         TYPES_MSG_GZ_FILE
 #     ])
@@ -30,14 +30,14 @@ from sample_files import TYPES_JSON_FILE
 
 
 def test_env():
-    result = CliRunner().invoke(gpsdio.cli.main, [
+    result = CliRunner().invoke(gpsdio.cli.main_group, [
         'env',
         '--drivers'
     ])
     assert result.exit_code is 0
     for name in gpsdio.drivers.BaseDriver.by_name.keys():
         assert name in result.output
-    result = CliRunner().invoke(gpsdio.cli.main, [
+    result = CliRunner().invoke(gpsdio.cli.main_group, [
         'env',
         '--compression'
     ])
@@ -45,7 +45,7 @@ def test_env():
     for name in gpsdio.drivers.BaseCompressionDriver.by_name.keys():
         assert name in result.output
 
-    result = CliRunner().invoke(gpsdio.cli.main, [
+    result = CliRunner().invoke(gpsdio.cli.main_group, [
         'env',
     ])
     assert result.exit_code is not 0
@@ -57,7 +57,7 @@ def test_load():
         stdin_input = f.read()
         print(stdin_input)
 
-        result = CliRunner().invoke(gpsdio.cli.main, [
+        result = CliRunner().invoke(gpsdio.cli.main_group, [
             '--output-driver', 'NewlineJSON',
             '--output-compression', 'GZIP',
             'load',
@@ -82,7 +82,7 @@ def test_etl():
 
     # Process everything and sort on timestamp
     with tempfile.NamedTemporaryFile('r+') as f:
-        result = CliRunner().invoke(gpsdio.cli.main, [
+        result = CliRunner().invoke(gpsdio.cli.main_group, [
             '--output-driver', driver,
             '--output-compression', comp,
             'etl',
@@ -104,7 +104,7 @@ def test_etl():
 
     # Process everything and sort on mmsi
     with tempfile.NamedTemporaryFile('r+') as f:
-        result = CliRunner().invoke(gpsdio.cli.main, [
+        result = CliRunner().invoke(gpsdio.cli.main_group, [
             '--output-driver', driver,
             '--output-compression', comp,
             'etl',
@@ -126,7 +126,7 @@ def test_etl():
 
     # Filter and process
     with tempfile.NamedTemporaryFile('r+') as f:
-        result = CliRunner().invoke(gpsdio.cli.main, [
+        result = CliRunner().invoke(gpsdio.cli.main_group, [
             '--output-driver', driver,
             '--output-compression', comp,
             'etl',
