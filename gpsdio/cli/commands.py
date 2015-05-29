@@ -93,7 +93,8 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
     stats = {}
     for name in files:
         logger.exception("Collecting stats for {infile} ...\n".format(infile=name))
-        with gpsdio.open(name, "r", skip_failures=True, force_message=False) as f:
+        with gpsdio.open(name, "r", driver=ctx.obj['i_drv'], compression=ctx.obj['i_cmp'],
+                         skip_failures=True, force_message=False) as f:
             if verbose:
                 def error_cb(type, msg, exc=None, trace=None):
                     if exc:
