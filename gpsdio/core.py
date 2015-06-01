@@ -14,7 +14,7 @@ from . import drivers
 from . import schema
 
 
-log = logging.getLogger('gpsdio_core')
+log = logging.getLogger('gpsdio-core')
 
 
 builtin_open = open

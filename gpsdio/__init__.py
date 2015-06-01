@@ -11,15 +11,15 @@ from . import schema
 from . import validate
 
 
-__version__ = '0.0.3'
-__author__ = 'Kevin Wurster, Egil Moeller'
-__email__ = 'kevin@skytruth.org, egil@skytruth.org, '
+__version__ = '0.0.4'
+__author__ = 'Egil Moeller, Kevin Wurster'
+__email__ = 'egil@skytruth.org, kevin@skytruth.org'
 __source__ = 'https://github.com/SkyTruth/gpsdio'
 __license__ = """
 Copyright 2014-2015 SkyTruth
 Authors:
-Kevin Wurster <kevin@skytruth.org>
 Egil Möller <egil@skytruth-org>
+Kevin Wurster <kevin@skytruth.org>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
