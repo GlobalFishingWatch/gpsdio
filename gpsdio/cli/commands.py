@@ -20,10 +20,6 @@ import gpsdio.schema
 import gpsdio.validate
 
 
-logging.basicConfig()
-logger = logging.getLogger('gpsdio_cli')
-
-
 def _cb_key_val(ctx, param, value):
 
     """
@@ -57,8 +53,6 @@ def _cb_key_val(ctx, param, value):
 
 
 
-
-
 @click.command()
 @click.argument("infile", metavar="INPUT_FILENAME")
 @click.option(
@@ -82,6 +76,10 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
     """
     Print info about a GPSD format AIS/GPS file
     """
+
+    logger = logging.getLogger('gpsdio-cli-validate')
+    logger.setLevel(ctx.obj['verbosity'])
+    logger.debug("Starting validate")
 
     if os.path.isdir(infile):
         files = [os.path.join(infile, name) for name in os.listdir(infile)]
@@ -167,8 +165,14 @@ def convert(ctx, infile, outfile):
     DEPRECATED - use etl instead: Converts between JSON and msgpack container formats.
     """
 
-    warnings.warn("`gpsdio convert` is deprecated and will be removed before "
-                  "v1.0.  Switch to `gpsdio etl`.", DeprecationWarning, stacklevel=2)
+    deprecation_msg = "`gpsdio convert` is deprecated and will be removed before " \
+                      "v1.0.  Switch to `gpsdio etl`."
+    warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
+
+    logger = logging.getLogger('gpsdio-cli-conver')
+    logger.setLevel(ctx.obj['verbosity'])
+    logging.debug('Starting convert')
+    logging.warning(deprecation_msg)
 
     with gpsdio.open(infile) as reader:
         with gpsdio.open(outfile, 'w') as writer:
@@ -185,6 +189,10 @@ def cat(ctx, infile):
     Print messages to stdout as newline JSON.
     """
 
+    logger = logging.getLogger('gpsdio-cli-cat')
+    logger.setLevel(ctx.obj['verbosity'])
+    logger.debug('Starting cat')
+
     with gpsdio.open(infile, driver=ctx.obj['i_drv'],
                      compression=ctx.obj['i_cmp']) as src, \
             gpsdio.open('-', 'w', driver='NewlineJSON', compression=False) as dst:
@@ -200,6 +208,10 @@ def load(ctx, outfile):
     """
     Load newline JSON messages from stdin to a file.
     """
+
+    logger = logging.getLogger('gpsdio-cli-load')
+    logger.setLevel(ctx.obj['verbosity'])
+    logger.debug('Starting load')
 
     with gpsdio.open('-', driver='NewlineJSON', compression=False) as src, \
             gpsdio.open(outfile, 'w', driver=ctx.obj['o_drv'],
@@ -231,6 +243,10 @@ def insp(ctx, infile, use_ipython):
         >>> with gpsdio.open(infile) as stream:
         ...     # Operations
     """
+
+    logger = logging.getLogger('gpsdio-cli-insp')
+    logger.setLevel(ctx.obj['verbosity'])
+    logger.debug('Starting insp')
 
     header = os.linesep.join((
         "gpsdio %s Interactive Inspector Session (Python %s)"
@@ -266,11 +282,16 @@ def insp(ctx, infile, use_ipython):
     '--compression', 'item', flag_value='compression',
     help='List of registered compression drivers and their I/O modes.'
 )
-def env(item):
+@click.pass_context
+def env(ctx, item):
 
     """
     Information about the gpsdio environment.
     """
+
+    logger = logging.getLogger('gpsdio-cli-env')
+    logger.setLevel(ctx.obj['verbosity'])
+    logger.debug('Starting env')
 
     if item == 'drivers':
         for name, driver in gpsdio.drivers.BaseDriver.by_name.items():
@@ -335,6 +356,10 @@ def etl(ctx, infile, outfile, filter_expr, sort_field):
             -f "timestamp.year == 2010" \\
             --sort timestamp
     """
+
+    logger = logging.getLogger('gpsdio-cli-etl')
+    logger.setLevel(ctx.obj['verbosity'])
+    logger.debug('Starting etl')
 
     with gpsdio.open(infile, driver=ctx.obj['i_drv'],
                      compression=ctx.obj['i_cmp']) as src, \
