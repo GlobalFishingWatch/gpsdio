@@ -5,3 +5,4 @@ python-dateutil
 six
 ujson
 cligj>=0.2
+str2type>=0.4

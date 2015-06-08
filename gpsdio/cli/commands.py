@@ -91,8 +91,16 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
     stats = {}
     for name in files:
         logger.exception("Collecting stats for {infile} ...\n".format(infile=name))
-        with gpsdio.open(name, "r", driver=ctx.obj['i_drv'], compression=ctx.obj['i_cmp'],
-                         skip_failures=True, force_message=False) as f:
+
+        with gpsdio.open(
+                name, "r",
+                driver=ctx.obj['i_drv'],
+                do=ctx.obj['i_drv_opts'],
+                compression=ctx.obj['i_cmp'],
+                co=ctx.obj['i_cmp_opts'],
+                skip_failures=True,
+                force_message=False) as f:
+
             if verbose:
                 def error_cb(type, msg, exc=None, trace=None):
                     if exc:
@@ -193,11 +201,11 @@ def cat(ctx, infile):
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting cat')
 
-    with gpsdio.open(infile, driver=ctx.obj['i_drv'],
-                     compression=ctx.obj['i_cmp']) as src, \
-            gpsdio.open('-', 'w', driver='NewlineJSON', compression=False) as dst:
-        for msg in src:
-            dst.write(msg)
+    with gpsdio.open(infile, **ctx.obj['r_opts']) as src:
+
+        with gpsdio.open('-', 'w', driver='NewlineJSON', compression=False) as dst:
+            for msg in src:
+                dst.write(msg)
 
 
 @click.command()
@@ -214,8 +222,7 @@ def load(ctx, outfile):
     logger.debug('Starting load')
 
     with gpsdio.open('-', driver='NewlineJSON', compression=False) as src, \
-            gpsdio.open(outfile, 'w', driver=ctx.obj['o_drv'],
-                        compression=ctx.obj['o_cmp']) as dst:
+            gpsdio.open(outfile, 'w', **ctx.obj['w_opts']) as dst:
         for msg in src:
             dst.write(msg)
 
@@ -254,8 +261,7 @@ def insp(ctx, infile, use_ipython):
         "Try `help(stream)` or `next(stream)`."
     ))
 
-    with gpsdio.open(infile, driver=ctx.obj['i_drv'],
-                     compression=ctx.obj['i_cmp']) as src:
+    with gpsdio.open(infile, **ctx.obj['r_opts']) as src:
 
         scope = {
             'stream': src,
@@ -361,11 +367,10 @@ def etl(ctx, infile, outfile, filter_expr, sort_field):
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting etl')
 
-    with gpsdio.open(infile, driver=ctx.obj['i_drv'],
-                     compression=ctx.obj['i_cmp']) as src, \
-            gpsdio.open(outfile, 'w', driver=ctx.obj['o_drv'],
-                        compression=ctx.obj['o_cmp']) as dst:
+    with gpsdio.open(infile, **ctx.obj['r_opts']) as src:
 
-        iterator = gpsdio.filter(src, filter_expr) if filter_expr else src
-        for msg in gpsdio.sort(iterator, sort_field) if sort_field else iterator:
-            dst.write(msg)
+        with gpsdio.open(outfile, 'w', **ctx.obj['w_opts']) as dst:
+
+            iterator = gpsdio.filter(src, filter_expr) if filter_expr else src
+            for msg in gpsdio.sort(iterator, sort_field) if sort_field else iterator:
+                dst.write(msg)
