@@ -27,6 +27,12 @@ registered to a ``gpsdio.gpsdio_plugins`` entry point.  An example plugin is `gp
 which generates density rasters from positional AIS messages.
 
 
+Drivers
+-------
+
+External drivers should be registered to the entry-point ``gpsdio.drivers``.
+
+
 Installation
 ------------
 

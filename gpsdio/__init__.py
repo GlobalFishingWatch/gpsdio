@@ -4,11 +4,19 @@
 """Tools for working with the GPSD format in JSON or msgpack."""
 
 
+import logging
+from pkg_resources import iter_entry_points
+
+
 from .core import open
 from .core import filter
 from .core import sort
 from . import schema
 from . import validate
+
+
+logging.basicConfig()
+logger = logging.getLogger('gpsdio')
 
 
 __version__ = '0.0.4'
@@ -33,3 +41,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+
+
+# Register external drivers
+for ep in iter_entry_points('gpsdio.drivers'):
+    try:
+        ep.load()
+        logger.debug("Loaded entry-point `%s'", ep.name)
+    except Exception as e:
+        logger.exception("Attempted to load entry-point `%s' but failed:", ep.name, exc_info=1)
