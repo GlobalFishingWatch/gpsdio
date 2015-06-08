@@ -15,6 +15,7 @@ from . import schema
 
 
 log = logging.getLogger('gpsdio-core')
+# log.setLevel(logging.DEBUG)
 
 
 builtin_open = open
@@ -52,9 +53,6 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
     Stream
         A loaded instance of stream ready for I/O operations.
     """
-
-    if path == '-' and not driver and not compression:
-        driver = 'NewlineJSON'
 
     if path == '-' and ('r' in mode or 'a' in mode):
         path = sys.stdin

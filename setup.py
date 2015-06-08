@@ -1,28 +1,36 @@
 #! /usr/bin/python
 
 
-from setuptools import setup
-from setuptools import find_packages
+"""
+Setup script for gpsdio
+"""
+
+
+import sys
+
 from setuptools.command.test import test as TestCommand
+from setuptools import find_packages
+from setuptools import setup
 
 
-# From http://fgimian.github.io/blog/2014/04/27/running-nose-tests-with-plugins-using-the-python-setuptools-test-command/
 # and https://pytest.org/latest/goodpractises.html
-class NoseTestCommand(TestCommand):
+class PyTest(TestCommand):
+    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.pytest_args = []
+
     def finalize_options(self):
         TestCommand.finalize_options(self)
         self.test_args = []
         self.test_suite = True
 
     def run_tests(self):
-        # Run nose ensuring that argv simulates running nosetests directly
-        import nose
-        nose.run_exit(argv=['nosetests'])
-
-
-
-with open('requirements.txt') as f:
-    install_requires = f.read().strip()
+        #import here, cause outside the eggs aren't loaded
+        import pytest
+        errno = pytest.main(self.pytest_args)
+        sys.exit(errno)
 
 
 version = None
@@ -45,23 +53,32 @@ with open('gpsdio/__init__.py') as f:
 
 setup(
     name="gpsdio",
-    cmdclass={'test': NoseTestCommand},
+    cmdclass={'test': PyTest},
     description="A library and command line tool to read, write and validate "
                 "AIS and GPS messages in the GPSD JSON format (or the same format in a msgpack container).",
     keywords="gpsd",
-    # install_requires=["python-dateutil"],
-    # extras_require={
-    #     'cli': ["click>=3.3"],
-    #     'msgpack': ["msgpack-python>=0.4.2"],
-    #     'test': ["nose", "coverage"]
-    # },
+    install_requires=[
+        'click',
+        'msgpack-python',
+        'newlinejson',
+        'python-dateutil',
+        'six',
+        'ujson',
+        'cligj>=0.2',
+        'str2type>=0.4'
+    ],
+    extras_require={
+        'test': [
+            'pytest',
+            'pytest-cov',
+        ]
+    },
     version=version,
     author=author,
     author_email=email,
     license="GPL",
     url=source,
     include_package_data=True,
-    install_requires=install_requires,
     packages=find_packages(),
     entry_points='''
         [console_scripts]

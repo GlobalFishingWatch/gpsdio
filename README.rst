@@ -50,8 +50,8 @@ Developing
     $ cd gpsdio
     $ virtualenv venv
     $ source venv/bin/activate
-    $ pip install -e .
-    $ nosetests --with-coverage -I test_compatibility
+    $ pip install -e .[test]
+    $ py.test tests --cov gpsdio --cov-report term-missing
 
 
 Command line tools
@@ -97,6 +97,7 @@ Additionally, some drivers and compression formats support additional modes that
 
     with gpsdio.open('outfile.msg.gz', 'w', cmode='wb') as dst:
         dst.write(msg)
+
 
 Simple Conversion Examples
 --------------------------
