@@ -26,6 +26,20 @@ Plugins should must be a `click <http://click.pocoo.org/4/>`_ command or group a
 registered to a ``gpsdio.gpsdio_plugins`` entry point.  An example plugin is `gpsdio-density <https://github.com/SkyTruth/gpsdio-density>`_
 which generates density rasters from positional AIS messages.
 
+Plugins also have access to information from the global click context.  Since
+multiple commands care about things like input and output drivers, compression,
+options, and verbosity, this information is available to plugin commands that are
+decorated with ``@click.pass_context`` through a dictionary stored in ``ctx.obj``.
+
+The objects available in ``ctx.obj`` that will not change are as follows:
+
+* ``i_drv : str`` - Driver name for input file.
+* ``i_drv_opts : dict`` - A dictionary for ``do`` in ``gpsdio.open()``.  Values have already been decoded to their Python type, including JSON.
+* ``i_cmp : str`` - Compression driver name for input file.
+* ``i_cmp_opts : dict`` - Same idea as ``i_drv_opts``.
+
+Output options are the same after swapping ``i_`` for ``o_``.
+
 
 Drivers
 -------
