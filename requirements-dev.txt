@@ -1,4 +1,0 @@
-nose
-coverage
-coveralls
-git+https://github.com/schwehr/libais.git

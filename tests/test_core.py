@@ -5,7 +5,7 @@ import itertools
 import tempfile
 import unittest
 
-from nose.tools import assert_raises
+import pytest
 import six
 
 from . import compare_msg
@@ -216,21 +216,6 @@ def test_filter():
     with gpsdio.open(TYPES_JSON_GZ_FILE) as stream:
         passed = [m for m in gpsdio.filter(stream, criteria)]
         assert len(passed) >= 1
-
-
-def test_open_stdinout_autoset_newlinejson():
-
-    # When reading from stdin or writing to stdin with '-' and no compression or
-    # driver is given we can assume its NewlineJSON.  Confirm that this works.
-
-    for mode in ('r', 'w'):
-        with gpsdio.open('-', mode=mode) as src:
-            assert isinstance(src._stream, gpsdio.drivers.NewlineJSON)
-
-    with assert_raises(Exception):
-        with gpsdio.open('-', driver='__invalid++') as src:
-            pass
-
 
 
 # class TestBaseDriver(unittest.TestCase):

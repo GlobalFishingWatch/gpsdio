@@ -2,11 +2,13 @@ import json
 import os.path
 import subprocess
 import urllib
+import pytest
 
 from . import cmdtest
 
 testdir = os.path.dirname(__file__)
 
+@pytest.mark.skipif(True, reason='gpsd library is required build from source is not fully implemented')
 class TestGpsdCompatibility(cmdtest.CmdTest):
     def setUp(self):
         cmdtest.CmdTest.setUp(self)
