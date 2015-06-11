@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#!/usr/bin/python
 
 
 """
@@ -6,6 +6,7 @@ Setup script for gpsdio
 """
 
 
+import os
 import sys
 
 from setuptools.command.test import test as TestCommand
@@ -33,11 +34,19 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
+with open('LICENSE.txt') as f:
+    license_content = f.read().strip()
+
+
+with open('README.rst') as f:
+    readme = f.read().strip()
+
+
 version = None
 author = None
 email = None
 source = None
-with open('gpsdio/__init__.py') as f:
+with open(os.path.join('gpsdio', '__init__.py')) as f:
     for line in f:
         if line.strip().startswith('__version__'):
             version = line.split('=')[1].strip().replace('"', '').replace("'", '')
@@ -52,34 +61,10 @@ with open('gpsdio/__init__.py') as f:
 
 
 setup(
-    name="gpsdio",
-    cmdclass={'test': PyTest},
-    description="A library and command line tool to read, write and validate "
-                "AIS and GPS messages in the GPSD JSON format (or the same format in a msgpack container).",
-    keywords="gpsd",
-    install_requires=[
-        'click>=3',
-        'msgpack-python',
-        'newlinejson',
-        'python-dateutil',
-        'six>=1.8',
-        'ujson',
-        'cligj>=0.2',
-        'str2type>=0.4'
-    ],
-    extras_require={
-        'test': [
-            'pytest',
-            'pytest-cov',
-        ]
-    },
-    version=version,
     author=author,
     author_email=email,
-    license="GPL",
-    url=source,
-    include_package_data=True,
-    packages=find_packages(),
+    cmdclass={'test': PyTest},
+    description="A general purpose AIS I/O library using the GPSd AIVDM schema.",
     entry_points='''
         [console_scripts]
         gpsdio=gpsdio.cli:main_group
@@ -92,5 +77,30 @@ setup(
         insp=gpsdio.cli.commands:insp
         load=gpsdio.cli.commands:load
         validate=gpsdio.cli.commands:validate
-    '''
+    ''',
+    extras_require={
+        'test': [
+            'pytest',
+            'pytest-cov',
+        ]
+    },
+    install_requires=[
+        'click>=3',
+        'msgpack-python',
+        'newlinejson',
+        'python-dateutil',
+        'six>=1.8',
+        'ujson',
+        'cligj>=0.2',
+        'str2type>=0.4'
+    ],
+    license=license_content,
+    long_description=readme,
+    include_package_data=True,
+    keywords="gpsd AIS I/O",
+
+    name="gpsdio",
+    packages=find_packages(),
+    url=source,
+    version=version,
 )
