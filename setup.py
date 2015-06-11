@@ -13,7 +13,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 
-# and https://pytest.org/latest/goodpractises.html
+# https://pytest.org/latest/goodpractises.html
 class PyTest(TestCommand):
     user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
 
@@ -58,11 +58,11 @@ setup(
                 "AIS and GPS messages in the GPSD JSON format (or the same format in a msgpack container).",
     keywords="gpsd",
     install_requires=[
-        'click',
+        'click>=3',
         'msgpack-python',
         'newlinejson',
         'python-dateutil',
-        'six',
+        'six>=1.8',
         'ujson',
         'cligj>=0.2',
         'str2type>=0.4'
