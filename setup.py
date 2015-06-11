@@ -34,10 +34,6 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
-with open('LICENSE.txt') as f:
-    license_content = f.read().strip()
-
-
 with open('README.rst') as f:
     readme = f.read().strip()
 
@@ -94,7 +90,7 @@ setup(
         'cligj>=0.2',
         'str2type>=0.4'
     ],
-    license=license_content,
+    license='Apache 2.0',
     long_description=readme,
     include_package_data=True,
     keywords="gpsd AIS I/O",
