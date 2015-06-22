@@ -70,6 +70,7 @@ setup(
         convert=gpsdio.cli.commands:convert
         env=gpsdio.cli.commands:env
         etl=gpsdio.cli.commands:etl
+        info=gpsdio.cli.commands:info
         insp=gpsdio.cli.commands:insp
         load=gpsdio.cli.commands:load
         validate=gpsdio.cli.commands:validate

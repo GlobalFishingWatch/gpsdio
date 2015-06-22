@@ -4,6 +4,7 @@ Commandline interface for `gpsdio`.
 
 
 import code
+from collections import OrderedDict
 import datetime
 import json
 import logging
@@ -74,8 +75,12 @@ def _cb_key_val(ctx, param, value):
 def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
 
     """
-    Print info about a GPSD format AIS/GPS file
+    DEPRECATED: Print info about a GPSD format AIS/GPS file
     """
+
+    deprecation_msg = "`gpsdio validate` is deprecated and will be removed before " \
+                      "v1.0.  Switch to `gpsdio info`."
+    warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
 
     logger = logging.getLogger('gpsdio-cli-validate')
     logger.setLevel(ctx.obj['verbosity'])
@@ -160,8 +165,6 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
                 click.echo("    %s -> %s" % (msg_type, stats['msg_type_hist'][msg_type]))
         click.echo("")
 
-    sys.exit(0)
-
 
 @click.command()
 @click.argument("infile", metavar="INPUT_FILENAME")
@@ -214,7 +217,7 @@ def cat(ctx, infile):
 def load(ctx, outfile):
 
     """
-    Load newline JSON messages from stdin to a file.
+    Load newline JSON msgs from stdin to a file.
     """
 
     logger = logging.getLogger('gpsdio-cli-load')
@@ -374,3 +377,159 @@ def etl(ctx, infile, outfile, filter_expr, sort_field):
             iterator = gpsdio.filter(src, filter_expr) if filter_expr else src
             for msg in gpsdio.sort(iterator, sort_field) if sort_field else iterator:
                 dst.write(msg)
+
+
+@click.command()
+@click.argument('infile')
+@click.option(
+    '--bounds', 'meta_member', flag_value='bounds',
+    help="Print only the boundary coordinates as xmin, ymin, xmax, ymax.")
+@click.option(
+    '--count', 'meta_member', flag_value='count',
+    help="Print only the number of messages in the datasource."
+)
+@click.option(
+    '--mmsi-hist', 'meta_member', flag_value='mmsi_histogram',
+    help="Print only the MMSI histogram."
+)
+@click.option(
+    '--type-hist', 'meta_member', flag_value='type_histogram',
+    help="Print only the type histogram."
+)
+@click.option(
+    '--with-mmsi-hist', is_flag=True,
+    help="Include a histogram of MMSI counts."
+)
+@click.option(
+    '--with-type-hist', is_flag=True,
+    help="Include a histogram of message type counts."
+)
+@click.option(
+    '--indent', type=click.INT,
+    help="Indent and pretty print output."
+)
+@click.option(
+    '--min-timestamp', 'meta_member', flag_value='min_timestamp',
+    help="Print only the minimum timestamp."
+)
+@click.option(
+    '--max-timestamp', 'meta_member', flag_value='max_timestamp',
+    help="Print only the maximum timestamp."
+)
+@click.option(
+    '--sorted', 'meta_member', flag_value='sorted',
+    help="Print only whether or not the datasource is sorted by timestamp."
+)
+@click.option(
+    '--num-unique-mmsi', 'meta_member', flag_value='num_unique_mmsi',
+    help="Print only the number of unique MMSI numbers."
+)
+@click.option(
+    '--num-unique-type', 'meta_member', flag_value='num_unique_type',
+    help="Print only the number of unique message types."
+)
+@click.pass_context
+def info(ctx, infile, meta_member, with_mmsi_hist, with_type_hist, indent):
+
+    """
+    Print metadata about a datasource as JSON.
+
+    Can optionally print a single item as a string.
+
+    One caveat of this tool is that JSON does not support integer keys, which
+    means that the keys of items like `type_histogram` and `mmsi_histogram`
+    have been converted to a string when in reality they should be integers.
+    Tools reading the JSON output will need account for this when parsing.
+    """
+
+    logger = logging.getLogger('gpsdio-cli-info')
+    logger.setLevel(ctx.obj['verbosity'])
+    logger.debug('Starting info')
+
+    if meta_member == 'mmsi_histogram':
+        with_mmsi_hist = True
+    if meta_member == 'type_histogram':
+        with_type_hist = True
+
+    xmin = ymin = xmax = ymax = 0
+    ts_min = ts_max = None
+    mmsi_hist = {}
+    type_hist = {}
+    is_sorted = True
+    prev_ts = None
+
+    with gpsdio.open(infile, driver=ctx.obj['i_drv'], compression=ctx.obj['i_cmp']) as src:
+        idx = 0  # In case file is empty
+        for idx, msg in enumerate(src):
+            ts = msg.get('timestamp')
+            x = msg.get('lon')
+            y = msg.get('lat')
+            msg_type = msg.get('type')
+            mmsi = msg.get('mmsi')
+
+            if ts is not None:
+
+                # Adjust min and max timestamp
+                if ts_min is None or ts < ts_min:
+                    ts_min = ts
+                if ts_max is None or ts > ts_max:
+                    ts_max = ts
+
+                # Figure out if the data is sorted by time
+                if prev_ts is None:
+                    prev_ts = ts
+                elif ts != prev_ts and ts < prev_ts:
+                    is_sorted = False
+
+            if x is not None and y is not None:
+
+                # Adjust bounding box
+                if xmin is None or x < xmin:
+                    xmin = x
+                if ymin is None or y < ymin:
+                    ymin = y
+                if xmax is None or x > xmax:
+                    xmax = x
+                if ymax is None or y > ymax:
+                    ymax = y
+
+            # Type histogram
+            if msg_type in type_hist:
+                type_hist[msg_type] += 1
+            else:
+                type_hist[msg_type] = 1
+
+            # MMSI histogram
+            if mmsi in mmsi_hist:
+                mmsi_hist[mmsi] += 1
+            else:
+                mmsi_hist[mmsi] = 1
+
+    stats = {
+        'bounds': (xmin, ymin, xmax, ymax),
+        'count': idx + 1,
+        'min_timestamp': gpsdio.schema.datetime2str(ts_min),
+        'max_timestamp': gpsdio.schema.datetime2str(ts_max),
+        'sorted': is_sorted,
+        'num_unique_mmsi': len(set(mmsi_hist.keys())),
+        'num_unique_type': len(set(type_hist.keys()))
+    }
+
+    if with_mmsi_hist:
+        stats['mmsi_histogram'] = OrderedDict(
+            ((k, mmsi_hist[k]) for k in sorted(mmsi_hist.keys())))
+    if with_type_hist:
+        stats['type_histogram'] = OrderedDict(
+            ((k, type_hist[k]) for k in sorted(type_hist.keys())))
+
+    stats = OrderedDict((k, stats[k]) for k in sorted(stats.keys()))
+
+    if meta_member:
+        if isinstance(stats[meta_member], (tuple, list)):
+            click.echo(" ".join((map(str, stats[meta_member]))))
+        elif isinstance(stats[meta_member], (dict, bool)):
+            click.echo(json.dumps(stats[meta_member], indent=indent))
+        else:
+            click.echo(stats[meta_member])
+    else:
+        click.echo(json.dumps(stats, indent=indent))
