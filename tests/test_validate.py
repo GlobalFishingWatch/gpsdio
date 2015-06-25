@@ -7,7 +7,6 @@ import datetime
 import json
 import os.path
 import random
-import sys
 import unittest
 
 from click.testing import CliRunner

@@ -26,22 +26,22 @@ import gpsdio.drivers
 @click.option(
     '--i-drv', metavar='NAME', default=None,
     help='Specify the input driver.  Normally auto-detected from file path.',
-    type=click.Choice(list(gpsdio.drivers.BaseDriver.by_name.keys()))
+    type=click.Choice(list(gpsdio.drivers._BaseDriver.by_name.keys()))
 )
 @click.option(
     '--o-drv', metavar='NAME', default=None,
     help='Specify the output driver.  Normally auto-detected from file path.',
-    type=click.Choice(list(gpsdio.drivers.BaseDriver.by_name.keys()))
+    type=click.Choice(list(gpsdio.drivers._BaseDriver.by_name.keys()))
 )
 @click.option(
     '--i-cmp', metavar='NAME', default=None,
     help='Input compression format.  Normally auto-detected from file path.',
-    type=click.Choice(list(gpsdio.drivers.BaseCompressionDriver.by_name.keys()))
+    type=click.Choice(list(gpsdio.drivers._BaseCompressionDriver.by_name.keys()))
 )
 @click.option(
     '--o-cmp', metavar='NAME', default=None,
     help='Output compression format.  Normally auto-detected from file path.',
-    type=click.Choice(list(gpsdio.drivers.BaseCompressionDriver.by_name.keys()))
+    type=click.Choice(list(gpsdio.drivers._BaseCompressionDriver.by_name.keys()))
 )
 @click.option(
     '--i-drv-opt', '--ido', 'i_drv_opts', metavar='NAME=VAL', multiple=True,

@@ -16,8 +16,8 @@ import newlinejson
 import six
 import ujson
 
-from .base import BaseCompressionDriver
-from .base import BaseDriver
+from .base import BaseCompressionDriver as _BaseCompressionDriver
+from .base import BaseDriver as _BaseDriver
 
 
 newlinejson.JSON = ujson
@@ -32,8 +32,8 @@ def get_driver(name):
     Accepts a string and returns the driver class associated with that name.
     """
 
-    if name in BaseDriver.by_name:
-        return BaseDriver.by_name[name]
+    if name in _BaseDriver.by_name:
+        return _BaseDriver.by_name[name]
     else:
         raise ValueError("Unrecognized driver name: %s" % name)
 
@@ -44,8 +44,8 @@ def get_compression(name):
     Accepts a string and returns the driver class associated with that name.
     """
 
-    if name in BaseCompressionDriver.by_name:
-        return BaseCompressionDriver.by_name[name]
+    if name in _BaseCompressionDriver.by_name:
+        return _BaseCompressionDriver.by_name[name]
     else:
         raise ValueError("Unrecognized compression name: %s" % name)
 
@@ -57,8 +57,8 @@ def detect_file_type(path):
     """
 
     for ext in path.split('.')[-2:]:
-        if ext in BaseDriver.by_extension:
-            return BaseDriver.by_extension[ext]
+        if ext in _BaseDriver.by_extension:
+            return _BaseDriver.by_extension[ext]
     else:
         raise ValueError("Can't determine driver: %s" % path)
 
@@ -70,13 +70,13 @@ def detect_compression_type(path):
     """
 
     ext = path.rpartition('.')[-1]
-    if ext in BaseCompressionDriver.by_extension:
-        return BaseCompressionDriver.by_extension[ext]
+    if ext in _BaseCompressionDriver.by_extension:
+        return _BaseCompressionDriver.by_extension[ext]
     else:
         raise ValueError("Can't determine compression: %s" % path)
 
 
-class NewlineJSON(BaseDriver):
+class NewlineJSON(_BaseDriver):
 
     """
     Driver for accessing data stored as newline delimited JSON.
@@ -104,13 +104,13 @@ class NewlineJSON(BaseDriver):
             Additional keyword arguments for `newlinejson.open()`.
         """
 
-        BaseDriver.__init__(
+        _BaseDriver.__init__(
             self,
             newlinejson.open(f, mode=mode, **kwargs)
         )
 
 
-class MsgPack(BaseDriver):
+class MsgPack(_BaseDriver):
 
     """
     Driver for accessing data stored as MsgPack.
@@ -218,18 +218,18 @@ class MsgPack(BaseDriver):
         else:
             self._f = f
         if mode == 'r':
-            BaseDriver.__init__(
+           _BaseDriver.__init__(
                 self,
                 self._MsgPackReader(self._f, **kwargs)
             )
         else:
-            BaseDriver.__init__(
+           _BaseDriver.__init__(
                 self,
                 self._MsgPackWriter(self._f, **kwargs)
             )
 
 
-class GZIP(BaseCompressionDriver):
+class GZIP(_BaseCompressionDriver):
 
     """
     Driver for accessing data stored as GZIP.
@@ -257,18 +257,18 @@ class GZIP(BaseCompressionDriver):
         """
 
         if isinstance(f, six.string_types):
-            BaseDriver.__init__(
+           _BaseDriver.__init__(
                 self,
                 gzip.open(f, mode=mode, **kwargs)
             )
         else:
-            BaseDriver.__init__(
+           _BaseDriver.__init__(
                 self,
                 gzip.GzipFile(fileobj=f, mode=mode, **kwargs)
             )
 
 
-class BZ2(BaseCompressionDriver):
+class BZ2(_BaseCompressionDriver):
 
     """
     Driver for accessing data stored as BZIP2.
@@ -292,7 +292,7 @@ class BZ2(BaseCompressionDriver):
             Additional keyword arguments for `bz2.BZFile()`.
         """
 
-        BaseDriver.__init__(
+        _BaseCompressionDriver.__init__(
             self,
             bz2.BZ2File(f, mode=mode, **kwargs)
         )

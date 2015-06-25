@@ -14,7 +14,6 @@ import warnings
 
 import click
 import six
-import str2type.ext
 
 import gpsdio
 import gpsdio.drivers
@@ -287,10 +286,10 @@ def env(ctx, item):
     logger.debug('Starting env')
 
     if item == 'drivers':
-        for name, driver in gpsdio.drivers.BaseDriver.by_name.items():
+        for name, driver in gpsdio.drivers._BaseDriver.by_name.items():
             click.echo("%s - %s" % (name, driver.io_modes))
     elif item == 'compression':
-        for name, driver in gpsdio.drivers.BaseCompressionDriver.by_name.items():
+        for name, driver in gpsdio.drivers._BaseCompressionDriver.by_name.items():
             click.echo("%s - %s" % (name, driver.io_modes))
     else:
         raise click.BadParameter('A flag is required.')
