@@ -1,6 +1,15 @@
 Changes
 =======
 
+0.0.6 (2015-06-25)
+------------------
+
+- `--indent 4` is now the default for `gpsdio info` but `--indent None` will disable indentation - #93
+- Added `--with-field-hist` to `gpsdio info` to get a report message counts by field - #90
+- External drivers must now subclass `gpsdio.base.Base/Compression/Driver` - #85
+- IO mode is validated when opening a file based on the driver's `io_modes` - #75
+
+
 0.0.5 (2015-06-24)
 ------------------
 
