@@ -10,12 +10,10 @@ import sys
 
 import six
 
-from . import drivers
 from . import schema
 
 
-log = logging.getLogger('gpsdio-core')
-# log.setLevel(logging.DEBUG)
+log = logging.getLogger('gpsdio')
 
 
 builtin_open = open
@@ -53,6 +51,10 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
     Stream
         A loaded instance of stream ready for I/O operations.
     """
+
+    # Drivers have to be imported inside open in order to prevent an import
+    # collision when registering external drivers.
+    from . import drivers
 
     if path == '-' and ('r' in mode or 'a' in mode):
         path = sys.stdin

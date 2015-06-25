@@ -124,7 +124,7 @@ class TestStream(unittest.TestCase):
 
 def test_get_driver():
 
-    for d in [_d for _d in gpsdio.drivers.BaseDriver.by_name.values()]:
+    for d in [_d for _d in gpsdio.drivers._BaseDriver.by_name.values()]:
         rd = gpsdio.drivers.get_driver(d.driver_name)
         assert rd == d, "%r != %r" % (d, rd)
     try:
@@ -136,7 +136,7 @@ def test_get_driver():
 
 def test_get_compression():
 
-    for c in [_d for _d in gpsdio.drivers.BaseDriver.by_name if getattr(_d, 'compresion', False)]:
+    for c in [_d for _d in gpsdio.drivers._BaseDriver.by_name if getattr(_d, 'compresion', False)]:
         cd = gpsdio.drivers.get_compression(c.name)
         assert cd == c, "%r != %r" % (c, cd)
     try:
@@ -148,7 +148,7 @@ def test_get_compression():
 
 def test_detect_file_type():
 
-    for d in [_d for _d in gpsdio.drivers.BaseDriver.by_name if getattr(_d, 'compresion', False)]:
+    for d in [_d for _d in gpsdio.drivers._BaseDriver.by_name if getattr(_d, 'compresion', False)]:
         for ext in d.extensions:
             rd = gpsdio.drivers.detect_file_type('path.%s.ext' % ext)
             assert d == rd, "%r != %r" % (d, rd)
@@ -161,7 +161,7 @@ def test_detect_file_type():
 
 def test_detect_compression_type():
 
-    for c in [_d for _d in gpsdio.drivers.BaseDriver.by_name if getattr(_d, 'compresion', False)]:
+    for c in [_d for _d in gpsdio.drivers._BaseDriver.by_name if getattr(_d, 'compresion', False)]:
         print(c)
         print(c.extensions)
         for ext in c.extensions:
@@ -221,7 +221,7 @@ def test_filter():
 # class TestBaseDriver(unittest.TestCase):
 #
 #     def test_attrs(self):
-#         self.assertTrue(hasattr(gpsdio.drivers.BaseDriver, '__next__'))
+#         self.assertTrue(hasattr(gpsdio.drivers._BaseDriver, '__next__'))
 #
 #     def test_driver_context_manager(self):
 #         with tempfile.NamedTemporaryFile(mode='r') as tfile:
@@ -235,6 +235,6 @@ def test_filter():
 #     def test_instantiated_properties(self):
 #         modes = ('r', 'w', 'a')
 #         name = 'drivername'
-#         bd = gpsdio.drivers.BaseDriver(None, mode='r', modes=modes, name=name, reader=lambda x: x)
+#         bd = gpsdio.drivers._BaseDriver(None, mode='r', modes=modes, name=name, reader=lambda x: x)
 #         self.assertEqual(bd.modes, modes)
 #         self.assertEqual(bd.name, name)

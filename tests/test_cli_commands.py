@@ -35,14 +35,14 @@ def test_env():
         '--drivers'
     ])
     assert result.exit_code is 0
-    for name in gpsdio.drivers.BaseDriver.by_name.keys():
+    for name in gpsdio.drivers._BaseDriver.by_name.keys():
         assert name in result.output
     result = CliRunner().invoke(gpsdio.cli.main_group, [
         'env',
         '--compression'
     ])
     assert result.exit_code is 0
-    for name in gpsdio.drivers.BaseCompressionDriver.by_name.keys():
+    for name in gpsdio.drivers._BaseCompressionDriver.by_name.keys():
         assert name in result.output
 
     result = CliRunner().invoke(gpsdio.cli.main_group, [

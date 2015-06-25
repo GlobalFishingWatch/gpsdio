@@ -44,7 +44,8 @@ Output options are the same after swapping ``i_`` for ``o_``.
 Drivers
 -------
 
-External drivers should be registered to the entry-point ``gpsdio.drivers``.
+External drivers should be registered to the entry-point ``gpsdio.drivers`` and
+must subclass ``gpsdio.base.BaseDriver`` or ``gpsdio.base.BaseCompressionDriver``.
 
 
 Installation

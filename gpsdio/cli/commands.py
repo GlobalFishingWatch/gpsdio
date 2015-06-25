@@ -14,44 +14,11 @@ import warnings
 
 import click
 import six
-import str2type.ext
 
 import gpsdio
 import gpsdio.drivers
 import gpsdio.schema
 import gpsdio.validate
-
-
-def _cb_key_val(ctx, param, value):
-
-    """
-    Some options like `-ro` take `key=val` pairs that need to be transformed
-    into `{'key': 'val}`.  This function can be used as a callback to handle
-    all options for a specific flag, for example if the user specifies 3 reader
-    options like `-ro key1=val1 -ro key2=val2 -ro key3=val3` then `click` uses
-    this function to produce `{'key1': 'val1', 'key2': 'val2', 'key3': 'val3'}`.
-    Parameters
-    ----------
-    ctx : click.Context
-        Ignored
-    param : click.Option
-        Ignored
-    value : tuple
-        All collected key=val values for an option.
-    Returns
-    -------
-    dict
-    """
-
-    output = {}
-    for pair in value:
-        if '=' not in pair:
-            raise click.BadParameter("incorrect syntax for KEY=VAL argument: `%s'" % pair)
-        else:
-            key, val = pair.split('=')
-            output[key] = val
-
-    return output
 
 
 def _cb_indent(ctx, param, value):
@@ -319,10 +286,10 @@ def env(ctx, item):
     logger.debug('Starting env')
 
     if item == 'drivers':
-        for name, driver in gpsdio.drivers.BaseDriver.by_name.items():
+        for name, driver in gpsdio.drivers._BaseDriver.by_name.items():
             click.echo("%s - %s" % (name, driver.io_modes))
     elif item == 'compression':
-        for name, driver in gpsdio.drivers.BaseCompressionDriver.by_name.items():
+        for name, driver in gpsdio.drivers._BaseCompressionDriver.by_name.items():
             click.echo("%s - %s" % (name, driver.io_modes))
     else:
         raise click.BadParameter('A flag is required.')
