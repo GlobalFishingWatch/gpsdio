@@ -14,6 +14,7 @@ import warnings
 
 import click
 import six
+import str2type.ext
 
 import gpsdio
 import gpsdio.drivers
@@ -52,6 +53,21 @@ def _cb_key_val(ctx, param, value):
 
     return output
 
+
+def _cb_indent(ctx, param, value):
+
+    """
+    Click callback for `gpsdio info`'s `--indent` option to let `None` be a
+    valid value so the user can disable indentation.
+    """
+
+    if value.lower().strip() == 'none':
+        return None
+    else:
+        try:
+            return int(value)
+        except ValueError:
+            raise click.BadParameter("Must be `None` or an integer.")
 
 
 @click.command()
@@ -405,8 +421,9 @@ def etl(ctx, infile, outfile, filter_expr, sort_field):
     help="Include a histogram of message type counts."
 )
 @click.option(
-    '--indent', type=click.INT,
-    help="Indent and pretty print output."
+    '--indent', metavar='INTEGER', default='4', callback=_cb_indent,
+    help="Indent and pretty print output.  Use `None` to turn off indentation and make output "
+         "serializable JSON. (default: 4)"
 )
 @click.option(
     '--min-timestamp', 'meta_member', flag_value='min_timestamp',

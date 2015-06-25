@@ -6,14 +6,23 @@ import six
 import gpsdio.cli.main
 
 
-def test_indented():
-    result = CliRunner().invoke(gpsdio.cli.main.main_group, [
+def test_indented_is_default():
+    default = CliRunner().invoke(gpsdio.cli.main.main_group, [
+        'info',
+        'sample-data/types.json'
+    ])
+    assert default.exit_code == 0
+    assert len(default.output.splitlines()) > 1
+
+    indented = CliRunner().invoke(gpsdio.cli.main.main_group, [
         'info',
         '--indent', '4',
         'sample-data/types.json'
     ])
-    assert result.exit_code == 0
-    assert len(result.output.splitlines()) > 1
+    assert indented.exit_code == 0
+    assert len(indented.output.splitlines()) > 1
+
+    assert default.output == indented.output
 
 
 def test_full_info():
