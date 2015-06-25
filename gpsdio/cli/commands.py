@@ -380,12 +380,20 @@ def etl(ctx, infile, outfile, filter_expr, sort_field):
     help="Print only the type histogram."
 )
 @click.option(
+    '--field-hist', 'meta_member', flag_value='field_histogram',
+    help="Print only the field histogram."
+)
+@click.option(
     '--with-mmsi-hist', is_flag=True,
     help="Include a histogram of MMSI counts."
 )
 @click.option(
     '--with-type-hist', is_flag=True,
     help="Include a histogram of message type counts."
+)
+@click.option(
+    '--with-field-hist', is_flag=True,
+    help="Include a histogram of field names and message counts."
 )
 @click.option(
     '--indent', metavar='INTEGER', default='4', callback=_cb_indent,
@@ -412,8 +420,17 @@ def etl(ctx, infile, outfile, filter_expr, sort_field):
     '--num-unique-type', 'meta_member', flag_value='num_unique_type',
     help="Print only the number of unique message types."
 )
+@click.option(
+    '--num-unique-field', 'meta_member', flag_value='num_unique_field',
+    help="Print only the number of unique fields."
+)
+@click.option(
+    '--with-all', is_flag=True,
+    help="Print all available metrics."
+)
 @click.pass_context
-def info(ctx, infile, meta_member, with_mmsi_hist, with_type_hist, indent):
+def info(ctx, infile, indent, meta_member, with_mmsi_hist, with_type_hist, with_field_hist,
+         with_all):
 
     """
     Print metadata about a datasource as JSON.
@@ -434,22 +451,31 @@ def info(ctx, infile, meta_member, with_mmsi_hist, with_type_hist, indent):
         with_mmsi_hist = True
     if meta_member == 'type_histogram':
         with_type_hist = True
+    if meta_member == 'field_histogram':
+        with_field_hist = True
 
-    xmin = ymin = xmax = ymax = 0
+    xmin = ymin = xmax = ymax = None
     ts_min = ts_max = None
     mmsi_hist = {}
     type_hist = {}
+    field_hist = {}
     is_sorted = True
     prev_ts = None
 
     with gpsdio.open(infile, driver=ctx.obj['i_drv'], compression=ctx.obj['i_cmp']) as src:
+
         idx = 0  # In case file is empty
         for idx, msg in enumerate(src):
+
             ts = msg.get('timestamp')
             x = msg.get('lon')
             y = msg.get('lat')
-            msg_type = msg.get('type')
             mmsi = msg.get('mmsi')
+            type_ = msg.get('type')
+
+            for key in msg.keys():
+                field_hist.setdefault(key, 0)
+                field_hist[key] += 1
 
             if ts is not None:
 
@@ -462,7 +488,7 @@ def info(ctx, infile, meta_member, with_mmsi_hist, with_type_hist, indent):
                 # Figure out if the data is sorted by time
                 if prev_ts is None:
                     prev_ts = ts
-                elif ts != prev_ts and ts < prev_ts:
+                elif (ts and prev_ts) and ts < prev_ts:
                     is_sorted = False
 
             if x is not None and y is not None:
@@ -478,16 +504,12 @@ def info(ctx, infile, meta_member, with_mmsi_hist, with_type_hist, indent):
                     ymax = y
 
             # Type histogram
-            if msg_type in type_hist:
-                type_hist[msg_type] += 1
-            else:
-                type_hist[msg_type] = 1
+            type_hist.setdefault(type_, 0)
+            type_hist[type_] += 1
 
             # MMSI histogram
-            if mmsi in mmsi_hist:
-                mmsi_hist[mmsi] += 1
-            else:
-                mmsi_hist[mmsi] = 1
+            mmsi_hist.setdefault(mmsi, 0)
+            mmsi_hist[mmsi] += 1
 
     stats = {
         'bounds': (xmin, ymin, xmax, ymax),
@@ -496,15 +518,19 @@ def info(ctx, infile, meta_member, with_mmsi_hist, with_type_hist, indent):
         'max_timestamp': gpsdio.schema.datetime2str(ts_max),
         'sorted': is_sorted,
         'num_unique_mmsi': len(set(mmsi_hist.keys())),
-        'num_unique_type': len(set(type_hist.keys()))
+        'num_unique_type': len(set(type_hist.keys())),
+        'num_unique_field': len(set(field_hist.keys()))
     }
 
-    if with_mmsi_hist:
+    if with_all or with_mmsi_hist:
         stats['mmsi_histogram'] = OrderedDict(
             ((k, mmsi_hist[k]) for k in sorted(mmsi_hist.keys())))
-    if with_type_hist:
+    if with_all or with_type_hist:
         stats['type_histogram'] = OrderedDict(
             ((k, type_hist[k]) for k in sorted(type_hist.keys())))
+    if with_all or with_field_hist:
+        stats['field_histogram'] = OrderedDict(
+            ((k, field_hist[k]) for k in sorted(field_hist.keys())))
 
     stats = OrderedDict((k, stats[k]) for k in sorted(stats.keys()))
 
