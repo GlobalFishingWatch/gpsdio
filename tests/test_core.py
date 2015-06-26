@@ -218,6 +218,12 @@ def test_filter():
         assert len(passed) >= 1
 
 
+def test_mode_passed_to_driver(tmpdir):
+    outfile = str(tmpdir.mkdir('out').join('outfile.msg.gz'))
+    with gpsdio.open(outfile, 'w') as dst:
+        assert dst._stream.mode == dst.mode == 'w'
+
+
 # class TestBaseDriver(unittest.TestCase):
 #
 #     def test_attrs(self):

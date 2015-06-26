@@ -52,9 +52,8 @@ class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
     by_extension = {}
     register = False
     io_modes = ('r', 'w', 'a')
-    mode = 'r'
 
-    def __init__(self, stream):
+    def __init__(self, stream, mode):
 
         """
         Creates an object that transparently interacts with all supported drivers
@@ -67,6 +66,7 @@ class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
         """
 
         self._stream = stream
+        self._mode = mode
         if self.mode not in self.io_modes:
             raise ValueError("Mode {mode} is unsupported - {io_modes}"
                              .format(mode=self.mode, io_modes=str(self.io_modes)))
@@ -97,6 +97,10 @@ class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
         """
 
         return self._stream
+
+    @property
+    def mode(self):
+        return self._mode
 
     def next(self):
 

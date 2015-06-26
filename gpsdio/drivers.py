@@ -106,7 +106,8 @@ class NewlineJSON(_BaseDriver):
 
         _BaseDriver.__init__(
             self,
-            newlinejson.open(f, mode=mode, **kwargs)
+            newlinejson.open(f, mode=mode, **kwargs),
+            mode=mode
         )
 
 
@@ -218,14 +219,16 @@ class MsgPack(_BaseDriver):
         else:
             self._f = f
         if mode == 'r':
-           _BaseDriver.__init__(
+            _BaseDriver.__init__(
                 self,
-                self._MsgPackReader(self._f, **kwargs)
+                self._MsgPackReader(self._f, **kwargs),
+                mode=mode
             )
         else:
-           _BaseDriver.__init__(
+            _BaseDriver.__init__(
                 self,
-                self._MsgPackWriter(self._f, **kwargs)
+                self._MsgPackWriter(self._f, **kwargs),
+                mode=mode
             )
 
 
@@ -257,14 +260,16 @@ class GZIP(_BaseCompressionDriver):
         """
 
         if isinstance(f, six.string_types):
-           _BaseDriver.__init__(
+            _BaseDriver.__init__(
                 self,
-                gzip.open(f, mode=mode, **kwargs)
+                gzip.open(f, mode=mode, **kwargs),
+                mode=mode
             )
         else:
-           _BaseDriver.__init__(
+            _BaseDriver.__init__(
                 self,
-                gzip.GzipFile(fileobj=f, mode=mode, **kwargs)
+                gzip.GzipFile(fileobj=f, mode=mode, **kwargs),
+                mode=mode
             )
 
 
@@ -294,7 +299,8 @@ class BZ2(_BaseCompressionDriver):
 
         _BaseCompressionDriver.__init__(
             self,
-            bz2.BZ2File(f, mode=mode, **kwargs)
+            bz2.BZ2File(f, mode=mode, **kwargs),
+            mode=mode
         )
 
 
