@@ -56,7 +56,7 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
     # collision when registering external drivers.
     from . import drivers
 
-    if path == '-' and ('r' in mode or 'a' in mode):
+    if path == '-' and 'r' in mode:
         path = sys.stdin
     elif path == '-' and ('w' in mode or 'a' in mode):
         path = sys.stdout
