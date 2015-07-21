@@ -10,16 +10,17 @@ from pkg_resources import iter_entry_points
 import sys
 
 import click
-import cligj.plugins
+from click_plugins import with_plugins
 import str2type.ext
 
 import gpsdio
 import gpsdio.drivers
 
 
-@cligj.plugins.group(plugins=(
+@with_plugins(plugins=(
     ep for ep in itertools.chain(*(iter_entry_points('gpsdio.gpsdio_commands'),
                                  iter_entry_points('gpsdio.gpsdio_plugins')))))
+@click.group()
 @click.version_option(gpsdio.__version__)
 @click.option('--verbose', '-v', count=True, help="Increase verbosity.")
 @click.option('--quiet', '-q', count=True, help="Decrease verbosity.")

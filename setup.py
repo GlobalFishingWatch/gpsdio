@@ -83,13 +83,13 @@ setup(
     },
     install_requires=[
         'click>=3',
+        'click-plugins',
         'msgpack-python',
         'newlinejson',
         'python-dateutil',
+        'str2type>=0.4',
         'six>=1.8',
         'ujson',
-        'cligj>=0.2',
-        'str2type>=0.4'
     ],
     license='Apache 2.0',
     long_description=readme,
