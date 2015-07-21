@@ -64,7 +64,9 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist,
              input_driver, input_compression, input_driver_opts, input_compression_opts):
 
     """
-    DEPRECATED - use info instead: Print info about a GPSD format AIS/GPS file
+    DEPRECATED - Use `gpsdio info` instead.
+
+    Print info about a GPSD format AIS/GPS file
     """
 
     # TODO (1.0): Delete these lines that handle fallback to old flag locations
@@ -166,7 +168,9 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist,
 def convert(ctx, infile, outfile):
 
     """
-    DEPRECATED - use etl instead: Converts between JSON and msgpack container formats.
+    DEPRECATED - Use `gpsdio etl` instead.
+
+    Converts between JSON and msgpack container formats.
     """
 
     warnings.warn(
@@ -265,15 +269,15 @@ def load(ctx, outfile, input_driver_opts,
 @click.command()
 @click.argument('infile', required=True)
 @click.option(
-    '--no-ipython', 'use_ipython', is_flag=True, default=True,
-    help="Don't use IPython, even if it is available."
+    '--ipython', 'interpreter', flag_value='ipython',
+    help="Use IPython as the interpreter."
 )
 @options.input_driver
 @options.input_compression
 @options.input_driver_opts
 @options.input_compression_opts
 @click.pass_context
-def insp(ctx, infile, use_ipython,
+def insp(ctx, infile, interpreter,
          input_driver, input_compression, input_driver_opts, input_compression_opts):
 
     # A good idea borrowed from Fiona and Rasterio
@@ -315,15 +319,14 @@ def insp(ctx, infile, use_ipython,
             'gpsdio': gpsdio
         }
 
-        try:
-            import IPython
-        except ImportError:
-            IPython = None
-
-        if use_ipython and IPython is not None:
-            IPython.embed(header=header, user_ns=scope)
-        else:
+        if not interpreter:
             code.interact(header, local=scope)
+        elif interpreter == 'ipython':
+            import IPython
+            IPython.InteractiveShell.banner1 = header
+            IPython.start_ipython(argv=[], user_ns=scope)
+        else:
+            raise click.BadParameter("Unrecognized interpreter: {}".format(interpreter))
 
 
 @click.command()
