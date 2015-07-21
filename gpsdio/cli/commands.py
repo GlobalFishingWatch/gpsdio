@@ -19,6 +19,7 @@ import gpsdio
 import gpsdio.drivers
 import gpsdio.schema
 import gpsdio.validate
+from gpsdio.cli import options
 
 
 def _cb_indent(ctx, param, value):
@@ -54,27 +55,38 @@ def _cb_indent(ctx, param, value):
 @click.option(
     '-v', '--verbose', is_flag=True,
     help="Print details on individual messages")
+@options.input_driver
+@options.input_compression
+@options.input_driver_opts
+@options.input_compression_opts
 @click.pass_context
-def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
+def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist,
+             input_driver, input_compression, input_driver_opts, input_compression_opts):
 
     """
-    DEPRECATED: Print info about a GPSD format AIS/GPS file
+    DEPRECATED - Use `gpsdio info` instead.
+
+    Print info about a GPSD format AIS/GPS file
     """
 
-    deprecation_msg = "`gpsdio validate` is deprecated and will be removed before " \
-                      "v1.0.  Switch to `gpsdio info`."
-    warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
+    # TODO (1.0): Delete these lines that handle fallback to old flag locations
+    warnings.warn(
+        "`gpsdio validate` is deprecated and will be removed before "
+        "v1.0.  Switch to `gpsdio info`.", FutureWarning, stacklevel=2)
+    input_driver = ctx.obj.get('i_drv') or input_driver
+    input_compression = ctx.obj.get('i_cmp') or input_compression
+    input_driver_opts = ctx.obj.get('i_drv_opts') or input_driver_opts
+    input_compression_opts = ctx.obj.get('i_cmp_opts') or input_compression_opts
+
 
     logger = logging.getLogger('gpsdio-cli-validate')
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug("Starting validate")
 
     if os.path.isdir(infile):
-        files = [os.path.join(infile, name) for name in os.listdir(infile)]
+        files = sorted([os.path.join(infile, name) for name in os.listdir(infile)])
     else:
-        files = [infile]
-
-    files.sort()
+        files = sorted([infile])
 
     stats = {}
     for name in files:
@@ -82,10 +94,10 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
 
         with gpsdio.open(
                 name, "r",
-                driver=ctx.obj['i_drv'],
-                do=ctx.obj['i_drv_opts'],
-                compression=ctx.obj['i_cmp'],
-                co=ctx.obj['i_cmp_opts'],
+                driver=input_driver,
+                do=input_driver_opts,
+                compression=input_compression,
+                co=input_compression_opts,
                 skip_failures=True,
                 force_message=False) as f:
 
@@ -156,17 +168,18 @@ def validate(ctx, infile, print_json, verbose, msg_hist, mmsi_hist):
 def convert(ctx, infile, outfile):
 
     """
-    DEPRECATED - use etl instead: Converts between JSON and msgpack container formats.
+    DEPRECATED - Use `gpsdio etl` instead.
+
+    Converts between JSON and msgpack container formats.
     """
 
-    deprecation_msg = "`gpsdio convert` is deprecated and will be removed before " \
-                      "v1.0.  Switch to `gpsdio etl`."
-    warnings.warn(deprecation_msg, DeprecationWarning, stacklevel=2)
+    warnings.warn(
+        "`gpsdio convert` is deprecated and will be removed before "
+        "v1.0.  Switch to `gpsdio etl`.", FutureWarning, stacklevel=2)
 
     logger = logging.getLogger('gpsdio-cli-conver')
     logger.setLevel(ctx.obj['verbosity'])
     logging.debug('Starting convert')
-    logging.warning(deprecation_msg)
 
     with gpsdio.open(infile) as reader:
         with gpsdio.open(outfile, 'w') as writer:
@@ -176,39 +189,79 @@ def convert(ctx, infile, outfile):
 
 @click.command()
 @click.argument('infile', required=True)
+@options.input_driver
+@options.input_compression
+@options.input_driver_opts
+@options.input_compression_opts
+@options.output_driver_opts
 @click.pass_context
-def cat(ctx, infile):
+def cat(ctx, infile, input_driver,
+        input_compression, input_driver_opts, input_compression_opts, output_driver_opts):
 
     """
     Print messages to stdout as newline JSON.
     """
 
+    # TODO (1.0): Delete these lines that handle fallback to old flag locations
+    input_driver = ctx.obj.get('i_drv') or input_driver
+    input_compression = ctx.obj.get('i_cmp') or input_compression
+    input_driver_opts = ctx.obj.get('i_drv_opts') or input_driver_opts
+    input_compression_opts = ctx.obj.get('i_cmp_opts') or input_compression_opts
+    output_driver_opts = ctx.obj.get('o_drv_opts') or output_driver_opts
+
     logger = logging.getLogger('gpsdio-cli-cat')
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting cat')
 
-    with gpsdio.open(infile, **ctx.obj['r_opts']) as src:
+    with gpsdio.open(infile,
+                     driver=input_driver,
+                     compression=input_compression,
+                     do=input_driver_opts,
+                     co=input_compression_opts) as src:
 
-        with gpsdio.open('-', 'w', driver='NewlineJSON', compression=False) as dst:
+        with gpsdio.open('-', 'w',
+                         driver='NewlineJSON',
+                         compression=False,
+                         do=output_driver_opts) as dst:
             for msg in src:
                 dst.write(msg)
 
 
 @click.command()
 @click.argument('outfile', required=True)
+@options.input_driver_opts
+@options.output_driver
+@options.output_compression
+@options.output_driver_opts
+@options.output_compression_opts
 @click.pass_context
-def load(ctx, outfile):
+def load(ctx, outfile, input_driver_opts,
+         output_driver, output_driver_opts, output_compression, output_compression_opts):
 
     """
     Load newline JSON msgs from stdin to a file.
     """
 
+    # TODO (1.0): Delete these lines that handle fallback to old flag locations
+    input_driver_opts = ctx.obj.get('i_drv_opts') or input_driver_opts
+    output_driver = ctx.obj.get('o_drv') or output_driver
+    output_compression = ctx.obj.get('o_cmp',) or output_compression
+    output_driver_opts = ctx.obj.get('o_drv_opts') or output_driver_opts
+    output_compression_opts = ctx.obj.get('o_cmp_opts') or output_compression_opts
+
     logger = logging.getLogger('gpsdio-cli-load')
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting load')
 
-    with gpsdio.open('-', driver='NewlineJSON', compression=False) as src, \
-            gpsdio.open(outfile, 'w', **ctx.obj['w_opts']) as dst:
+    with gpsdio.open('-',
+                     driver='NewlineJSON',
+                     compression=False,
+                     do=input_driver_opts) as src, \
+            gpsdio.open(outfile, 'w',
+                        driver=output_driver,
+                        compression=output_compression,
+                        co=output_compression_opts,
+                        do=output_driver_opts) as dst:
         for msg in src:
             dst.write(msg)
 
@@ -216,11 +269,16 @@ def load(ctx, outfile):
 @click.command()
 @click.argument('infile', required=True)
 @click.option(
-    '--no-ipython', 'use_ipython', is_flag=True, default=True,
-    help="Don't use IPython, even if it is available."
+    '--ipython', 'interpreter', flag_value='ipython',
+    help="Use IPython as the interpreter."
 )
+@options.input_driver
+@options.input_compression
+@options.input_driver_opts
+@options.input_compression_opts
 @click.pass_context
-def insp(ctx, infile, use_ipython):
+def insp(ctx, infile, interpreter,
+         input_driver, input_compression, input_driver_opts, input_compression_opts):
 
     # A good idea borrowed from Fiona and Rasterio
 
@@ -237,6 +295,12 @@ def insp(ctx, infile, use_ipython):
         ...     # Operations
     """
 
+    # TODO (1.0): Delete these lines that handle fallback to old flag locations
+    input_driver = ctx.obj.get('i_drv') or input_driver
+    input_compression = ctx.obj.get('i_cmp') or input_compression
+    input_driver_opts = ctx.obj.get('i_drv_opts') or input_driver_opts
+    input_compression_opts = ctx.obj.get('i_cmp_opts') or input_compression_opts
+
     logger = logging.getLogger('gpsdio-cli-insp')
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting insp')
@@ -247,22 +311,22 @@ def insp(ctx, infile, use_ipython):
         "Try `help(stream)` or `next(stream)`."
     ))
 
-    with gpsdio.open(infile, **ctx.obj['r_opts']) as src:
+    with gpsdio.open(infile, driver=input_driver, compression=input_compression,
+                     do=input_driver_opts, co=input_compression_opts) as src:
 
         scope = {
             'stream': src,
             'gpsdio': gpsdio
         }
 
-        try:
-            import IPython
-        except ImportError:
-            IPython = None
-
-        if use_ipython and IPython is not None:
-            IPython.embed(header=header, user_ns=scope)
-        else:
+        if not interpreter:
             code.interact(header, local=scope)
+        elif interpreter == 'ipython':
+            import IPython
+            IPython.InteractiveShell.banner1 = header
+            IPython.start_ipython(argv=[], user_ns=scope)
+        else:
+            raise click.BadParameter("Unrecognized interpreter: {}".format(interpreter))
 
 
 @click.command()
@@ -307,8 +371,18 @@ def env(ctx, item):
     help="Sort output messages by field.  Holds the entire file in memory and drops messages "
          "lacking the specified field."
 )
+@options.input_driver
+@options.input_driver_opts
+@options.input_compression
+@options.input_compression_opts
+@options.output_driver
+@options.output_driver_opts
+@options.output_compression
+@options.output_compression_opts
 @click.pass_context
-def etl(ctx, infile, outfile, filter_expr, sort_field):
+def etl(ctx, infile, outfile, filter_expr, sort_field,
+        input_driver, input_driver_opts, input_compression, input_compression_opts,
+        output_driver, output_driver_opts, output_compression, output_compression_opts):
 
     """
     Format conversion, filtering, and sorting.
@@ -349,13 +423,32 @@ def etl(ctx, infile, outfile, filter_expr, sort_field):
             --sort timestamp
     """
 
+    # TODO (1.0): Delete these lines that handle fallback to old flag locations
+    input_driver = ctx.obj.get('i_drv') or input_driver
+    input_compression = ctx.obj.get('i_cmp') or input_compression
+    input_driver_opts = ctx.obj.get('i_drv_opts') or input_driver_opts
+    input_compression_opts = ctx.obj.get('i_cmp_opts') or input_compression_opts
+    output_driver = ctx.obj.get('o_drv') or output_driver
+    output_compression = ctx.obj.get('o_cmp',) or output_compression
+    output_driver_opts = ctx.obj.get('o_drv_opts') or output_driver_opts
+    output_compression_opts = ctx.obj.get('o_cmp_opts') or output_compression_opts
+
+
     logger = logging.getLogger('gpsdio-cli-etl')
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting etl')
 
-    with gpsdio.open(infile, **ctx.obj['r_opts']) as src:
+    with gpsdio.open(infile,
+                     driver=input_driver,
+                     compression=input_compression,
+                     do=input_driver_opts,
+                     co=input_compression_opts) as src:
 
-        with gpsdio.open(outfile, 'w', **ctx.obj['w_opts']) as dst:
+        with gpsdio.open(outfile, 'w',
+                         driver=output_driver,
+                         compression=output_compression,
+                         do=output_driver_opts,
+                         co=output_compression_opts) as dst:
 
             iterator = gpsdio.filter(src, filter_expr) if filter_expr else src
             for msg in gpsdio.sort(iterator, sort_field) if sort_field else iterator:
@@ -428,9 +521,13 @@ def etl(ctx, infile, outfile, filter_expr, sort_field):
     '--with-all', is_flag=True,
     help="Print all available metrics."
 )
+@options.input_driver
+@options.input_driver_opts
+@options.input_compression
+@options.input_compression_opts
 @click.pass_context
 def info(ctx, infile, indent, meta_member, with_mmsi_hist, with_type_hist, with_field_hist,
-         with_all):
+         with_all, input_driver, input_driver_opts, input_compression, input_compression_opts):
 
     """
     Print metadata about a datasource as JSON.
@@ -442,6 +539,13 @@ def info(ctx, infile, indent, meta_member, with_mmsi_hist, with_type_hist, with_
     have been converted to a string when in reality they should be integers.
     Tools reading the JSON output will need account for this when parsing.
     """
+
+    # TODO (1.0): Delete these lines that handle fallback to old flag locations
+    input_driver = ctx.obj.get('i_drv') or input_driver
+    input_compression = ctx.obj.get('i_cmp') or input_compression
+    input_driver_opts = ctx.obj.get('i_drv_opts') or input_driver_opts
+    input_compression_opts = ctx.obj.get('i_cmp_opts') or input_compression_opts
+
 
     logger = logging.getLogger('gpsdio-cli-info')
     logger.setLevel(ctx.obj['verbosity'])
@@ -462,7 +566,11 @@ def info(ctx, infile, indent, meta_member, with_mmsi_hist, with_type_hist, with_
     is_sorted = True
     prev_ts = None
 
-    with gpsdio.open(infile, driver=ctx.obj['i_drv'], compression=ctx.obj['i_cmp']) as src:
+    with gpsdio.open(infile,
+                     driver=input_driver,
+                     compression=input_compression,
+                     do=input_driver_opts,
+                     co=input_compression_opts) as src:
 
         idx = 0  # In case file is empty
         for idx, msg in enumerate(src):
