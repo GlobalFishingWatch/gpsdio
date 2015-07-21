@@ -65,7 +65,7 @@ Developing
     $ cd gpsdio
     $ virtualenv venv
     $ source venv/bin/activate
-    $ pip install -e .[test]
+    $ pip install -e .[dev]
     $ py.test tests --cov gpsdio --cov-report term-missing
 
 

@@ -76,7 +76,7 @@ setup(
         validate=gpsdio.cli.commands:validate
     ''',
     extras_require={
-        'test': [
+        'dev': [
             'pytest',
             'pytest-cov',
         ]
