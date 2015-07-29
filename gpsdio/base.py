@@ -68,11 +68,11 @@ class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
             An object provided by a driver that behaves like `file`.
         """
 
+        if mode not in self.io_modes:
+            raise ValueError("Mode '{mode}' is unsupported: {io_modes}"
+                             .format(mode=mode, io_modes=str(self.io_modes)))
         self._stream = self.open(path, mode=mode, **kwargs)
         self._mode = mode
-        if self.mode not in self.io_modes:
-            raise ValueError("Mode '{mode}' is unsupported: {io_modes}"
-                             .format(mode=self.mode, io_modes=str(self.io_modes)))
 
     def __repr__(self):
         return "<%s driver %s, mode '%s'>" % (
