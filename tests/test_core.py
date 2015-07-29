@@ -2,18 +2,21 @@
 
 
 import itertools
+import gzip
 import tempfile
 import unittest
 
-import pytest
+import newlinejson as nlj
 import six
 
 from . import compare_msg
 import gpsdio
 import gpsdio.schema
 import gpsdio.drivers
-import gpsdio.pycompat
-from .sample_files import *
+from .sample_files import TYPES_MSG_FILE
+from .sample_files import TYPES_MSG_GZ_FILE
+from .sample_files import TYPES_JSON_FILE
+from .sample_files import TYPES_JSON_GZ_FILE
 
 
 VALID_ROWS = [
@@ -222,6 +225,26 @@ def test_mode_passed_to_driver(tmpdir):
     outfile = str(tmpdir.mkdir('out').join('outfile.msg.gz'))
     with gpsdio.open(outfile, 'w') as dst:
         assert dst._stream.mode == dst.mode == 'w'
+
+
+def test_io_open_file_pointer():
+    # msg gz
+    with gzip.open(TYPES_MSG_GZ_FILE) as gz, \
+            gpsdio.open(gz, driver='MsgPack', compression='GZIP') as actual, \
+            gpsdio.open(TYPES_JSON_GZ_FILE) as expected:
+        for e, a in zip(expected, actual):
+            assert e == a
+    # json gz
+    with gzip.open(TYPES_JSON_GZ_FILE) as gz, \
+            gpsdio.open(gz, drver='NewlineJSON', compression='GZIP') as actual, \
+            gpsdio.open(TYPES_JSON_GZ_FILE) as expected:
+        for e, a in zip(expected, actual):
+            assert e == a
+    # json fully opened
+    with nlj.open(TYPES_JSON_FILE) as f, gpsdio.open(f, driver='NewlineJSON') as actual, \
+            gpsdio.open(TYPES_JSON_FILE) as expected:
+        for e, a in zip(expected, actual):
+            assert e == a
 
 
 # class TestBaseDriver(unittest.TestCase):

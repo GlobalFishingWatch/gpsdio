@@ -54,7 +54,10 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
 
     # Drivers have to be imported inside open in order to prevent an import
     # collision when registering external drivers.
-    from . import drivers
+    from gpsdio.drivers import detect_compression_type
+    from gpsdio.drivers import detect_file_type
+    from gpsdio.drivers import registered_compression
+    from gpsdio.drivers import registered_drivers
 
     if path == '-' and 'r' in mode:
         path = sys.stdin
@@ -63,36 +66,61 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
 
     log.debug("Opening: %s" % path)
 
-    do = do or {}  # Driver options
-    co = co or {}  # Compression options
-    dmode = dmode or mode  # Driver mode
-    cmode = cmode or mode  # Compression mode
+    do = do or {}
+    co = co or {}
+    dmode = dmode or mode
+    cmode = cmode or mode
 
-    if isinstance(compression, six.string_types):
-        comp_driver = drivers.get_compression(compression)
-    elif compression is None:
-        try:
-            comp_driver = drivers.detect_compression_type(getattr(path, 'name', path))
-        except Exception:
+    # Input path is a file-like object
+    if not isinstance(path, six.string_types):
+
+        log.debug("Input path is a file-like object: %s", path)
+
+        # If we get a driver name, just use that
+        # Otherwise, detect it from the object's path property
+        # If that doesn't work, crash because we don't know what to do
+        if driver:
+            io_driver = registered_drivers[driver]
+        else:
+            io_driver = detect_file_type(getattr(path, 'name', None))
+
+        # Don't be too strict about compression.  At some point the driver
+        # will try to read or write, which will throw an error if its really
+        # a compressed file.
+        if compression:
+            comp_driver = registered_compression[compression]
+        else:
             comp_driver = None
+
+    # Input path is a string
     else:
-        comp_driver = None
 
-    log.debug("Compression driver: %s" % comp_driver)
+        if driver:
+            io_driver = registered_drivers[driver] 
+        else:
+            io_driver = detect_file_type(path)
+        
+        if compression:
+            comp_driver = registered_compression[compression]
+        else:
+            # We cannot allow driver to fail, but detect_compression_type()
+            # failing probably means that the file just isn't compressed
+            try:
+                comp_driver = detect_compression_type(path)
+            except ValueError:
+                comp_driver = None
 
-    if isinstance(driver, six.string_types):
-        io_driver = drivers.get_driver(driver)
-    else:
-        io_driver = drivers.detect_file_type(getattr(path, 'name', path))
-
-    log.debug("Driver: %s" % io_driver)
-
+    log.debug("Compression driver: %s", io_driver)
+    log.debug("Driver: %s", comp_driver)
+    
     if comp_driver:
-        stream = io_driver(comp_driver(path, mode=cmode, **co), mode=dmode, **do)
+        c_stream = comp_driver(path, mode=cmode, **co)
     else:
-        stream = io_driver(path, mode=dmode, **do)
+        c_stream = path
+        
+    stream = io_driver(c_stream, mode=dmode, **do)
 
-    log.debug("Built base I/O stream: %s" % stream)
+    log.debug("Built base I/O stream: %s", stream)
 
     return Stream(stream, mode=mode, **kwargs)
 
