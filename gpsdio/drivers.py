@@ -85,29 +85,8 @@ class NewlineJSON(_BaseDriver):
     driver_name = 'NewlineJSON'
     extensions = ('json', 'nljson')
 
-    def __init__(self, f, mode='r', **kwargs):
-
-        """
-        The object returned by `newlinejson.open()` has all of the methods
-        required by `BaseDriver()` so this constructor is pretty sparse.  The
-        `newlinejson.open()` function handles all of the file opening/closing
-        and the returned object is passed directly to `BaseDriver()`.
-
-        Parameters
-        ----------
-        f : str or `newlinejson.Stream()`
-            Path to a file that can be opened by `newlinejson.open()` or a fully
-            instantiated `newlinejson.Stream()` object.
-        mode : str, optional
-            I/O mode for `newlinejson.open()`.
-        kwargs : **kwargs, optional
-            Additional keyword arguments for `newlinejson.open()`.
-        """
-
-        _BaseDriver.__init__(
-            self,
-            newlinejson.open(f, mode=mode, **kwargs)
-        )
+    def open(self, f, mode='r', **kwargs):
+        return newlinejson.open(f, mode=mode, **kwargs)
 
 
 class MsgPack(_BaseDriver):
@@ -195,7 +174,7 @@ class MsgPack(_BaseDriver):
 
             return getattr(self._f, item)
 
-    def __init__(self, f, mode='r', **kwargs):
+    def open(self, f, mode='r', **kwargs):
 
         """
         Constructs the necessary objects for reading or writing and hands them
@@ -214,19 +193,13 @@ class MsgPack(_BaseDriver):
         """
 
         if isinstance(f, six.string_types):
-            self._f = codecs_open(f, mode=mode)
+            _f = codecs_open(f, mode=mode)
         else:
-            self._f = f
+            _f = f
         if mode == 'r':
-           _BaseDriver.__init__(
-                self,
-                self._MsgPackReader(self._f, **kwargs)
-            )
+            return self._MsgPackReader(_f, **kwargs)
         else:
-           _BaseDriver.__init__(
-                self,
-                self._MsgPackWriter(self._f, **kwargs)
-            )
+            return self._MsgPackWriter(_f, **kwargs)
 
 
 class GZIP(_BaseCompressionDriver):
@@ -238,34 +211,12 @@ class GZIP(_BaseCompressionDriver):
     driver_name = 'GZIP'
     extensions = 'gz',
 
-    def __init__(self, f, mode='r', **kwargs):
-
-        """
-        Creates an instance of `gzip.GzipFile()` and passes it to `BaseDriver()`.
-
-        If `f` is a string `gzip.open()` is used, otherwise `gzip.GzipFile()` is
-        instantiated directly.
-
-        Parameters
-        ----------
-        f : str or file
-            File path or open file-like object.
-        mode : str, optional
-            I/O mode for the `gzip` library.
-        kwargs : **kwargs, optional
-            Additional keyword arguments for `gzip.open()` or `gzip.GzipFile()`.
-        """
+    def open(self, f, mode='r', **kwargs):
 
         if isinstance(f, six.string_types):
-           _BaseDriver.__init__(
-                self,
-                gzip.open(f, mode=mode, **kwargs)
-            )
+            return gzip.open(f, mode=mode, **kwargs)
         else:
-           _BaseDriver.__init__(
-                self,
-                gzip.GzipFile(fileobj=f, mode=mode, **kwargs)
-            )
+            return gzip.GzipFile(fileobj=f, mode=mode, **kwargs)
 
 
 class BZ2(_BaseCompressionDriver):
@@ -277,7 +228,7 @@ class BZ2(_BaseCompressionDriver):
     driver_name = 'BZ2'
     extensions = 'bz2',
 
-    def __init__(self, f, mode='r', **kwargs):
+    def open(self, f, mode='r', **kwargs):
 
         """
         All arguments are passed directly to `bz2.BZFile()`.
@@ -292,10 +243,7 @@ class BZ2(_BaseCompressionDriver):
             Additional keyword arguments for `bz2.BZFile()`.
         """
 
-        _BaseCompressionDriver.__init__(
-            self,
-            bz2.BZ2File(f, mode=mode, **kwargs)
-        )
+        return bz2.BZ2File(f, mode=mode, **kwargs)
 
 
 # Register external drivers

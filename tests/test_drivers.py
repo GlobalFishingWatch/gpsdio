@@ -37,7 +37,7 @@ def test_driver_read_matrix():
     for odrv in open_drivers:
         odrv.close()
 
-        stream = odrv.stream
+        stream = odrv._stream
         while stream:
             assert stream.closed, stream
             if hasattr(stream, '_f'):

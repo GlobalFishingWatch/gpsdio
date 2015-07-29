@@ -39,10 +39,13 @@ class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
 
     Generally speaking drivers behave just like an instance of `file`, except
     they operate on data stored in a very specific way.  Drivers must handle file
-    opening, closing, reading, and writing, and must pass an object that behaves
-    like `file` to `BaseDriver.__init__()`.  The really critical methods are
-    `__iter__()` and `write()`.  The former must yield one dictionary per
-    iteration and the latter must accept a dictionary and write it to disk.
+    opening, closing, reading, and writing, via an `open()` method that accepts a
+    file path, connection string, etc., `mode`, and `**kwargs` and returns an
+    open file-like object.
+
+    Additional critical methods are `__iter__()` and `write()`.  The former must
+    yield one dictionary per iteration and the latter must accept a dictionary
+    and write it to disk.
 
     See the `NewlineJSON()` driver for an example of a really simple driver
     and the `MsgPack()` driver for one that is more complex.
@@ -52,9 +55,8 @@ class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
     by_extension = {}
     register = False
     io_modes = ('r', 'w', 'a')
-    mode = 'r'
 
-    def __init__(self, stream):
+    def __init__(self, path, mode='r', **kwargs):
 
         """
         Creates an object that transparently interacts with all supported drivers
@@ -66,10 +68,11 @@ class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
             An object provided by a driver that behaves like `file`.
         """
 
-        self._stream = stream
-        if self.mode not in self.io_modes:
-            raise ValueError("Mode {mode} is unsupported - {io_modes}"
-                             .format(mode=self.mode, io_modes=str(self.io_modes)))
+        if mode not in self.io_modes:
+            raise ValueError("Mode '{mode}' is unsupported: {io_modes}"
+                             .format(mode=mode, io_modes=str(self.io_modes)))
+        self._stream = self.open(path, mode=mode, **kwargs)
+        self._mode = mode
 
     def __repr__(self):
         return "<%s driver %s, mode '%s'>" % (
@@ -85,20 +88,17 @@ class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
         self.close()
 
     def __iter__(self):
-        return iter(self.stream)
+        return iter(self._stream)
 
     @property
-    def stream(self):
+    def mode(self):
+        return self._mode
 
-        """
-        A handle to the underlying file-like object.  This can range from simply
-        being an instance of `file()` to being an instance of a compression
-        driver, which in turn has a `stream` property that is a driver class etc.
-        """
+    @property
+    def closed(self):
+        return self._stream.closed
 
-        return self._stream
-
-    def next(self):
+    def __next__(self):
 
         """
         This method must be explicitly defined, otherwise the `__getattr__()`
@@ -108,17 +108,31 @@ class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
         iterated over.
         """
 
-        return next(self.stream)
+        if self.closed:
+            raise IOError("I/O operation on closed stream")
+        if self.mode != 'r':
+            raise IOError("Stream not open for reading")
 
-    __next__ = next
+        return next(self._stream)
+
+    next = __next__
+
+    def write(self, msg):
+
+        if self.closed:
+            raise IOError("I/O operation on closed stream")
+        if self.mode not in ('a', 'w'):
+            raise IOError("Stream not open for writing")
+
+        self._stream.write(msg)
 
     def __getattr__(self, item):
 
         """
-        For all other methods, just get it from the underlying `stream`.
+        For all other methods, just get it from the underlying `_stream`.
         """
 
-        return getattr(self.stream, item)
+        return getattr(self._stream, item)
 
 
 class BaseCompressionDriver(BaseDriver):
