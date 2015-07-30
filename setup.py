@@ -66,14 +66,14 @@ setup(
         gpsdio=gpsdio.cli:main_group
 
         [gpsdio.gpsdio_commands]
-        cat=gpsdio.cli.commands:cat
-        convert=gpsdio.cli.commands:convert
-        env=gpsdio.cli.commands:env
-        etl=gpsdio.cli.commands:etl
-        info=gpsdio.cli.commands:info
-        insp=gpsdio.cli.commands:insp
-        load=gpsdio.cli.commands:load
-        validate=gpsdio.cli.commands:validate
+        cat=gpsdio.cli.cat:cat
+        convert=gpsdio.cli.deprecated:convert
+        env=gpsdio.cli.env:env
+        etl=gpsdio.cli.etl:etl
+        info=gpsdio.cli.info:info
+        insp=gpsdio.cli.insp:insp
+        load=gpsdio.cli.load:load
+        validate=gpsdio.cli.deprecated:validate
     ''',
     extras_require={
         'dev': [
@@ -94,8 +94,7 @@ setup(
     license='Apache 2.0',
     long_description=readme,
     include_package_data=True,
-    keywords="gpsd AIS I/O",
-
+    keywords="GPSd AIVDM AIS I/O",
     name="gpsdio",
     packages=find_packages(),
     url=source,
