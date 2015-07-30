@@ -20,11 +20,12 @@ import gpsdio.drivers
 
 @with_plugins(plugins=(
     ep for ep in itertools.chain(*(iter_entry_points('gpsdio.gpsdio_commands'),
-                                 iter_entry_points('gpsdio.gpsdio_plugins')))))
+                                 iter_entry_points('gpsdio.gpsdio_plugins'),
+                                   iter_entry_points('gpsdio.cli_plugins')))))
 @click.group()
 @click.version_option(gpsdio.__version__)
-@click.option('--verbose', '-v', count=True, help="Increase verbosity.")
-@click.option('--quiet', '-q', count=True, help="Decrease verbosity.")
+@click.option('-v', '--verbose', count=True, help="Increase verbosity.")
+@click.option('-q', '--quiet', count=True, help="Decrease verbosity.")
 @click.option(
     '--i-drv', metavar='NAME', default=None,
     help='DEPRECATED: Specify the input driver.  Normally auto-detected from file path.',
@@ -69,7 +70,7 @@ import gpsdio.drivers
 def main_group(ctx, i_drv, o_drv, i_cmp, o_cmp, i_drv_opts, i_cmp_opts, o_drv_opts, o_cmp_opts,
                verbose, quiet):
     """
-    A collection of tools for working with the GPSD JSON format (or the same format in a msgpack container)
+    gpsdio command line interface
     """
 
     verbosity = max(10, 30 - 10 * verbose) - quiet
@@ -87,13 +88,10 @@ def main_group(ctx, i_drv, o_drv, i_cmp, o_cmp, i_drv_opts, i_cmp_opts, o_drv_op
                     "Most of the keys in the gpsdio CLI's ctx.obj will be removed by 1.0 in "
                     "favor of more centralized options.  Use the decorators in "
                     "gpsdio/cli/options.py on subcommands rather than relying on ctx.obj.",
-                    FutureWarning,
-                    stacklevel=2
-                )
+                    FutureWarning, stacklevel=2)
 
             return super(_DepDict, self).__getitem__(item)
 
-    # A collection of objects subcommands need access to
     ctx.obj = {
         'verbosity': verbosity,  # DO NOT DEPRECATE THIS KEY
         'i_drv': i_drv,

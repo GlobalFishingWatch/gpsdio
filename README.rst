@@ -1,6 +1,7 @@
-GPSD Format
-===========
+gpsdio
+======
 
+AIS I/O with Python, dictionaries, and the `GPSd AIVDM <http://catb.org/gpsd/AIVDM.html>`_ schema.
 
 .. image:: https://travis-ci.org/SkyTruth/gpsdio.svg?branch=master
     :target: https://travis-ci.org/SkyTruth/gpsdio
@@ -9,51 +10,137 @@ GPSD Format
 .. image:: https://coveralls.io/repos/SkyTruth/gpsdio/badge.svg?branch=master
     :target: https://coveralls.io/r/SkyTruth/gpsdio
 
+This project is still evolving but will calm down once it hits ``v0.1``.  We
+would love to hear from you're using, or would like to use, this project, both
+so we don't make any unexpected changes, and to get outside opinions on AIS
+processing.
 
-A collection of tools for working with the GPSD JSON format (or the same format in a msgpack container).
 
-Currently only a subset of message types are supported.
+Overview
+--------
 
-* A library to read and write messages in the format
-* A command line tool to validate files in the format and give feedback on statistics and any errors found
+Vessels use a ship-to-ship Automated Identification System (AIS) to avoid
+collisions by broadcasting information about who they are, where they are, and
+what they are doing.  These messages are broadcast as `NMEA 0183 <https://en.wikipedia.org/wiki/NMEA_2000>`_
+or `NMEA 2000 <https://en.wikipedia.org/wiki/NMEA_2000>`_ sentences and are
+constantly being collected by terrestrial and satellite receivers.
+
+NMEA is very large and difficult to work with natively, so the solution is to
+parse it and store as another format.  Rather than spend time developing our
+own schema we chose to adopt the `GPSd AIVDM <http://catb.org/gpsd/AIVDM.html>`_
+schema, which clearly defines all message types.  Messages map well to Python
+dictionaries due to how fields vary type-to-type, so that's what ``gpsdio`` uses.
+
+This project aims to make AIS data easier to work with by providing I/O and a
+small set of useful transforms, and was built with large-scale data processing
+pipelines in mind.
+
+
+Example I/O
+-----------
+
+Here's a small example of how to read data stored as `newline delimited JSON <https://github.com/geowurster/newlinejson>`_,
+add a field, and write as GZIP compressed `MsgPack <http://msgpack.org/index.html>`_.
+The driver and compression are explicitly given but can also be detected from the file path.
+For more information on what ``gpsdio.open()`` returns, see the section on `messages <README.rst#Messages>`_.
+
+.. code-block:: python
+
+    import gpsdio
+
+    with gpsdio.open('sample-data/types.json') as src:
+        with gpsdio.open('with-num-fields.msg.gz', 'w', driver='MsgPack', compression='GZIP') as dst:
+            for msg in src:
+                msg['num_fields'] = len(msg)
+
+
+Parsing NMEA Sentences
+----------------------
+
+``gpsdio`` does not yet support reading NMEA directly, although it will hopefully
+in the near future.  In the meantime, `libais <https://github.com/schwehr/libais>`_
+has an ``aisdecode`` utility with an optional ``--gpsd`` format that produces data
+readable by this library.
+
+
+Commandline Interface
+---------------------
+
+This project also offers a ``gpsdio`` commandline utility for common tasks like
+inspecting and transforming data.  See the `CLI docs <docs/CLI.rst>`_
+for more information.
+
+
+Messages
+--------
+
+**NOTE:** Message validation and transformation has not quite settled and will
+change for ``v0.1``.  The description below is currently mostly relevant, although
+some fields may be placed into an ``__invalid__`` key on read or write.
+
+``gpsdio.open()`` returns a file-like object called ``Stream()`` that is
+responsible for taking a dictionary from the underlying driver and transforming
+it into a well formed message.
+
+Normally I/O libraries perform some strict validation while reading and before
+writing data, but working with AIS usually involves adding some custom fields.
+Rather than telling ``gpsdio.open()`` what additional fields it may encounter
+every time a file is opened, message validation only happens when requested.
+This may seem backwards, but the idea is that validation really only needs to
+happen as data parsed and brought into the ``gpsdio`` world.  After that the
+user knows far more about their data and is likely adding additional fields
+during processing.
+
+See `sample-data <https://github.com/SkyTruth/gpsdio/blob/master/sample-data>`_
+for some data ``gpsdio`` can immediately read and write.
 
 
 CLI Plugins
 -----------
 
-The ``gpsdio`` commandline utility supports loading plugins via `setuptools entry points <https://pythonhosted.org/setuptools/setuptools.html#dynamic-discovery-of-services-and-plugins>`_.
-Plugins should must be a `click <http://click.pocoo.org/4/>`_ command or group and should be
-registered to a ``gpsdio.gpsdio_plugins`` entry point.  An example plugin is `gpsdio-density <https://github.com/SkyTruth/gpsdio-density>`_
-which generates density rasters from positional AIS messages.
+Developers can create their own ``gpsdio`` commands with ``click-plugins``.
+``gpsdio`` loads plugins from a `setuptools entry point <https://pythonhosted.org/setuptools/setuptools.html#dynamic-discovery-of-services-and-plugins>`_
+called ``gpsdio.cli_plugins``, so in your ``setup.py``:
 
-Plugins also have access to information from the global click context.  Since
-multiple commands care about things like input and output drivers, compression,
-options, and verbosity, this information is available to plugin commands that are
-decorated with ``@click.pass_context`` through a dictionary stored in ``ctx.obj``.
+.. code-block:: python
 
-The objects available in ``ctx.obj`` that will not change are as follows:
+    setup(
+        entry_points='''
+            [gpsdio.cli_plugins]
+            name=package.module:click_command
+        '''
+    )
 
-* ``i_drv : str`` - Driver name for input file.
-* ``i_drv_opts : dict`` - A dictionary for ``do`` in ``gpsdio.open()``.  Values have already been decoded to their Python type, including JSON.
-* ``i_cmp : str`` - Compression driver name for input file.
-* ``i_cmp_opts : dict`` - Same idea as ``i_drv_opts``.
-
-Output options are the same after swapping ``i_`` for ``o_``.
+For a more in-depth description see the `click-plugins <https://github.com/click-contrib/click-plugins>`_
+documentation.  Additionally, see `gpsdio-density <https://github.com/SkyTruth/gpsdio-density>`_
+for an example, or one of the other plugins listed in the
+`plugin registry <https://github.com/SkyTruth/gpsdio/wiki/CLI-plugin-registry>`_.
 
 
-Drivers
--------
+Driver Plugins
+--------------
 
-External drivers should be registered to the entry-point ``gpsdio.drivers`` and
+External drivers should be registered to the entry-point ``gpsdio.driver_plugins`` and
 must subclass ``gpsdio.base.BaseDriver`` or ``gpsdio.base.BaseCompressionDriver``.
+See the docstrings on those two objects for subclassing information.
 
 
 Installation
 ------------
 
+With pip:
+
 .. code-block:: console
 
-    $ pip install https://github.com/skytruth/gpsdio
+    $ pip install gpsdio
+
+From source:
+
+.. code-block:: console
+
+    $ git clone https://github.com/SkyTruth/gpsdio
+    $ cd gpsdio
+    $ python setup.py install
 
 
 Developing
@@ -69,82 +156,13 @@ Developing
     $ py.test tests --cov gpsdio --cov-report term-missing
 
 
-Command line tools
-------------------
+Changelog
+---------
 
-.. code-block:: console
-
-    $ gpsdio validate FILENAME.msg
-    $ gpsdio validate FILENAME.json
-    $ gpsdio convert FILENAME.msg FILENAME.json
-    $ gpsdio convert FILENAME.json FILENAME.msg
+See ``CHANGES.md``
 
 
-API
----
+License
+-------
 
-Opening a file:
-
-.. code-block:: python
-
-    with gpsdio.open('infile.msg') as src:
-        for msg in src:
-            print msg
-
-.. code-block:: python
-
-    with gpsdio.open('outfile.msg', 'w') as dst:
-        dst.write(msg)
-
-Opens a file containing gpsd format data in any of the supported container formats and optionally compressed. The returned object can be used as a context manager, and in read mode it works as an iterator over the messages in the file.
-
-Currently supported container formats are newline delimited JSON and MsgPack and currently supported compression formats are GZIP and XZ. When possible the container format and compression types are sniffed out based on the file extensions.  These parameters can be explicitly provided via `driver` and `compression`.  Additional driver specific or compression specific options can be supplied by passing a dictionary to `do` and/or `co`.  For example, the GZIP driver uses `gzip.GzipFile()` internally so if the user wants to specify `GzipFile()`'s 'compresslevel' keyword argument they would do:
-
-.. code-block:: python
-
-    with gpsdio.open('infile.msg.gz', co={'compresslevel': 9}) as src:
-        for msg in src:
-            pass
-
-Additionally, some drivers and compression formats support additional modes that compliment r, w, a.  If the user wants to pass a more specific mode to a compression driver, they would do:
-
-.. code-block:: python
-
-    with gpsdio.open('outfile.msg.gz', 'w', cmode='wb') as dst:
-        dst.write(msg)
-
-
-Simple Conversion Examples
---------------------------
-
-Read from newline delimited JSON and write to GZIP compressed MsgPack:
-
-.. code-block:: python
-
-    import gpsdio
-    with gpsdio.open('input.json') as src:
-        with gpsdio.open('output.msg.gz', 'w') as dst:
-            for msg in src:
-                dst.write(msg)
-
-Read MsgPack compressed with GZIP and write to newline JSON with XZ compression without using file extensions:
-
-.. code-block:: python
-
-    import gpsdio
-    with gpsdio.open('input', driver='msgpack', compression='gzip') as src:
-        with gpsdio.open('output', 'w', driver='newlinejson', compression='xz'):
-            for msg in src:
-                dst.write(msg)
-
-Stream
-------
-
-A file-like object that reads, writes, and validates GPSD data. This is the type of object returned by ``gpsdio.open()``.
-
-When reading and writing ``Stream()`` can perform message manipulation and validation to ensure more uniform data - there are several key flags that change how ``Stream()`` reads and writes data:
-
-* ``skip_failures`` : Bad field values are moved to a sub-object of the message under the key '__invalid__', and any parser or validation errors are recorded under the same key instead of raising exceptions.
-* ``force_msg`` : On read and write force the message being handled to be GPSD compliant by removing fields that do not belong and adding missing fields with default values.
-* ``keep_fields`` : On read and write don't remove unrecognized fields. Use together with ``force_msg`` to only add missing fields.
-* ``convert`` : When reading import date/time fields into an instance of ``datetime.datetime`` and export to a string when writing.  This can be expensive so if you can work with the dates and times as strings it is best to set this to `False`.
+See ``LICENSE.txt``
