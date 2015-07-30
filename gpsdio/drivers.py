@@ -80,7 +80,10 @@ def detect_compression_type(path):
 class NewlineJSON(_BaseDriver):
 
     """
-    Driver for accessing data stored as newline delimited JSON.
+    Access data stored as newline delimited JSON.  Driver options are passed to
+    ``newlinejson.open()``.
+
+    https://github.com/geowurster/newlinejson
     """
 
     driver_name = 'NewlineJSON'
@@ -156,7 +159,10 @@ class _MsgPackReader(msgpack.Unpacker):
 class MsgPack(_BaseDriver):
 
     """
-    Driver for accessing data stored as MsgPack.
+    Read and write data stored as MsgPack.  When reading, driver options are
+    passed to ``msgpack.Unpacker()`` and ``msgpack.Packer()`` when writing.
+
+    https://github.com/msgpack/msgpack-python
     """
 
     driver_name = 'MsgPack'
@@ -178,7 +184,11 @@ class MsgPack(_BaseDriver):
 class GZIP(_BaseCompressionDriver):
 
     """
-    Driver for accessing data stored as GZIP.
+    Access data stored as GZIP using Python's builtin ``gzip`` library.  Driver
+    options are passed to ``gzip.open()``, unless the input path is a file-like
+    object, in which case they are passed to ``gzip.GzipFile()``.
+
+    https://docs.python.org/3/library/gzip.html
     """
 
     driver_name = 'GZIP'
@@ -200,7 +210,10 @@ class GZIP(_BaseCompressionDriver):
 class BZ2(_BaseCompressionDriver):
 
     """
-    Driver for accessing data stored as BZIP2.
+    Access data stored as BZ2 with Python's builtin ``bz2`` library.  Driver
+    options are passed to ``bz2.BZ2File()``.
+
+    https://docs.python.org/3/library/bz2.html
     """
 
     driver_name = 'BZ2'
@@ -228,7 +241,7 @@ class BZ2(_BaseCompressionDriver):
 
 
 # Register external drivers
-for ep in iter_entry_points('gpsdio.drivers'):
+for ep in list(iter_entry_points('gpsdio.drivers')) + list(iter_entry_points('gpsdio.driver_plugins')):
     try:
         ep.load()
         logger.debug("Loaded entry-point `%s'", ep.name)

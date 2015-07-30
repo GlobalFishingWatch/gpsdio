@@ -2,7 +2,7 @@
 
 
 """
-AIS I/O with Python and the GPSd AIVDM schema.
+AIS I/O with Python, dictionaries, and the GPSd AIVDM schema.
 """
 
 
