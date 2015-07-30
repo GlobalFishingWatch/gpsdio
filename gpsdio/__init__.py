@@ -19,7 +19,7 @@ from . import schema
 from . import validate
 
 
-__version__ = '0.0.6'
+__version__ = '0.0.7'
 __author__ = 'Egil Moeller, Kevin Wurster'
 __email__ = 'egil@skytruth.org, kevin@skytruth.org'
 __source__ = 'https://github.com/SkyTruth/gpsdio'

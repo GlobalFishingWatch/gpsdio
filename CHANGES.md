@@ -1,6 +1,18 @@
 Changes
 =======
 
+
+0.0.7 (2015-07-30)
+------------------
+
+- Expose information about drivers through `gpsdio env --driver-help` - # 120
+- `gpsdio insp` supports alternate interpreters and uses `src` var instead of `stream` - #109
+- i/o drv/cmp options moved from main CLI to subcommands - #108
+- Fixed a bug where `gpsdio.open('-', 'a')` would open `stdout` - #105
+- Support for already open file pointers - #104
+- Drivers must now implement an `open()` method - #99
+
+
 0.0.6 (2015-06-25)
 ------------------
 
