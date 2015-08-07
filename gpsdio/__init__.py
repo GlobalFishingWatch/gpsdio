@@ -5,21 +5,22 @@
 AIS I/O with Python, dictionaries, and the GPSd AIVDM schema.
 """
 
-
 import logging
 
 # Immediately set up so that other modules have access to the logger
+# logging.basicConfig()
 logging.basicConfig()
 logger = logging.getLogger('gpsdio')
 
-from .core import open
-from .core import filter
-from .core import sort
-from . import schema
-from . import validate
+
+from gpsdio.core import open
+from gpsdio.core import filter
+from gpsdio.core import sort
+from gpsdio import schema
+from gpsdio import validate
 
 
-__version__ = '0.0.7'
+__version__ = '0.0.8'
 __author__ = 'Egil Moeller, Kevin Wurster'
 __email__ = 'egil@skytruth.org, kevin@skytruth.org'
 __source__ = 'https://github.com/SkyTruth/gpsdio'
