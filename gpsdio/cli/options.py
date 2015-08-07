@@ -50,3 +50,26 @@ output_compression_opts = click.option(
     callback=str2type.ext.click_cb_key_val,
     help='Output compression driver options.  JSON values are automatically decoded.',
 )
+
+
+def _cb_indent(ctx, param, value):
+
+    """
+    Click callback for `gpsdio info`'s `--indent` option to let `None` be a
+    valid value so the user can disable indentation.
+    """
+
+    if value.lower().strip() == 'none':
+        return None
+    else:
+        try:
+            return int(value)
+        except ValueError:
+            raise click.BadParameter("Must be `None` or an integer.")
+
+
+indent_opt = click.option(
+    '--indent', metavar='INTEGER', default='4', callback=_cb_indent,
+    help="Indent and pretty print output.  Use `None` to turn off indentation and make output "
+         "serializable JSON. (default: 4)"
+)
