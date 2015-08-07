@@ -273,7 +273,7 @@ def get_default_msg(msg_type, schema=CURRENT, optional=True):
         raise ValueError("Invalid AIS message type: %s: %s" % (msg_type, e))
 
 
-for ep in iter_entry_points('gpsdio.schema'):
+for ep in iter_entry_points('gpsdio.schema_extensions'):
     try:
         CURRENT.update(**ep.load())
         logger.debug("Registered external schema: %s", ep.name)
