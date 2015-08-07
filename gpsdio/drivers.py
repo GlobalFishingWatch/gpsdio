@@ -17,8 +17,8 @@ import newlinejson.core
 import six
 import ujson
 
-from .base import BaseCompressionDriver as _BaseCompressionDriver
-from .base import BaseDriver as _BaseDriver
+from gpsdio.base import BaseCompressionDriver as _BaseCompressionDriver
+from gpsdio.base import BaseDriver as _BaseDriver
 
 
 newlinejson.JSON = ujson
