@@ -10,7 +10,7 @@ import sys
 
 import six
 
-from . import schema
+from gpsdio import schema
 
 
 log = logging.getLogger('gpsdio')

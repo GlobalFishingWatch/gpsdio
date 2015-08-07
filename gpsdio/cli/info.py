@@ -13,22 +13,6 @@ import gpsdio
 from gpsdio.cli import options
 
 
-def _cb_indent(ctx, param, value):
-
-    """
-    Click callback for `gpsdio info`'s `--indent` option to let `None` be a
-    valid value so the user can disable indentation.
-    """
-
-    if value.lower().strip() == 'none':
-        return None
-    else:
-        try:
-            return int(value)
-        except ValueError:
-            raise click.BadParameter("Must be `None` or an integer.")
-
-
 @click.command(name='info')
 @click.argument('infile')
 @click.option(
@@ -62,11 +46,7 @@ def _cb_indent(ctx, param, value):
     '--with-field-hist', is_flag=True,
     help="Include a histogram of field names and message counts."
 )
-@click.option(
-    '--indent', metavar='INTEGER', default='4', callback=_cb_indent,
-    help="Indent and pretty print output.  Use `None` to turn off indentation and make output "
-         "serializable JSON. (default: 4)"
-)
+@options.indent_opt
 @click.option(
     '--min-timestamp', 'meta_member', flag_value='min_timestamp',
     help="Print only the minimum timestamp."

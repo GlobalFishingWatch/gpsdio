@@ -96,7 +96,7 @@ setup(
     include_package_data=True,
     keywords="GPSd AIVDM AIS I/O",
     name="gpsdio",
-    packages=find_packages(),
+    packages=find_packages(exclude=['test']),
     url=source,
     version=version,
 )

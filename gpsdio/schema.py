@@ -3,13 +3,18 @@ Schema definitions and functions to transform rows
 """
 
 
+import logging
+from pkg_resources import iter_entry_points
 import six
 
-from ._schema_def import DATETIME_FORMAT
-from ._schema_def import datetime2str
-from ._schema_def import fields_by_msg_type
-from ._schema_def import str2datetime
-from ._schema_def import VERSIONS
+from gpsdio._schema_def import DATETIME_FORMAT
+from gpsdio._schema_def import datetime2str
+from gpsdio._schema_def import fields_by_msg_type
+from gpsdio._schema_def import str2datetime
+from gpsdio._schema_def import VERSIONS
+
+
+logger = logging.getLogger('gpsdio')
 
 
 CURRENT = VERSIONS[max(VERSIONS.keys())]
@@ -266,3 +271,11 @@ def get_default_msg(msg_type, schema=CURRENT, optional=True):
         return res
     except Exception as e:
         raise ValueError("Invalid AIS message type: %s: %s" % (msg_type, e))
+
+
+for ep in iter_entry_points('gpsdio.schema_extensions'):
+    try:
+        CURRENT.update(**ep.load())
+        logger.debug("Registered external schema: %s", ep.name)
+    except Exception:
+        logger.exception("Couldn't load external schema: %s", ep.name)
