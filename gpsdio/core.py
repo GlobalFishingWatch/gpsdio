@@ -125,13 +125,13 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
 
     log.debug("Built base I/O stream: %s", stream)
 
-    return Stream(stream, mode=mode, **kwargs)
+    return GPSDIOStream(stream, mode=mode, **kwargs)
 
 
-class Stream(object):
+class GPSDIOStream(object):
 
     def __init__(self, stream, mode='r', force_msg=False, keep_fields=True,
-                 skip_failures=False, convert=True, **kwargs):
+                 skip_failures=False, convert=True):
 
         """
         Read or write a stream of AIS data.
