@@ -106,8 +106,6 @@ class TestStream(unittest.TestCase):
                     next(stream)
                 with self.assertRaises(IOError):
                     stream.write(None)
-                with self.assertRaises(IOError):
-                    stream.writeheader()
 
     def test_read_from_write_stream(self):
         with gpsdio.open(TYPES_MSG_GZ_FILE) as src, \
@@ -116,13 +114,6 @@ class TestStream(unittest.TestCase):
                 dst.write(msg)
             with self.assertRaises(IOError):
                 next(dst)
-
-    def test_write_to_read_stream(self):
-        with tempfile.NamedTemporaryFile(mode='r+') as f:
-            for mode in ('r', 'a'):
-                with gpsdio.open(f.name, mode=mode, driver='MsgPack') as src:
-                    with self.assertRaises(IOError):
-                        src.writeheader()
 
 
 def test_get_driver():
