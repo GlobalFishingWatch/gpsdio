@@ -230,7 +230,7 @@ class Stream(object):
         self._stream.write(msg)
 
 
-def filter(stream, expressions):
+def filter(expressions, stream):
 
     """
     A generator to filter a stream of data with boolean Pythonic expressions.

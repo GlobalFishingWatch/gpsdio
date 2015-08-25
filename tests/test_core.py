@@ -172,20 +172,20 @@ def test_filter():
 
     # Pass all through unaltered
     with gpsdio.open(TYPES_MSG_GZ_FILE) as actual, gpsdio.open(TYPES_MSG_GZ_FILE) as expected:
-        for a, e in zip(gpsdio.filter(actual, "isinstance(mmsi, int)"), expected):
+        for a, e in zip(gpsdio.filter("isinstance(mmsi, int)", actual), expected):
             assert a == e
 
     # Extract only types 1, 2, and 3
     passed = []
     with gpsdio.open(TYPES_MSG_GZ_FILE) as stream:
-        for msg in gpsdio.filter(stream, "type in (1,2,3)"):
+        for msg in gpsdio.filter("type in (1,2,3)", stream):
             passed.append(msg)
             assert msg['type'] in (1, 2, 3)
     assert len(passed) >= 3
 
     # Filter out everything
     with gpsdio.open(TYPES_MSG_GZ_FILE) as stream:
-        for msg in gpsdio.filter(stream, ("type is 5", "mmsi is -1000")):
+        for msg in gpsdio.filter(("type is 5", "mmsi is -1000"), stream):
             assert False, "Above loop should not have executed because the filter should " \
                           "not have yielded anything."
 
@@ -193,14 +193,14 @@ def test_filter():
     passed = []
     with gpsdio.open(TYPES_MSG_GZ_FILE) as stream:
         for msg in gpsdio.filter(
-                stream, ("status == 'Under way using engine'", "mmsi is 366268061")):
+                ("status == 'Under way using engine'", "mmsi is 366268061"), stream):
             passed.append(msg)
             assert msg['mmsi'] is 366268061
 
     # Reference the entire message
     passed = []
     with gpsdio.open(TYPES_JSON_GZ_FILE) as stream:
-        for msg in gpsdio.filter(stream, ("isinstance(msg, dict)", "'lat' in msg")):
+        for msg in gpsdio.filter(("isinstance(msg, dict)", "'lat' in msg"), stream):
             passed.append(msg)
             assert 'lat' in msg
     assert len(passed) >= 9
@@ -208,7 +208,7 @@ def test_filter():
     # Multiple complex filters
     criteria = ("turn is 0 and second is 0", "mmsi == 366268061", "'lat' in msg")
     with gpsdio.open(TYPES_JSON_GZ_FILE) as stream:
-        passed = [m for m in gpsdio.filter(stream, criteria)]
+        passed = [m for m in gpsdio.filter(criteria, stream)]
         assert len(passed) >= 1
 
 
