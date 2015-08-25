@@ -75,17 +75,6 @@ def etl(ctx, infile, outfile, filter_expr, sort_field,
             --sort timestamp
     """
 
-    # TODO (1.0): Delete these lines that handle fallback to old flag locations
-    input_driver = ctx.obj.get('i_drv') or input_driver
-    input_compression = ctx.obj.get('i_cmp') or input_compression
-    input_driver_opts = ctx.obj.get('i_drv_opts') or input_driver_opts
-    input_compression_opts = ctx.obj.get('i_cmp_opts') or input_compression_opts
-    output_driver = ctx.obj.get('o_drv') or output_driver
-    output_compression = ctx.obj.get('o_cmp',) or output_compression
-    output_driver_opts = ctx.obj.get('o_drv_opts') or output_driver_opts
-    output_compression_opts = ctx.obj.get('o_cmp_opts') or output_compression_opts
-
-
     logger = logging.getLogger('gpsdio-cli-etl')
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting etl')

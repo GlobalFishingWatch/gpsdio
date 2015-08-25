@@ -26,13 +26,6 @@ def load(ctx, outfile, input_driver_opts,
     Load newline JSON msgs from stdin to a file.
     """
 
-    # TODO (1.0): Delete these lines that handle fallback to old flag locations
-    input_driver_opts = ctx.obj.get('i_drv_opts') or input_driver_opts
-    output_driver = ctx.obj.get('o_drv') or output_driver
-    output_compression = ctx.obj.get('o_cmp',) or output_compression
-    output_driver_opts = ctx.obj.get('o_drv_opts') or output_driver_opts
-    output_compression_opts = ctx.obj.get('o_cmp_opts') or output_compression_opts
-
     logger = logging.getLogger('gpsdio-cli-load')
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting load')
