@@ -1,5 +1,32 @@
 """
 The schema definitions are very long and make reading `gpsdio/schema.py` difficult
+
+
+In order to ease test maintenance as outputs and inputs change, the data in the
+structures below contains a test for every field, a value that will pass the
+test, and a value that will fail the test.  All information is pulled from the
+GPSd AIVDM spec and assumes two things:
+
+    1. Fieldnames are unique across all messages
+    2. Fields appearing in different message types contain the same information.
+       For instance, the field 'sog' appears in multiple types but is always
+       speed over ground in the same units in every message.
+
+Keys are fieldnames and values are dictionaries containing three keys:
+
+    1. test - a function that verifies a value is acceptable for this field
+    2. good - a value that will pass the test function
+    3. bad  - a value that will not pass the test function
+
+Some fields are flags with values 0 or 1 that may be switched to Python's bool
+in the future but in the meantime we want to be positive these values are int's.
+Since bool subclasses int expressions like `0 in (1, 0)` and `True in (0, 1)`
+both evaluate as `True` which could yield unexpected results.  Any test that
+expects an int also checks to make sure that int is NOT a bool, even if the
+field is a range and will never be bool.  Better to be safe here than be forced
+to debug some potentially ambiguous bugs elsewhere.
+
+http://catb.org/gpsd/AIVDM.html
 """
 
 
@@ -68,49 +95,58 @@ def etastr2datetime(string):
 
 
 # Fields required by each message type, by message type ID
+
 fields_by_msg_type = {
     1: [
-        'slot_timeout', 'sync_state', 'repeat', 'lat', 'turn', 'mmsi', 'lon', 'raim', 'heading', 'scaled', 'course',
-        'second', 'status', 'type', 'device', 'spare', 'maneuver', 'class', 'speed', 'accuracy'
+        'slot_timeout', 'sync_state', 'repeat', 'lat', 'turn', 'mmsi', 'lon', 'raim',
+        'heading', 'scaled', 'course', 'second', 'status', 'type', 'device', 'spare',
+        'maneuver', 'class', 'speed', 'accuracy'
     ],
     2: [
-        'slot_timeout', 'sync_state', 'repeat', 'lat', 'turn', 'mmsi', 'lon', 'raim', 'heading', 'scaled', 'course',
-        'second', 'status', 'type', 'device', 'spare', 'maneuver', 'class', 'speed', 'accuracy'
+        'slot_timeout', 'sync_state', 'repeat', 'lat', 'turn', 'mmsi', 'lon', 'raim',
+        'heading', 'scaled', 'course', 'second', 'status', 'type', 'device', 'spare',
+        'maneuver', 'class', 'speed', 'accuracy'
     ],
     3: [
-        'slot_timeout', 'sync_state', 'repeat', 'lat', 'turn', 'mmsi', 'lon', 'raim', 'heading', 'scaled', 'course',
-        'second', 'status', 'type', 'device', 'spare', 'maneuver', 'class', 'speed', 'accuracy'],
+        'slot_timeout', 'sync_state', 'repeat', 'lat', 'turn', 'mmsi', 'lon', 'raim',
+        'heading', 'scaled', 'course', 'second', 'status', 'type', 'device', 'spare',
+        'maneuver', 'class', 'speed', 'accuracy'],
     4: [
-        'slot_timeout', 'sync_state', 'repeat', 'mmsi', 'device', 'lon', 'raim', 'scaled', 'epfd', 'transmission_ctl',
-        'eta', 'spare', 'slot_number', 'lat', 'type', 'class', 'accuracy'
+        'slot_timeout', 'sync_state', 'repeat', 'mmsi', 'device', 'lon', 'raim', 'scaled',
+        'epfd', 'transmission_ctl', 'eta', 'spare', 'slot_number', 'lat', 'type', 'class',
+        'accuracy'
     ],
     5: [
-        'scaled', 'to_starboard', 'repeat', 'shipname', 'ais_version', 'draught', 'mmsi', 'destination', 'to_bow',
-        'dte', 'to_stern', 'to_port', 'eta', 'callsign', 'imo', 'shiptype', 'device', 'spare', 'epfd', 'type', 'class'
+        'scaled', 'to_starboard', 'repeat', 'shipname', 'ais_version', 'draught', 'mmsi',
+        'destination', 'to_bow', 'dte', 'to_stern', 'to_port', 'eta', 'callsign', 'imo',
+        'shiptype', 'device', 'spare', 'epfd', 'type', 'class'
     ],
     6: [
-        'repeat', 'retransmit', 'spare2', 'dest_mmsi', 'seqno', 'mmsi', 'dac', 'ack_required', 'scaled', 'msg_seq',
-        'spare', 'fid', 'device', 'type', 'class'],
+        'repeat', 'retransmit', 'spare2', 'dest_mmsi', 'seqno', 'mmsi', 'dac', 'ack_required',
+        'scaled', 'msg_seq', 'spare', 'fid', 'device', 'type', 'class'],
     7: [
         'repeat', 'mmsi', 'scaled', 'acks', 'device', 'type', 'class'
     ],
     8: [
-        'notice_type_str', 'repeat', 'dac', 'mmsi', 'link_id', 'scaled', 'duration_minutes', 'spare', 'device',
-        'sub_areas', 'class', 'notice_type', 'fid', 'type'
+        'notice_type_str', 'repeat', 'dac', 'mmsi', 'link_id', 'scaled', 'duration_minutes',
+        'spare', 'device', 'sub_areas', 'class', 'notice_type', 'fid', 'type'
     ],
     9: [
-        'slot_timeout', 'received_stations', 'repeat', 'spare2', 'alt_sensor', 'mmsi', 'device', 'lon', 'raim', 'dte',
-        'scaled', 'course', 'second', 'spare', 'lat', 'alt', 'type', 'class', 'speed', 'accuracy'
+        'slot_timeout', 'received_stations', 'repeat', 'spare2', 'alt_sensor', 'mmsi',
+        'device', 'lon', 'raim', 'dte', 'scaled', 'course', 'second', 'spare', 'lat', 'alt',
+        'type', 'class', 'speed', 'accuracy'
     ],
     10: [
         'scaled', 'device', 'repeat', 'spare', 'spare2', 'dest_mmsi', 'mmsi', 'type', 'class'
     ],
     11: [
-        'slot_timeout', 'sync_state', 'repeat', 'mmsi', 'device', 'lon', 'raim', 'scaled', 'epfd', 'transmission_ctl',
-        'eta', 'spare', 'lat', 'slot_offset', 'type', 'class', 'accuracy'
+        'slot_timeout', 'sync_state', 'repeat', 'mmsi', 'device', 'lon', 'raim', 'scaled',
+        'epfd', 'transmission_ctl', 'eta', 'spare', 'lat', 'slot_offset', 'type', 'class',
+        'accuracy'
     ],
     12: [
-        'repeat', 'mmsi', 'scaled', 'spare', 'device', 'class', 'retransmit', 'seqno', 'dest_mmsi', 'type'
+        'repeat', 'mmsi', 'scaled', 'spare', 'device', 'class', 'retransmit', 'seqno',
+        'dest_mmsi', 'type'
     ],
     13: [
         'repeat', 'mmsi', 'class', 'scaled', 'device', 'mmsi4', 'mmsi3', 'mmsi2', 'mmsi1'
@@ -119,73 +155,63 @@ fields_by_msg_type = {
         'repeat', 'text', 'mmsi', 'scaled', 'device', 'class'
     ],
     15: [
-        'spare4', 'repeat', 'slot_offset_2', 'spare3', 'spare2', 'mmsi_1', 'msg_1_1', 'mmsi', 'mmsi_2', 'class',
-        'scaled', 'dest_msg_1_2', 'slot_offset_1_1', 'spare', 'device', 'type', 'msg_2', 'slot_offset_1_2'
+        'spare4', 'repeat', 'slot_offset_2', 'spare3', 'spare2', 'mmsi_1', 'msg_1_1', 'mmsi',
+        'mmsi_2', 'class', 'scaled', 'dest_msg_1_2', 'slot_offset_1_1', 'spare', 'device',
+        'type', 'msg_2', 'slot_offset_1_2'
     ],
     16: [
-        'repeat', 'increment1', 'increment2', 'mmsi', 'scaled', 'spare', 'device', 'dest_mmsi_b', 'dest_mmsi_a',
-        'offset1', 'offset2', 'class', 'type'
+        'repeat', 'increment1', 'increment2', 'mmsi', 'scaled', 'spare', 'device',
+        'dest_mmsi_b', 'dest_mmsi_a', 'offset1', 'offset2', 'class', 'type'
     ],
     17: [
         'scaled', 'device', 'repeat', 'spare', 'spare2', 'lat', 'type', 'mmsi', 'lon', 'class'
     ],
     18: [
-        'spare2', 'scaled', 'device', 'second', 'cs', 'speed', 'unit', 'lon', 'type', 'dsc', 'msg22', 'accuracy',
-        'repeat', 'mmsi', 'raim', 'band', 'spare', 'lat', 'class', 'course', 'heading', 'mode', 'display'
+        'spare2', 'scaled', 'device', 'second', 'cs', 'speed', 'unit', 'lon', 'type', 'dsc',
+        'msg22', 'accuracy', 'repeat', 'mmsi', 'raim', 'band', 'spare', 'lat', 'class',
+        'course', 'heading', 'mode', 'display'
     ],
     19: [
-        'type_and_cargo', 'spare3', 'spare2', 'to_port', 'to_bow', 'scaled', 'course', 'second', 'speed',
-        'to_starboard', 'lon', 'type', 'accuracy', 'repeat', 'mmsi', 'raim', 'epfd', 'spare', 'device', 'class',
-        'assigned', 'to_stern', 'lat', 'shipname', 'dte', 'heading'
+        'type_and_cargo', 'spare3', 'spare2', 'to_port', 'to_bow', 'scaled', 'course',
+        'second', 'speed', 'to_starboard', 'lon', 'type', 'accuracy', 'repeat', 'mmsi',
+        'raim', 'epfd', 'spare', 'device', 'class', 'assigned', 'to_stern', 'lat', 'shipname',
+        'dte', 'heading'
     ],
     20: [
-        'offset4', 'offset1', 'offset2', 'offset3', 'scaled', 'increment4', 'increment3', 'increment2', 'increment1',
-        'timeout3', 'timeout2', 'timeout1', 'timeout4', 'type', 'repeat', 'mmsi', 'number4', 'number2', 'number3',
-        'number1', 'device', 'class', 'spare'
+        'offset4', 'offset1', 'offset2', 'offset3', 'scaled', 'increment4', 'increment3',
+        'increment2', 'increment1', 'timeout3', 'timeout2', 'timeout1', 'timeout4',
+        'type', 'repeat', 'mmsi', 'number4', 'number2', 'number3', 'number1', 'device',
+        'class', 'spare'
     ],
     21: [
-        'virtual_aid', 'to_port', 'to_bow', 'scaled', 'device', 'second', 'to_starboard', 'lon', 'type', 'accuracy',
-        'repeat', 'mmsi', 'raim', 'aid_type', 'spare', 'lat', 'class', 'assigned', 'to_stern', 'shipname',
-        'aton_status', 'epfd', 'off_position'
+        'virtual_aid', 'to_port', 'to_bow', 'scaled', 'device', 'second', 'to_starboard',
+        'lon', 'type', 'accuracy', 'repeat', 'mmsi', 'raim', 'aid_type', 'spare', 'lat',
+        'class', 'assigned', 'to_stern', 'shipname', 'aton_status', 'epfd', 'off_position'
     ],
     22: [
-        'repeat', 'band_b', 'zonesize', 'power', 'band_a', 'mmsi', 'spare2', 'ne_lon', 'txrx', 'scaled', 'class',
-        'channel_a', 'channel_b', 'device', 'spare', 'y2', 'type', 'sw_lon', 'sw_lat', 'ne_lat'
+        'repeat', 'band_b', 'zonesize', 'power', 'band_a', 'mmsi', 'spare2', 'ne_lon', 'txrx',
+        'scaled', 'class', 'channel_a', 'channel_b', 'device', 'spare', 'y2', 'type', 'sw_lon',
+        'sw_lat', 'ne_lat'
     ],
     23: [
-        'repeat', 'type_and_cargo', 'spare3', 'station_type', 'interval_raw', 'mmsi', 'ne_lon', 'quiet', 'txrx',
-        'scaled', 'class', 'spare', 'device', 'spare2', 'y2', 'type', 'sw_lon', 'sw_lat', 'ne_lat'
+        'repeat', 'type_and_cargo', 'spare3', 'station_type', 'interval_raw', 'mmsi', 'ne_lon',
+        'quiet', 'txrx', 'scaled', 'class', 'spare', 'device', 'spare2', 'y2', 'type',
+        'sw_lon', 'sw_lat', 'ne_lat'
     ],
     24: [
         'scaled', 'repeat', 'shipname', 'device', 'mmsi', 'type', 'part_num', 'class'
     ],
     25: [
-        'repeat', 'dest_mmsi', 'mmsi', 'structured', 'app_id', 'scaled', 'addressed', 'device', 'data', 'class'
+        'repeat', 'dest_mmsi', 'mmsi', 'structured', 'app_id', 'scaled', 'addressed', 'device',
+        'data', 'class'
     ],
     27: [
-        'type', 'repeat', 'mmsi', 'accuracy', 'raim', 'status', 'lon', 'lat', 'speed', 'course', 'gnss'
+        'type', 'repeat', 'mmsi', 'accuracy', 'raim', 'status', 'lon', 'lat', 'speed',
+        'course', 'gnss'
     ]
 }
 
 
-
-# In order to ease test maintenance as outputs and inputs change the data structure below contains a test for every
-# field, a value that will pass the test, and a value that will fail the test.  All information is pulled from GPSD
-# (http://catb.org/gpsd/AIVDM.html) and assumes two things:
-#   1. Fieldnames are unique across all messages
-#   2. Fields appearing in different message types contain the same information.  For instance, the field 'sog'
-#      appears in multiple types but is always speed over ground in the same units in every message.
-#
-# Keys are fieldnames and values are dictionaries containing three keys:
-#   1. test - a function that verifies a value is acceptable for this field
-#   2. good - a value that will pass the test function
-#   3. bad  - a value that will not pass the test function
-#
-# Some fields are flags with values 0 or 1 that may be switched to Python's bool in the future but in the meantime
-# we want to be positive these values are int's.  Since bool subclasses int expressions like `0 in (1, 0)` and
-# `True in (0, 1)` both evaluate as `True` which could yield unexpected results.  Any test that expects an int
-# also checks to make sure that int is NOT a bool, even if the field is a range and will never be bool.  Better to be
-# safe here than be forced to debug some potentially ambiguous bugs elsewhere.
 VERSIONS = {
     1.0: {
         'course': {
@@ -1194,7 +1220,8 @@ VERSIONS = {
             'description': '',
             'type': int,
             'units': '',
-            # TODO: FIXME: This test is incorrect. value can not be > 511 according to AIS spec; check to_stern etc too
+            # TODO: FIXME: This test is incorrect. value can not be > 511 according to AIS
+            # TODO: check to_stern etc too
             'test': lambda x: 0 <= x <= 2 ** 9,
             'good': [1],
             'bad': [-1],
@@ -1477,7 +1504,8 @@ VERSIONS = {
             'import': str2datetime,
             'export': datetime2str,
             'units': 'N/A',
-            'description': 'Timestamp from tagblock. Datetime format: {}'.format(DATETIME_FORMAT),
+            'description':
+                'Timestamp from tagblock. Datetime format: {}'.format(DATETIME_FORMAT),
         },
         'tagblock_station': {
             'default': '',

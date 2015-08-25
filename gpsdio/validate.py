@@ -209,7 +209,7 @@ def collect_info(input, error_cb=None):
             # is_sorted
             # This only executes if stats['is_sorted'] = True in order to gain
             # a little optimization.  No need to test if we already know its not sorted.
-            if previous_timestamp is not None and stats['is_sorted'] and row.get('timestamp', None):
+            if previous_timestamp is not None and stats['is_sorted'] and row.get('timestamp'):
                 if not row['timestamp'] >= previous_timestamp:
                     stats['is_sorted'] = False
 

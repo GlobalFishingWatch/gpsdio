@@ -18,20 +18,35 @@ logger = logging.getLogger('gpsdio')
 
 
 CURRENT = VERSIONS[max(VERSIONS.keys())]
+
+
 default = {
-    field: CURRENT[field]['default'] for field in CURRENT.keys() if 'default' in CURRENT[field]
+    field: CURRENT[field]['default'] for field in CURRENT.keys()
+    if 'default' in CURRENT[field]
 }
 
+
 schema_import_functions = {
-    field: CURRENT[field]['import'] for field in CURRENT if CURRENT[field].get('import', None) is not None
+    field: CURRENT[field]['import'] for field in CURRENT
+    if CURRENT[field].get('import', None) is not None
 }
+
+
 schema_export_functions = {
-    field: CURRENT[field]['export'] for field in CURRENT if CURRENT[field].get('export', None) is not None
+    field: CURRENT[field]['export'] for field in CURRENT
+    if CURRENT[field].get('export', None) is not None
 }
+
+
 schema_types = {
-    field: CURRENT[field]['type'] for field in CURRENT if CURRENT[field].get('type', None) is not None
+    field: CURRENT[field]['type'] for field in CURRENT
+    if CURRENT[field].get('type', None) is not None
 }
+
+
 schema_cast_functions = schema_types.copy()
+
+
 schema_cast_functions.update(schema_import_functions)
 
 
@@ -100,7 +115,8 @@ def validate_msg(row, ignore_missing=False, skip_failures=False, schema=CURRENT)
                 add_invalid('__missing_keys__', ('type',))
                 res = False
             else:
-                default_keys = set(get_default_msg(int(row['type']), schema=schema, optional=False).keys())
+                default_keys = set(
+                    get_default_msg(int(row['type']), schema=schema, optional=False).keys())
                 row_keys = set(row.keys())
                 if len(default_keys - row_keys) != 0:
                     add_invalid('__missing_keys__', tuple(default_keys - row_keys))
@@ -111,6 +127,7 @@ def validate_msg(row, ignore_missing=False, skip_failures=False, schema=CURRENT)
         res = False
 
     return res
+
 
 def complete_msg(msg, schema=CURRENT):
     """Add any fields that are not present with their default values"""
@@ -264,9 +281,9 @@ def get_default_msg(msg_type, schema=CURRENT, optional=True):
     """
 
     try:
-        res = {field: schema[field]['default']
-               for field in fields_by_msg_type[msg_type]
-               if 'default' in schema[field] and (optional or schema[field].get('required', True))}
+        res = {field: schema[field]['default'] for field in fields_by_msg_type[msg_type]
+               if 'default' in schema[field] and (
+                   optional or schema[field].get('required', True))}
         res['type'] = msg_type
         return res
     except Exception as e:
