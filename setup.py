@@ -63,17 +63,15 @@ setup(
     description="A general purpose AIS I/O library using the GPSd AIVDM schema.",
     entry_points='''
         [console_scripts]
-        gpsdio=gpsdio.cli:main_group
+        gpsdio=gpsdio.cli.main:main_group
 
         [gpsdio.gpsdio_commands]
         cat=gpsdio.cli.cat:cat
-        convert=gpsdio.cli.deprecated:convert
         env=gpsdio.cli.env:env
         etl=gpsdio.cli.etl:etl
         info=gpsdio.cli.info:info
         insp=gpsdio.cli.insp:insp
         load=gpsdio.cli.load:load
-        validate=gpsdio.cli.deprecated:validate
     ''',
     extras_require={
         'dev': [

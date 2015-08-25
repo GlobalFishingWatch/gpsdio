@@ -17,7 +17,6 @@ from gpsdio.core import open
 from gpsdio.core import filter
 from gpsdio.core import sort
 from gpsdio import schema
-from gpsdio import validate
 
 
 __version__ = '0.0.8'

@@ -131,7 +131,7 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
 class Stream(object):
 
     def __init__(self, stream, mode='r', force_msg=False, keep_fields=True,
-                 skip_failures=False, convert=True, *args, **kwargs):
+                 skip_failures=False, convert=True, **kwargs):
 
         """
         Read or write a stream of AIS data.

@@ -6,6 +6,7 @@ import unittest
 import click.testing
 
 import gpsdio.cli
+import gpsdio.cli.main
 
 
 class CmdTest(unittest.TestCase):
@@ -24,7 +25,7 @@ class CmdTest(unittest.TestCase):
     def runcmd(self, *args):
         stderr = sys.stderr
 
-        main = gpsdio.cli.main_group
+        main = gpsdio.cli.main.main_group
 
         # def wrapper(*arg, **kw):
         #     clickstderr = sys.stderr
@@ -36,6 +37,6 @@ class CmdTest(unittest.TestCase):
         # gpsdio.cli.main_group = wrapper
 
         try:
-            return self.runner.invoke(gpsdio.cli.main_group, args, catch_exceptions=False)
+            return self.runner.invoke(gpsdio.cli.main.main_group, args, catch_exceptions=False)
         finally:
             gpsdio.cli.main_group = main
