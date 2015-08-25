@@ -8,7 +8,7 @@ import newlinejson as nlj
 import pytest
 
 import gpsdio
-import gpsdio.cli
+import gpsdio.cli.main
 from sample_files import TYPES_MSG_GZ_FILE
 
 
@@ -17,7 +17,7 @@ from sample_files import TYPES_MSG_GZ_FILE
                                  "gpsdio is closing sys.stdout and CliRunner() expects to "
                                  "do that itself.  Not sure what the work-around is.")
 def test_cat():
-    result = CliRunner().invoke(gpsdio.cli.main_group, [
+    result = CliRunner().invoke(gpsdio.cli.main.main_group, [
         'cat',
         TYPES_MSG_GZ_FILE
     ])

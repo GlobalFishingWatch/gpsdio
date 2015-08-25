@@ -1,7 +1,10 @@
-"""Read and write the GPSD format.
+"""
+Core components for Pythonic message I/O.
 
-The API mimics that of csv.DictReader/DictWriter and uses
-`gpsdio.schema` to get schema details.
+
+with gpsdio.open(infile) as src, gpsdio.open(outfile, 'w') as dst:
+    for msg in src:
+        dst.write(msg
 """
 
 
@@ -127,8 +130,8 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
 
 class Stream(object):
 
-    def __init__(self, stream, mode='r', force_msg=False, keep_fields=True, skip_failures=False, convert=True,
-                 *args, **kwargs):
+    def __init__(self, stream, mode='r', force_msg=False, keep_fields=True,
+                 skip_failures=False, convert=True, **kwargs):
 
         """
         Read or write a stream of AIS data.
@@ -180,7 +183,7 @@ class Stream(object):
     def name(self):
         return getattr(self._stream, 'name', None)
 
-    def next(self):
+    def __next__(self):
 
         if self.mode != 'r':
             raise IOError("Stream not open for reading")
@@ -203,25 +206,10 @@ class Stream(object):
                 raise Exception("%s: %s: %s\n%s" % (getattr(self._stream, 'name', 'Unknown'), type(e), e, "    " + traceback.format_exc().replace("\n", "\n    ")))
             return {"__invalid__": {"__content__": line}}
 
-    __next__ = next
+    next = __next__
 
     def close(self):
         return self._stream.close()
-
-    def writeheader(self):
-
-        """
-        Write a file header if one is needed by the container format
-        """
-
-        if self.mode == 'a':
-            raise IOError("Can't write header when appending")
-        elif self.mode != 'w':
-            raise IOError("Stream not open for writing")
-        elif self.closed:
-            raise IOError("Can't operate on a closed stream")
-
-        return self._stream.writeheader()
 
     def write(self, msg):
 
@@ -241,16 +229,8 @@ class Stream(object):
 
         self._stream.write(msg)
 
-    def writelines(self, msgs):
-        for msg in msgs:
-            self.write(msg)
 
-    # csv.DictWriter compatibility, don't remove :)
-    writerow = write
-    writerows = writelines
-
-
-def filter(stream, expressions):
+def filter(expressions, stream):
 
     """
     A generator to filter a stream of data with boolean Pythonic expressions.

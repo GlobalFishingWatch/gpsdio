@@ -28,7 +28,8 @@ def env():
 def drivers_cmd(name):
 
     """
-    To get more information about a driver:
+    To get more information about a specific driver:
+
     \b
         $ gpsdio env drivers ${NAME}
     """
@@ -48,7 +49,8 @@ def drivers_cmd(name):
 def drivers_cmd(name):
 
     """
-    To get more information about a driver:
+    To get more information about a specific compression driver:
+
     \b
         $ gpsdio env compression ${NAME}
     """
@@ -92,6 +94,7 @@ def schema_cmd(field, indent):
 
     """
     To get information about a specific field:
+
     \b
         $ gpsdio env schema ${FIELD}
     """

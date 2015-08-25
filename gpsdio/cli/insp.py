@@ -45,12 +45,6 @@ def insp(ctx, infile, interpreter,
         ...     # Operations
     """
 
-    # TODO (1.0): Delete these lines that handle fallback to old flag locations
-    input_driver = ctx.obj.get('i_drv') or input_driver
-    input_compression = ctx.obj.get('i_cmp') or input_compression
-    input_driver_opts = ctx.obj.get('i_drv_opts') or input_driver_opts
-    input_compression_opts = ctx.obj.get('i_cmp_opts') or input_compression_opts
-
     logger = logging.getLogger('gpsdio-cli-insp')
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting insp')

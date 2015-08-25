@@ -11,11 +11,12 @@ import gpsdio
 import gpsdio.base
 import gpsdio.cli
 import gpsdio.cli.env
+import gpsdio.cli.main
 import gpsdio.drivers
 
 
 def test_drivers():
-    result = CliRunner().invoke(gpsdio.cli.main_group, [
+    result = CliRunner().invoke(gpsdio.cli.main.main_group, [
         'env', 'drivers'
     ])
     assert result.exit_code is 0
@@ -24,7 +25,7 @@ def test_drivers():
 
 
 def test_driver_help():
-    result = CliRunner().invoke(gpsdio.cli.main_group, [
+    result = CliRunner().invoke(gpsdio.cli.main.main_group, [
         'env', 'drivers', 'NewlineJSON'
     ])
     assert result.exit_code is 0
@@ -32,7 +33,7 @@ def test_driver_help():
 
 
 def test_compression():
-    result = CliRunner().invoke(gpsdio.cli.main_group, [
+    result = CliRunner().invoke(gpsdio.cli.main.main_group, [
         'env', 'compression'
     ])
     print(result.output)
@@ -42,7 +43,7 @@ def test_compression():
 
 
 def test_compression_help():
-    result = CliRunner().invoke(gpsdio.cli.main_group, [
+    result = CliRunner().invoke(gpsdio.cli.main.main_group, [
         'env', 'compression', 'GZIP'
     ])
     assert result.exit_code is 0
@@ -50,7 +51,7 @@ def test_compression_help():
 
 
 def test_schema():
-    result = CliRunner().invoke(gpsdio.cli.main_group, [
+    result = CliRunner().invoke(gpsdio.cli.main.main_group, [
         'env', 'schema'
     ])
     assert result.exit_code == 0
@@ -60,7 +61,7 @@ def test_schema():
 
 
 def test_schema_field():
-    result = CliRunner().invoke(gpsdio.cli.main_group, [
+    result = CliRunner().invoke(gpsdio.cli.main.main_group, [
         'env', 'schema', '--indent', 'None', 'mmsi'
     ])
     assert result.exit_code == 0

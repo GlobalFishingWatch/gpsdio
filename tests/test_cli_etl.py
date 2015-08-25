@@ -9,6 +9,7 @@ from click.testing import CliRunner
 
 import gpsdio
 import gpsdio.cli
+import gpsdio.cli.main
 from sample_files import TYPES_MSG_GZ_FILE
 
 
@@ -16,7 +17,7 @@ def test_sort_time():
 
     # Process everything and sort on timestamp
     with tempfile.NamedTemporaryFile('r+') as f:
-        result = CliRunner().invoke(gpsdio.cli.main_group, [
+        result = CliRunner().invoke(gpsdio.cli.main.main_group, [
             'etl',
             '--o-drv', 'MsgPack',
             '--o-cmp', 'BZ2',
@@ -40,7 +41,7 @@ def test_sort_mmsi():
 
     # Process everything and sort on mmsi
     with tempfile.NamedTemporaryFile('r+') as f:
-        result = CliRunner().invoke(gpsdio.cli.main_group, [
+        result = CliRunner().invoke(gpsdio.cli.main.main_group, [
             'etl',
             '--o-drv', 'MsgPack',
             '--o-cmp', 'BZ2',
@@ -64,7 +65,7 @@ def test_filter():
 
     # Filter and process
     with tempfile.NamedTemporaryFile('r+') as f:
-        result = CliRunner().invoke(gpsdio.cli.main_group, [
+        result = CliRunner().invoke(gpsdio.cli.main.main_group, [
             'etl',
             '--o-drv', 'MsgPack',
             '--o-cmp', 'BZ2',

@@ -15,7 +15,7 @@ from gpsdio.cli import options
 @click.argument('infile', required=True)
 @click.argument('outfile', required=True)
 @click.option(
-    '-f', '--filter', 'filter_expr', metavar='EXPR', multiple=True,
+    '--filter', 'filter_expr', metavar='EXPR', multiple=True,
     help="Apply a filtering expression to the messages."
 )
 @click.option(
@@ -39,13 +39,14 @@ def etl(ctx, infile, outfile, filter_expr, sort_field,
     """
     Format conversion, filtering, and sorting.
 
-    Data is filtered before sorting to limit the amount of data kept in memory.
+    Messages are filtered before sorting to limit the amount of data kept in
+    memory.
 
     Filtering expressions take the form of Python boolean expressions and provide
     access to fields and the entire message via a custom scope.  Each field name
     can be referenced directly and the entire messages is available via a `msg`
-    variable.  It is important to remember that `gpsdio` converts `timestamps` to
-    `datetime.datetime()` objects internally.
+    variable.  It is important to remember that `gpsdio` converts `timestamps`
+    to `datetime.datetime()` objects internally.
 
     Since fields differ by message type any expression that raises a `NameError`
     when evaluated is considered a failure.
@@ -58,33 +59,22 @@ def etl(ctx, infile, outfile, filter_expr, sort_field,
 
     \b
         $ gpsdio ${INFILE} ${OUTFILE} \\
-            -f "'timestamp' in msg"
+            --filter "'timestamp' in msg"
 
     Only process messages from May 2010 for a specific MMSI:
 
     \b
         $ gpsdio ${INFIE} ${OUTFILE} \\
-            -f "timestamp.month == 5 and timestamp.year == 2010"" \\
-            -f "mmsi == 123456789"
+            --filter "timestamp.month == 5 and timestamp.year == 2010"" \\
+            --filter "mmsi == 123456789"
 
     Filter and sort:
 
     \b
         $ gpsdio ${INFILE} ${OUTFILE} \\
-            -f "timestamp.year == 2010" \\
+            --filter "timestamp.year == 2010" \\
             --sort timestamp
     """
-
-    # TODO (1.0): Delete these lines that handle fallback to old flag locations
-    input_driver = ctx.obj.get('i_drv') or input_driver
-    input_compression = ctx.obj.get('i_cmp') or input_compression
-    input_driver_opts = ctx.obj.get('i_drv_opts') or input_driver_opts
-    input_compression_opts = ctx.obj.get('i_cmp_opts') or input_compression_opts
-    output_driver = ctx.obj.get('o_drv') or output_driver
-    output_compression = ctx.obj.get('o_cmp',) or output_compression
-    output_driver_opts = ctx.obj.get('o_drv_opts') or output_driver_opts
-    output_compression_opts = ctx.obj.get('o_cmp_opts') or output_compression_opts
-
 
     logger = logging.getLogger('gpsdio-cli-etl')
     logger.setLevel(ctx.obj['verbosity'])
@@ -102,6 +92,6 @@ def etl(ctx, infile, outfile, filter_expr, sort_field,
                          do=output_driver_opts,
                          co=output_compression_opts) as dst:
 
-            iterator = gpsdio.filter(src, filter_expr) if filter_expr else src
+            iterator = gpsdio.filter(filter_expr, src) if filter_expr else src
             for msg in gpsdio.sort(iterator, sort_field) if sort_field else iterator:
                 dst.write(msg)

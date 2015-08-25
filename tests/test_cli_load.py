@@ -8,10 +8,9 @@ import tempfile
 from click.testing import CliRunner
 
 import gpsdio
-import gpsdio.cli
+import gpsdio.cli.main
 from sample_files import TYPES_JSON_FILE
 from sample_files import TYPES_MSG_GZ_FILE
-
 
 
 def test_load():
@@ -20,7 +19,7 @@ def test_load():
         stdin_input = f.read()
         print(stdin_input)
 
-        result = CliRunner().invoke(gpsdio.cli.main_group, [
+        result = CliRunner().invoke(gpsdio.cli.main.main_group, [
             'load',
             '--o-drv', 'NewlineJSON',
             '--o-cmp', 'GZIP',
