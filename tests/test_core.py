@@ -1,4 +1,4 @@
-"""Unittests for `gpsdio.core`."""
+"""Unittests for `gpsdio.core`"""
 
 
 import itertools
@@ -227,7 +227,7 @@ def test_io_open_file_pointer():
             assert e == a
     # json gz
     with gzip.open(TYPES_JSON_GZ_FILE) as gz, \
-            gpsdio.open(gz, drver='NewlineJSON', compression='GZIP') as actual, \
+            gpsdio.open(gz, driver='NewlineJSON', compression='GZIP') as actual, \
             gpsdio.open(TYPES_JSON_GZ_FILE) as expected:
         for e, a in zip(expected, actual):
             assert e == a
