@@ -11,22 +11,22 @@ import gpsdio.drivers
 
 
 input_driver = click.option(
-    '--i-drv', 'input_driver', metavar='NAME', default=None,
+    '--i-drv', 'input_driver', metavar='NAME',
     help='Specify the input driver.  Normally auto-detected from file path.',
     type=click.Choice(list(gpsdio.drivers._BaseDriver.by_name.keys()))
 )
 output_driver = click.option(
-    '--o-drv', 'output_driver', metavar='NAME', default=None,
+    '--o-drv', 'output_driver', metavar='NAME',
     help='Specify the output driver.  Normally auto-detected from file path.',
     type=click.Choice(list(gpsdio.drivers._BaseDriver.by_name.keys()))
 )
 input_compression = click.option(
-    '--i-cmp', 'input_compression', metavar='NAME', default=None,
+    '--i-cmp', 'input_compression', metavar='NAME',
     help='Input compression format.  Normally auto-detected from file path.',
     type=click.Choice(list(gpsdio.drivers._BaseCompressionDriver.by_name.keys()))
 )
 output_compression = click.option(
-    '--o-cmp', 'output_compression', metavar='NAME', default=None,
+    '--o-cmp', 'output_compression', metavar='NAME',
     help='Output compression format.  Normally auto-detected from file path.',
     type=click.Choice(list(gpsdio.drivers._BaseCompressionDriver.by_name.keys()))
 )
@@ -69,7 +69,7 @@ def _cb_indent(ctx, param, value):
 
 
 indent_opt = click.option(
-    '--indent', metavar='INTEGER', default='4', callback=_cb_indent,
-    help="Indent and pretty print output.  Use `None` to turn off indentation and make output "
-         "serializable JSON. (default: 4)"
+    '--indent', metavar='INTEGER', default='4', callback=_cb_indent, show_default=True,
+    help="Indent and pretty print output.  Use 'None' to disable indentation and print output "
+         "as a single line of serializable JSON."
 )

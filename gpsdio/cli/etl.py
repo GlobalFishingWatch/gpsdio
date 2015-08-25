@@ -15,7 +15,7 @@ from gpsdio.cli import options
 @click.argument('infile', required=True)
 @click.argument('outfile', required=True)
 @click.option(
-    '-f', '--filter', 'filter_expr', metavar='EXPR', multiple=True,
+    '--filter', 'filter_expr', metavar='EXPR', multiple=True,
     help="Apply a filtering expression to the messages."
 )
 @click.option(
@@ -39,13 +39,14 @@ def etl(ctx, infile, outfile, filter_expr, sort_field,
     """
     Format conversion, filtering, and sorting.
 
-    Data is filtered before sorting to limit the amount of data kept in memory.
+    Messages are filtered before sorting to limit the amount of data kept in
+    memory.
 
     Filtering expressions take the form of Python boolean expressions and provide
     access to fields and the entire message via a custom scope.  Each field name
     can be referenced directly and the entire messages is available via a `msg`
-    variable.  It is important to remember that `gpsdio` converts `timestamps` to
-    `datetime.datetime()` objects internally.
+    variable.  It is important to remember that `gpsdio` converts `timestamps`
+    to `datetime.datetime()` objects internally.
 
     Since fields differ by message type any expression that raises a `NameError`
     when evaluated is considered a failure.
@@ -58,20 +59,20 @@ def etl(ctx, infile, outfile, filter_expr, sort_field,
 
     \b
         $ gpsdio ${INFILE} ${OUTFILE} \\
-            -f "'timestamp' in msg"
+            --filter "'timestamp' in msg"
 
     Only process messages from May 2010 for a specific MMSI:
 
     \b
         $ gpsdio ${INFIE} ${OUTFILE} \\
-            -f "timestamp.month == 5 and timestamp.year == 2010"" \\
-            -f "mmsi == 123456789"
+            --filter "timestamp.month == 5 and timestamp.year == 2010"" \\
+            --filter "mmsi == 123456789"
 
     Filter and sort:
 
     \b
         $ gpsdio ${INFILE} ${OUTFILE} \\
-            -f "timestamp.year == 2010" \\
+            --filter "timestamp.year == 2010" \\
             --sort timestamp
     """
 
