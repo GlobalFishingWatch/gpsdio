@@ -229,10 +229,6 @@ class Stream(object):
 
         self._stream.write(msg)
 
-    def writelines(self, msgs):
-        for msg in msgs:
-            self.write(msg)
-
 
 def filter(stream, expressions):
 
