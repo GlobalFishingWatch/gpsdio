@@ -87,7 +87,7 @@ file as newline delimited JSON.
 
 .. code-block:: console
 
-    $ gpsdio cat sample-data/types.msg.gz                                                                                                             ⏎
+    $ gpsdio cat sample-data/types.msg.gz
     {"status": "Moored", "maneuver": 0, "repeat": 0, "turn": 0, "type": 1, "mmsi": 354490000, "device": "stdin", "lon": -76.3487, "raim": false, "class": "AIS", "scaled": true, "course": 217.0, "second": 58, "radio": 266634, "lat": 36.873, "speed": 0.0, "heading": 345, "accuracy": false}
     {"status": "Under way using engine", "maneuver": 0, "repeat": 0, "turn": 0, "type": 2, "mmsi": 366989394, "device": "stdin", "lon": -90.4067, "raim": false, "class": "AIS", "scaled": true, "course": 230.5, "second": 8, "radio": 4486, "lat": 29.9855, "speed": 0.0, "heading": 51, "accuracy": true}
     ...
@@ -102,7 +102,7 @@ Information about the ``gpsdio`` environment like a list of registered drivers,
 
 .. code-block:: console
 
-    $ gpsdio env --drivers                                                                                                                            ⏎
+    $ gpsdio env --drivers
     NewlineJSON - ('r', 'w', 'a')
     MsgPack - ('r', 'w', 'a')
 

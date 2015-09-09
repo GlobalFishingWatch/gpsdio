@@ -20,7 +20,7 @@ class PyTest(TestCommand):
 
     def initialize_options(self):
         TestCommand.initialize_options(self)
-        self.pytest_args = []
+        self.pytest_args = ['tests']
 
     def finalize_options(self):
         TestCommand.finalize_options(self)
@@ -28,7 +28,7 @@ class PyTest(TestCommand):
         self.test_suite = True
 
     def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
+        # Import here, because outside the eggs aren't loaded
         import pytest
         errno = pytest.main(self.pytest_args)
         sys.exit(errno)
@@ -92,7 +92,7 @@ setup(
     license='Apache 2.0',
     long_description=readme,
     include_package_data=True,
-    keywords="GPSd AIVDM AIS I/O",
+    keywords="AIS I/O with Python, dictionaries, and the GPSd AIVDM schema.",
     name="gpsdio",
     packages=find_packages(exclude=['test']),
     url=source,
