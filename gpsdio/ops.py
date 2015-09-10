@@ -24,8 +24,6 @@ def strip_msgs(stream, keep_invalid=False, invalid_key='__invalid__'):
         Key to store unrecognized fields.
     """
 
-    allowed_keys = gpsdio.schema.CURRENT.keys()
-
     for msg in stream:
 
         # Copy the input message to make sure we don't modify the dicts outside
@@ -34,7 +32,8 @@ def strip_msgs(stream, keep_invalid=False, invalid_key='__invalid__'):
         invalid = copy.deepcopy(msg)
 
         m = {
-            k: invalid.pop(k) for k in invalid.keys() if k in allowed_keys}
+            k: invalid.pop(k) for k in invalid.keys()
+            if k in gpsdio.schema.fields_by_msg_type[msg['type']]}
 
         if keep_invalid and invalid:
             m[invalid_key] = invalid
