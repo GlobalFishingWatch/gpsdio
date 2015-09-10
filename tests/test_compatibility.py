@@ -1,17 +1,69 @@
+"""
+Test against other decoders
+"""
+
+
+# TODO: Do we want this in gpsdio?
+
+
 import json
 import os.path
 import subprocess
+import shutil
+import sys
+import tempfile
+import unittest
 import urllib
+
 import pytest
 
-from . import cmdtest
+import click.testing
+
+import gpsdio.cli
+import gpsdio.cli.main
+
 
 testdir = os.path.dirname(__file__)
 
-@pytest.mark.skipif(True, reason='gpsd library is required build from source is not fully implemented')
-class TestGpsdCompatibility(cmdtest.CmdTest):
+
+class CmdTest(unittest.TestCase):
+    keep_tree = False
+
     def setUp(self):
-        cmdtest.CmdTest.setUp(self)
+        self.dir = tempfile.mkdtemp()
+        self.runner = click.testing.CliRunner()
+        if self.keep_tree:
+            print("CmdTest is running in %s" % self.dir)
+
+    def tearDown(self):
+        if not self.keep_tree:
+            shutil.rmtree(self.dir)
+
+    def runcmd(self, *args):
+        stderr = sys.stderr
+
+        main = gpsdio.cli.main.main_group
+
+        # def wrapper(*arg, **kw):
+        #     clickstderr = sys.stderr
+        #     sys.stderr = stderr
+        #     try:
+        #         return main(*arg, **kw)
+        #     finally:
+        #         sys.stderr = clickstderr
+        # gpsdio.cli.main_group = wrapper
+
+        try:
+            return self.runner.invoke(gpsdio.cli.main.main_group, args, catch_exceptions=False)
+        finally:
+            gpsdio.cli.main_group = main
+
+
+@pytest.mark.skipif(
+    True, reason='gpsd library is required build from source is not fully implemented')
+class TestGpsdCompatibility(CmdTest):
+    def setUp(self):
+        CmdTest.setUp(self)
 
         self.utilsdir = os.path.join(testdir, "..", "utils")
         cmd = [os.path.join(self.utilsdir, "install-latest-gpsd")]
@@ -48,8 +100,6 @@ class TestGpsdCompatibility(cmdtest.CmdTest):
     def test_gpsdecode_samples_from_libais(self):
         self.download("libais.nmea", "https://raw.githubusercontent.com/schwehr/libais/master/test/typeexamples.nmea")
         self.validate_file(os.path.join(self.dir, "libais.nmea"), 'gpsdecode')
-
-
 
     def test_aisdecode_known_types(self):
         self.validate_file(os.path.join(os.path.dirname(__file__), "types.nmea"), 'aisdecode')

@@ -3,8 +3,10 @@ Schema definitions and functions to transform rows
 """
 
 
+import copy
 import logging
 from pkg_resources import iter_entry_points
+
 import six
 
 from gpsdio._schema_def import DATETIME_FORMAT
@@ -65,7 +67,7 @@ def strip_msg(msg, schema=CURRENT):
     res = {'type': msg['type']}
     msg_type = int(msg['type'])
 
-    for key, value in msg.iteritems():
+    for key, value in six.iteritems(msg):
         if key in fields_by_msg_type[msg_type]:
             res[key] = value
 

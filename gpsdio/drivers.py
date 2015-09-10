@@ -199,6 +199,8 @@ class GZIP(_BaseCompressionDriver):
     options are passed to ``gzip.open()``, unless the input path is a file-like
     object, in which case they are passed to ``gzip.GzipFile()``.
 
+    Input file is automatically opened in ``rb`` mode when reading in Python3.
+
     https://docs.python.org/3/library/gzip.html
     """
 
@@ -217,12 +219,28 @@ class GZIP(_BaseCompressionDriver):
         else:
             return gzip.GzipFile(fileobj=path, mode=mode, **kwargs)
 
+    def __next__(self):
+        # Make sure we're not returning byte string's in Python3
+        l = super(GZIP, self).__next__()
+        if hasattr(l, 'decode'):
+            l = l.decode('utf-8')
+        return l
+
+    next = __next__
+
+    def write(self, msg):
+        if six.PY3 and isinstance(msg, six.string_types):
+            msg = bytes(msg, 'utf-8')
+        return super(GZIP, self).write(msg)
+
 
 class BZ2(_BaseCompressionDriver):
 
     """
     Access data stored as BZ2 with Python's builtin ``bz2`` library.  Driver
     options are passed to ``bz2.BZ2File()``.
+
+    Files are automatically opened in ``rb`` mode when reading in Python3.
 
     https://docs.python.org/3/library/bz2.html
     """

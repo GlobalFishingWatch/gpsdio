@@ -5,7 +5,6 @@ Unittests for gpsdio env
 
 import json
 
-import click
 from click.testing import CliRunner
 
 import gpsdio
