@@ -3,13 +3,16 @@ Unittests for `gpsdio.drivers`.
 """
 
 
-from __future__ import unicode_literals
-
+import bz2
 import itertools
 import tempfile
+import sys
+
+import pytest
 
 from . import compare_msg
 from gpsdio import drivers
+import gpsdio.drivers
 from .sample_files import *
 
 
@@ -66,3 +69,20 @@ def test_msgpack():
             with drivers.MsgPack(gzip) as actual, drivers.MsgPack(TYPES_MSG_FILE) as expected:
                 for e, a in zip(expected, actual):
                     assert compare_msg(e, a)
+
+
+def test_get_compression():
+    assert gpsdio.drivers.GZIP == gpsdio.drivers.get_compression('GZIP')
+    with pytest.raises(ValueError):
+        gpsdio.drivers.get_compression("bad-name")
+
+
+def test_gzip_cannot_read_from_stdin():
+    with pytest.raises(IOError):
+        gpsdio.drivers.GZIP(sys.stdin)
+
+
+def test_already_open_bzip2():
+    with bz2.BZ2File('sample-data/types.json.bz2') as f:
+        with gpsdio.drivers.BZ2(f) as src:
+            pass
