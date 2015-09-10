@@ -3,7 +3,12 @@ Base objects to avoid import errors.
 """
 
 
+import logging
+
 import six
+
+
+logger = logging.getLogger('gpsdio')
 
 
 class _RegisterDriver(type):
@@ -90,6 +95,18 @@ class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
     def __iter__(self):
         return iter(self._stream)
 
+    def open(self, name, mode='r'):
+
+        """
+        Open a file, datasource, stream, etc. for reading or writing.
+        """
+
+        # This is implemented on the BaseDriver to prevent a recursion error
+        # when instantiating the BaseDRiver directly.
+
+        raise NotImplementedError("Drivers must implement this method.")
+
+
     @property
     def mode(self):
         return self._mode
@@ -101,17 +118,11 @@ class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
     def __next__(self):
 
         """
-        This method must be explicitly defined, otherwise the `__getattr__()`
-        method will return the `stream`'s `next()` method, which is not in the
-        same namespace as `__iter__()` so this class will appear to have the
-        necessary methods to be an iterator but will raise exceptions when
-        iterated over.
+        Get the next message from the underlying stream.
         """
 
-        if self.closed:
-            raise IOError("I/O operation on closed stream")
-        if self.mode != 'r':
-            raise IOError("Stream not open for reading")
+        # Explicitly defined so that __iter__ can work properly.  Otherwise
+        # __getattr__ gets in the way.
 
         return next(self._stream)
 
@@ -119,12 +130,21 @@ class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
 
     def write(self, msg):
 
-        if self.closed:
-            raise IOError("I/O operation on closed stream")
-        if self.mode not in ('a', 'w'):
-            raise IOError("Stream not open for writing")
+        """
+        Write a message.
+        """
 
         self._stream.write(msg)
+
+    def close(self):
+
+        """
+        Close the underlying stream.
+        """
+
+        # Explicitly defined otherwise __getattr__ gets in the way.
+
+        self._stream.close()
 
     def __getattr__(self, item):
 
@@ -145,3 +165,11 @@ class BaseCompressionDriver(BaseDriver):
     by_name = {}
     by_extension = {}
     register = False
+
+    def open(self, name, mode='r'):
+
+        """
+        Compression drivers must implement this method.  See `BaseDriver()`.
+        """
+
+        raise NotImplementedError

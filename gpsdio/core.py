@@ -16,7 +16,7 @@ import six
 from gpsdio import schema
 
 
-log = logging.getLogger('gpsdio')
+logger = logging.getLogger('gpsdio')
 
 
 builtin_open = open
@@ -67,7 +67,7 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
     elif path == '-' and ('w' in mode or 'a' in mode):
         path = sys.stdout
 
-    log.debug("Opening: %s" % path)
+    logger.debug("Opening: %s" % path)
 
     do = do or {}
     co = co or {}
@@ -77,7 +77,7 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
     # Input path is a file-like object
     if not isinstance(path, six.string_types):
 
-        log.debug("Input path is a file-like object: %s", path)
+        logger.debug("Input path is a file-like object: %s", path)
 
         # If we get a driver name, just use that
         # Otherwise, detect it from the object's path property
@@ -113,8 +113,8 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
             except ValueError:
                 comp_driver = None
 
-    log.debug("Compression driver: %s", io_driver)
-    log.debug("Driver: %s", comp_driver)
+    logger.debug("Compression driver: %s", io_driver)
+    logger.debug("Driver: %s", comp_driver)
     
     if comp_driver:
         c_stream = comp_driver(path, mode=cmode, **co)
@@ -123,15 +123,14 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
         
     stream = io_driver(c_stream, mode=dmode, **do)
 
-    log.debug("Built base I/O stream: %s", stream)
+    logger.debug("Built base I/O stream: %s", stream)
 
     return GPSDIOStream(stream, mode=mode, **kwargs)
 
 
 class GPSDIOStream(object):
 
-    def __init__(self, stream, mode='r', force_msg=False, keep_fields=True,
-                 skip_failures=False, convert=True):
+    def __init__(self, stream, mode='r', convert=True, skip_failures=False):
 
         """
         Read or write a stream of AIS data.
@@ -147,11 +146,9 @@ class GPSDIOStream(object):
         """
 
         self._stream = stream
-        self.force_msg = force_msg
         self.skip_failures = skip_failures
         self._mode = mode
         self.convert = convert
-        self.keep_fields = keep_fields
         self.skip_failures = skip_failures
 
     def __iter__(self):
@@ -189,45 +186,61 @@ class GPSDIOStream(object):
             raise IOError("Stream not open for reading")
         elif self.closed:
             raise IOError("Can't operate on a closed stream")
-
-        line = None
+        
         try:
-            loaded = line = next(self._stream)
+            
+            msg = next(self._stream)
+            
             if self.convert:
-                loaded = schema.import_msg(line, skip_failures=self.skip_failures)
-                if self.force_msg:
-                    loaded = schema.force_msg(loaded, keep_fields=self.keep_fields)
-            return loaded
+                msg = {
+                    fld: schema.schema_import_functions.get(fld, lambda x: x)(v)
+                    for fld, v in six.iteritems(msg)}
+
+            return msg
+
         except StopIteration:
-            raise
+            raise 
+        
         except Exception as e:
+            # TODO: Include a traceback for better error handling
+            logger.exception(str(e))
             if not self.skip_failures:
-                import traceback
-                raise Exception("%s: %s: %s\n%s" % (getattr(self._stream, 'name', 'Unknown'), type(e), e, "    " + traceback.format_exc().replace("\n", "\n    ")))
-            return {"__invalid__": {"__content__": line}}
+                raise e
 
     next = __next__
 
     def close(self):
+
+        """
+        Close the underlying stream and flush to disk.
+        """
+
         return self._stream.close()
 
     def write(self, msg):
+
+        """
+        Write a message to disk.
+        """
 
         if self.mode not in ('w', 'a'):
             raise IOError("Stream not open for writing")
         elif self.closed:
             raise IOError("Can't operate on a closed stream")
 
-        if not self.keep_fields and 'type' in msg:
-            msg = {field: val for field, val in six.iteritems(msg)
-                   if field in schema.get_default_msg(msg['type'])}
+        try:
 
-        if self.convert:
-            if self.force_msg:
-                msg = schema.force_msg(msg, keep_fields=self.keep_fields)
-            msg = schema.export_msg(msg, skip_failures=self.skip_failures)
+            if self.convert:
+                msg = {
+                    fld: schema.schema_export_functions.get(fld, lambda x: x)(v)
+                    for fld, v in six.iteritems(msg)}
 
-        self._stream.write(msg)
+            self._stream.write(msg)
+
+        except Exception as e:
+            logger.exception(str(e))
+            if not self.skip_failures:
+                raise e
 
 
 def filter(expressions, stream):
@@ -281,7 +294,8 @@ def filter(expressions, stream):
             try:
                 result = eval(expr, global_scope, local_scope)
             except NameError:
-                # A message doesn't contain something in the expression so just force a failure
+                # A message doesn't contain something in the expression so just
+                # force a failure since we don't need to check the other expressions.
                 result = False
 
             if not result:

@@ -7,6 +7,7 @@ import tempfile
 import unittest
 
 import newlinejson as nlj
+import pytest
 import six
 
 from . import compare_msg
@@ -238,23 +239,20 @@ def test_io_open_file_pointer():
             assert e == a
 
 
-# class TestBaseDriver(unittest.TestCase):
-#
-#     def test_attrs(self):
-#         self.assertTrue(hasattr(gpsdio.drivers._BaseDriver, '__next__'))
-#
-#     def test_driver_context_manager(self):
-#         with tempfile.NamedTemporaryFile(mode='r') as tfile:
-#             with gpsdio.drivers.NewlineJSON(tfile, mode='r'):
-#                 pass
-#
-#     def test_invalid_mode(self):
-#         with self.assertRaises(ValueError):
-#             gpsdio.drivers.FileDriver(None, mode='invalid')
-#
-#     def test_instantiated_properties(self):
-#         modes = ('r', 'w', 'a')
-#         name = 'drivername'
-#         bd = gpsdio.drivers._BaseDriver(None, mode='r', modes=modes, name=name, reader=lambda x: x)
-#         self.assertEqual(bd.modes, modes)
-#         self.assertEqual(bd.name, name)
+def test_name_property():
+    pth = 'sample-data/types.msg'
+    with gpsdio.open(pth) as src:
+        assert src.name == pth
+
+
+def test_read_bad_msg():
+    with gpsdio.open(six.StringIO("{"), driver='NewlineJSON') as src:
+        with pytest.raises(Exception):
+            next(src)
+
+
+def test_write_bad_msg():
+    with tempfile.TemporaryFile(mode='w') as f:
+        with gpsdio.open(f, 'w', driver='NewlineJSON') as dst:
+            with pytest.raises(Exception):
+                dst.write({'field': gpsdio})

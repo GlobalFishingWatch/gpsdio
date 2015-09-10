@@ -198,7 +198,7 @@ class GZIP(_BaseCompressionDriver):
 
         # TODO: There's probably a workaround for this?  Not critical but would be cool.
         if path == sys.stdin:
-            raise TypeError("GZIP can't read directly from stdin")
+            raise IOError("GZIP can't read directly from stdin")
         elif isinstance(path, six.string_types):
             return gzip.open(path, mode=mode, **kwargs)
         elif isinstance(path, gzip.GzipFile):
