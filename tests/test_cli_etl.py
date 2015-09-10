@@ -3,85 +3,79 @@ Unittests for gpsdio etl
 """
 
 
-import tempfile
-
 from click.testing import CliRunner
 
 import gpsdio
 import gpsdio.cli
 import gpsdio.cli.main
-from sample_files import TYPES_MSG_GZ_FILE
 
 
-def test_sort_time():
+def test_sort_time(types_msg_gz_path, tmpdir):
 
     # Process everything and sort on timestamp
-    with tempfile.NamedTemporaryFile('r+') as f:
-        result = CliRunner().invoke(gpsdio.cli.main.main_group, [
-            'etl',
-            '--o-drv', 'MsgPack',
-            '--o-cmp', 'BZ2',
-            '--sort', 'timestamp',
-            TYPES_MSG_GZ_FILE,
-            f.name
-        ])
-        f.seek(0)
+    pth = str(tmpdir.mkdir('test').join('test_sort_time'))
+    result = CliRunner().invoke(gpsdio.cli.main.main_group, [
+        'etl',
+        '--o-drv', 'MsgPack',
+        '--o-cmp', 'BZ2',
+        '--sort', 'timestamp',
+        types_msg_gz_path,
+        pth
+    ])
 
-        assert result.exit_code is 0
+    assert result.exit_code is 0
 
-        prev = None
-        with gpsdio.open(f.name, driver='MsgPack', compression='BZ2') as actual:
-            for msg in actual:
-                if prev is None:
-                    prev = msg
-                else:
-                    assert msg['timestamp'] >= prev['timestamp']
+    prev = None
+    with gpsdio.open(pth, driver='MsgPack', compression='BZ2') as actual:
+        for msg in actual:
+            if prev is None:
+                prev = msg
+            else:
+                assert msg['timestamp'] >= prev['timestamp']
 
-def test_sort_mmsi():
 
-    # Process everything and sort on mmsi
-    with tempfile.NamedTemporaryFile('r+') as f:
-        result = CliRunner().invoke(gpsdio.cli.main.main_group, [
-            'etl',
-            '--o-drv', 'MsgPack',
-            '--o-cmp', 'BZ2',
-            '--sort', 'mmsi',
-            TYPES_MSG_GZ_FILE,
-            f.name
-        ])
-        f.seek(0)
+def test_sort_mmsi(types_msg_gz_path, tmpdir):
 
-        assert result.exit_code is 0
+    pth = str(tmpdir.mkdir('test').join('test_sort_mmsi'))
+    result = CliRunner().invoke(gpsdio.cli.main.main_group, [
+        'etl',
+        '--o-drv', 'MsgPack',
+        '--o-cmp', 'BZ2',
+        '--sort', 'mmsi',
+        types_msg_gz_path,
+        pth
+    ])
 
-        prev = None
-        with gpsdio.open(f.name, driver='MsgPack', compression='BZ2') as actual:
-            for msg in actual:
-                if prev is None:
-                    prev = msg
-                else:
-                    assert msg['mmsi'] >= prev['mmsi']
+    assert result.exit_code is 0
 
-def test_filter():
+    prev = None
+    with gpsdio.open(pth, driver='MsgPack', compression='BZ2') as actual:
+        for msg in actual:
+            if prev is None:
+                prev = msg
+            else:
+                assert msg['mmsi'] >= prev['mmsi']
 
-    # Filter and process
-    with tempfile.NamedTemporaryFile('r+') as f:
-        result = CliRunner().invoke(gpsdio.cli.main.main_group, [
-            'etl',
-            '--o-drv', 'MsgPack',
-            '--o-cmp', 'BZ2',
-            '--filter', "lat and lon",
-            '--sort', 'lat',
-            TYPES_MSG_GZ_FILE,
-            f.name
-        ])
-        f.seek(0)
 
-        assert result.exit_code is 0
+def test_filter(types_msg_gz_path, tmpdir):
 
-        prev = None
-        with gpsdio.open(f.name, driver='MsgPack', compression='BZ2') as actual:
-            for msg in actual:
-                if prev is None:
-                    prev = msg
-                else:
-                    assert msg['lat'] >= prev['lat']
+    pth = str(tmpdir.mkdir('test').join('test_filter'))
+    result = CliRunner().invoke(gpsdio.cli.main.main_group, [
+        'etl',
+        '--o-drv', 'MsgPack',
+        '--o-cmp', 'BZ2',
+        '--filter', "lat and lon",
+        '--sort', 'lat',
+        types_msg_gz_path,
+        pth
+    ])
+
+    assert result.exit_code is 0
+
+    prev = None
+    with gpsdio.open(pth, driver='MsgPack', compression='BZ2') as actual:
+        for msg in actual:
+            if prev is None:
+                prev = msg
+            else:
+                assert msg['lat'] >= prev['lat']

@@ -7,6 +7,7 @@ from click.testing import CliRunner
 
 import gpsdio
 import gpsdio.cli
+import gpsdio.cli.main
 
 
 def test_version():

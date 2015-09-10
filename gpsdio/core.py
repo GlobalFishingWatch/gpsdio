@@ -19,9 +19,6 @@ from gpsdio import schema
 logger = logging.getLogger('gpsdio')
 
 
-builtin_open = open
-
-
 __all__ = ['open', 'Stream']
 
 

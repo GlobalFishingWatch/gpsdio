@@ -66,7 +66,7 @@ def drivers_cmd(name):
 
 
 def _scrub_val(val):
-    types = (list, dict, str, unicode, int, float, bool, type(None)) + six.string_types
+    types = (list, dict, int, float, bool, type(None)) + six.string_types
     if isinstance(val, types):
         return val
     else:

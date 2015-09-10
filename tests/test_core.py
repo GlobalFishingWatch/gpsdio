@@ -3,21 +3,14 @@
 
 import itertools
 import gzip
-import tempfile
-import unittest
 
 import newlinejson as nlj
 import pytest
 import six
 
-from . import compare_msg
 import gpsdio
 import gpsdio.schema
 import gpsdio.drivers
-from .sample_files import TYPES_MSG_FILE
-from .sample_files import TYPES_MSG_GZ_FILE
-from .sample_files import TYPES_JSON_FILE
-from .sample_files import TYPES_JSON_GZ_FILE
 
 
 VALID_ROWS = [
@@ -33,88 +26,64 @@ INVALID_ROWS = [
 ]
 
 
-class TestOpen(unittest.TestCase):
+def test_standard(
+        types_msg_path, types_msg_gz_path, types_json_path, types_json_gz_path, compare_msg):
 
-    def setUp(self):
-        self.tempfile = tempfile.NamedTemporaryFile(mode='r+')
+    with gpsdio.open(types_msg_path) as fp_msg, \
+            gpsdio.open(types_msg_gz_path) as fp_msg_gz, \
+            gpsdio.open(types_json_path) as fp_json, \
+            gpsdio.open(types_json_gz_path) as fp_json_gz:
 
-    def tearDown(self):
-        self.tempfile.close()
-
-    def test_standard(self):
-
-        with gpsdio.open(TYPES_MSG_FILE) as fp_msg, \
-                gpsdio.open(TYPES_MSG_GZ_FILE) as fp_msg_gz, \
-                gpsdio.open(TYPES_JSON_FILE) as fp_json, \
-                gpsdio.open(TYPES_JSON_GZ_FILE) as fp_json_gz:
-
-            for lines in zip(fp_msg, fp_msg_gz, fp_json, fp_json_gz):
-                for pair in itertools.combinations(lines, 2):
-                    self.assertTrue(compare_msg(*pair))
-
-    def test_wrong_extension(self):
-
-        with open(TYPES_MSG_FILE) as src:
-            self.tempfile.write(src.read())
-        self.tempfile.seek(0)
-
-        with gpsdio.open(self.tempfile.name, driver='MsgPack') as actual, \
-                gpsdio.open(TYPES_MSG_FILE) as expected:
-            for e_line, a_line in zip(expected, actual):
-                self.assertDictEqual(e_line, a_line)
-
-        with tempfile.NamedTemporaryFile(mode='r+') as tfile:
-            with open(TYPES_MSG_GZ_FILE) as src:
-                tfile.write(src.read())
-            tfile.seek(0)
-
-            with gpsdio.open(tfile.name, driver='MsgPack', compression='GZIP') as actual, \
-                    gpsdio.open(TYPES_MSG_GZ_FILE) as expected:
-                for e_line, a_line in zip(expected, actual):
-                    self.assertDictEqual(e_line, a_line)
-
-    def test_no_detect_compression(self):
-
-        with gpsdio.open(TYPES_MSG_FILE, compression=False) as actual, \
-                gpsdio.open(TYPES_MSG_FILE) as expected:
-            for e_line, a_line in zip(expected, actual):
-                self.assertDictEqual(e_line, a_line)
+        for lines in zip(fp_msg, fp_msg_gz, fp_json, fp_json_gz):
+            for pair in itertools.combinations(lines, 2):
+                assert compare_msg(*pair)
 
 
-class TestStream(unittest.TestCase):
+def test_no_detect_compression(types_msg_path):
 
-    def setUp(self):
-        self.tempfile = tempfile.NamedTemporaryFile(mode='r+')
+    with gpsdio.open(types_msg_path, compression=False) as actual, \
+            gpsdio.open(types_msg_path) as expected:
+        for e_line, a_line in zip(expected, actual):
+            assert e_line == a_line
 
-    def tearDown(self):
-        self.tempfile.close()
 
-    def test_default_mode_is_read(self):
-        with gpsdio.open(TYPES_MSG_FILE) as stream:
-            self.assertEqual(stream.mode, 'r')
+def test_default_mode_is_read(types_msg_path):
+    with gpsdio.open(types_msg_path) as stream:
+        assert stream.mode == 'r'
 
-    def test_attrs(self):
-        with gpsdio.open(TYPES_MSG_FILE) as stream:
-            self.assertIsInstance(stream.__repr__(), six.string_types)
-            self.assertTrue(hasattr(stream, '__next__'))
 
-    def test_io_on_closed_stream(self):
-        for mode in ('r', 'w', 'a'):
-            with gpsdio.open(self.tempfile.name, mode=mode, driver='NewlineJSON') as stream:
-                stream.close()
-                self.assertTrue(stream.closed)
-                with self.assertRaises(IOError):
-                    next(stream)
-                with self.assertRaises(IOError):
-                    stream.write(None)
+def test_attrs(types_msg_path):
+    with gpsdio.open(types_msg_path) as stream:
+        assert isinstance(stream.__repr__(), six.string_types)
+        assert hasattr(stream, '__next__')
 
-    def test_read_from_write_stream(self):
-        with gpsdio.open(TYPES_MSG_GZ_FILE) as src, \
-                gpsdio.open(self.tempfile.name, 'w', driver='NewlineJSON') as dst:
-            for msg in src:
-                dst.write(msg)
-            with self.assertRaises(IOError):
-                next(dst)
+
+def test_io_on_closed_stream(tmpdir):
+
+    # Make sure the tempfile actually appears on disk
+    pth = str(tmpdir.mkdir('test').join('test_io_on_closed_file'))
+    with open(pth, 'w') as f:
+        f.write('')
+
+    # Have to check in read and write in order to trigger all the exceptions
+    for mode in ('r', 'w'):
+        with gpsdio.open(pth, mode=mode, driver='NewlineJSON') as src:
+            src.close()
+        assert src.closed
+        with pytest.raises(IOError):
+            next(src)
+        with pytest.raises(IOError):
+            src.write(None)
+
+
+def test_read_from_write_stream(types_msg_gz_path, tmpdir):
+    pth = str(tmpdir.mkdir('test').join('rw-io.json'))
+    with gpsdio.open(types_msg_gz_path) as src, \
+            gpsdio.open(pth, 'w', driver='NewlineJSON') as dst:
+        for msg in src:
+            dst.write(msg)
+        with pytest.raises(IOError):
+            next(dst)
 
 
 def test_get_driver():
@@ -169,30 +138,30 @@ def test_detect_compression_type():
         pass
 
 
-def test_filter():
+def test_filter(types_msg_gz_path, types_json_gz_path):
 
     # Pass all through unaltered
-    with gpsdio.open(TYPES_MSG_GZ_FILE) as actual, gpsdio.open(TYPES_MSG_GZ_FILE) as expected:
+    with gpsdio.open(types_msg_gz_path) as actual, gpsdio.open(types_msg_gz_path) as expected:
         for a, e in zip(gpsdio.filter("isinstance(mmsi, int)", actual), expected):
             assert a == e
 
     # Extract only types 1, 2, and 3
     passed = []
-    with gpsdio.open(TYPES_MSG_GZ_FILE) as stream:
+    with gpsdio.open(types_msg_gz_path) as stream:
         for msg in gpsdio.filter("type in (1,2,3)", stream):
             passed.append(msg)
             assert msg['type'] in (1, 2, 3)
     assert len(passed) >= 3
 
     # Filter out everything
-    with gpsdio.open(TYPES_MSG_GZ_FILE) as stream:
+    with gpsdio.open(types_msg_gz_path) as stream:
         for msg in gpsdio.filter(("type is 5", "mmsi is -1000"), stream):
             assert False, "Above loop should not have executed because the filter should " \
                           "not have yielded anything."
 
     # Multiple expressions
     passed = []
-    with gpsdio.open(TYPES_MSG_GZ_FILE) as stream:
+    with gpsdio.open(types_msg_gz_path) as stream:
         for msg in gpsdio.filter(
                 ("status == 'Under way using engine'", "mmsi is 366268061"), stream):
             passed.append(msg)
@@ -200,7 +169,7 @@ def test_filter():
 
     # Reference the entire message
     passed = []
-    with gpsdio.open(TYPES_JSON_GZ_FILE) as stream:
+    with gpsdio.open(types_json_gz_path) as stream:
         for msg in gpsdio.filter(("isinstance(msg, dict)", "'lat' in msg"), stream):
             passed.append(msg)
             assert 'lat' in msg
@@ -208,7 +177,7 @@ def test_filter():
 
     # Multiple complex filters
     criteria = ("turn is 0 and second is 0", "mmsi == 366268061", "'lat' in msg")
-    with gpsdio.open(TYPES_JSON_GZ_FILE) as stream:
+    with gpsdio.open(types_json_gz_path) as stream:
         passed = [m for m in gpsdio.filter(criteria, stream)]
         assert len(passed) >= 1
 
@@ -219,30 +188,29 @@ def test_mode_passed_to_driver(tmpdir):
         assert dst._stream.mode == dst.mode == 'w'
 
 
-def test_io_open_file_pointer():
+def test_io_open_file_pointer(types_json_gz_path, types_msg_gz_path, types_json_path):
     # msg gz
-    with gzip.open(TYPES_MSG_GZ_FILE) as gz, \
+    with gzip.open(types_msg_gz_path) as gz, \
             gpsdio.open(gz, driver='MsgPack', compression='GZIP') as actual, \
-            gpsdio.open(TYPES_JSON_GZ_FILE) as expected:
+            gpsdio.open(types_json_gz_path) as expected:
         for e, a in zip(expected, actual):
             assert e == a
     # json gz
-    with gzip.open(TYPES_JSON_GZ_FILE) as gz, \
+    with gzip.open(types_json_gz_path) as gz, \
             gpsdio.open(gz, driver='NewlineJSON', compression='GZIP') as actual, \
-            gpsdio.open(TYPES_JSON_GZ_FILE) as expected:
+            gpsdio.open(types_json_gz_path) as expected:
         for e, a in zip(expected, actual):
             assert e == a
     # json fully opened
-    with nlj.open(TYPES_JSON_FILE) as f, gpsdio.open(f, driver='NewlineJSON') as actual, \
-            gpsdio.open(TYPES_JSON_FILE) as expected:
+    with nlj.open(types_json_path) as f, gpsdio.open(f, driver='NewlineJSON') as actual, \
+            gpsdio.open(types_json_path) as expected:
         for e, a in zip(expected, actual):
             assert e == a
 
 
-def test_name_property():
-    pth = 'sample-data/types.msg'
-    with gpsdio.open(pth) as src:
-        assert src.name == pth
+def test_name_property(types_msg_path):
+    with gpsdio.open(types_msg_path) as src:
+        assert src.name == types_msg_path
 
 
 def test_read_bad_msg():
@@ -251,8 +219,8 @@ def test_read_bad_msg():
             next(src)
 
 
-def test_write_bad_msg():
-    with tempfile.TemporaryFile(mode='w') as f:
-        with gpsdio.open(f, 'w', driver='NewlineJSON') as dst:
-            with pytest.raises(Exception):
-                dst.write({'field': gpsdio})
+def test_write_bad_msg(tmpdir):
+    pth = str(tmpdir.mkdir('test').join('test_write_bad_msg'))
+    with gpsdio.open(pth, 'w', driver='NewlineJSON') as dst:
+        with pytest.raises(Exception):
+            dst.write({'field': gpsdio})

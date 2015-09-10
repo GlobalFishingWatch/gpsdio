@@ -150,6 +150,9 @@ class _MsgPackReader(msgpack.Unpacker):
         """
 
         self._f = f
+
+        if 'encoding' not in kwargs:
+            kwargs.update(encoding='utf-8')
         msgpack.Unpacker.__init__(self, f, **kwargs)
 
     def __getattr__(self, item):
@@ -162,6 +165,11 @@ class MsgPack(_BaseDriver):
     Read and write data stored as MsgPack.  When reading, driver options are
     passed to ``msgpack.Unpacker()`` and ``msgpack.Packer()`` when writing.
 
+    If not specified, encoding will be set to ``utf-8`` to avoid receiving
+    bytestrings.  In Python3 input files are automatically opened in ``rb`` if
+    opening in ``r`` mode.  When passing in an already open file, the file must
+    have been opened in ``rb`` mode.
+
     https://github.com/msgpack/msgpack-python
     """
 
@@ -170,12 +178,15 @@ class MsgPack(_BaseDriver):
 
     def open(self, path, mode='r', **kwargs):
 
+        if six.PY3 and mode == 'r':
+            mode = 'rb'
+
         if isinstance(path, six.string_types):
             f = open(path, mode=mode)
         else:
             f = path
 
-        if mode == 'r':
+        if mode in ('r', 'rb'):
             return _MsgPackReader(f, **kwargs)
         else:
             return _MsgPackWriter(f, **kwargs)
@@ -187,6 +198,8 @@ class GZIP(_BaseCompressionDriver):
     Access data stored as GZIP using Python's builtin ``gzip`` library.  Driver
     options are passed to ``gzip.open()``, unless the input path is a file-like
     object, in which case they are passed to ``gzip.GzipFile()``.
+
+    Input file is automatically opened in ``rb`` mode when reading in Python3.
 
     https://docs.python.org/3/library/gzip.html
     """
@@ -206,12 +219,28 @@ class GZIP(_BaseCompressionDriver):
         else:
             return gzip.GzipFile(fileobj=path, mode=mode, **kwargs)
 
+    def __next__(self):
+        # Make sure we're not returning byte string's in Python3
+        l = super(GZIP, self).__next__()
+        if hasattr(l, 'decode'):
+            l = l.decode('utf-8')
+        return l
+
+    next = __next__
+
+    def write(self, msg):
+        if six.PY3 and isinstance(msg, six.string_types):
+            msg = bytes(msg, 'utf-8')
+        return super(GZIP, self).write(msg)
+
 
 class BZ2(_BaseCompressionDriver):
 
     """
     Access data stored as BZ2 with Python's builtin ``bz2`` library.  Driver
     options are passed to ``bz2.BZ2File()``.
+
+    Files are automatically opened in ``rb`` mode when reading in Python3.
 
     https://docs.python.org/3/library/bz2.html
     """
