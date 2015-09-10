@@ -150,6 +150,9 @@ class _MsgPackReader(msgpack.Unpacker):
         """
 
         self._f = f
+
+        if 'encoding' not in kwargs:
+            kwargs.update(encoding='utf-8')
         msgpack.Unpacker.__init__(self, f, **kwargs)
 
     def __getattr__(self, item):
@@ -162,6 +165,11 @@ class MsgPack(_BaseDriver):
     Read and write data stored as MsgPack.  When reading, driver options are
     passed to ``msgpack.Unpacker()`` and ``msgpack.Packer()`` when writing.
 
+    If not specified, encoding will be set to ``utf-8`` to avoid receiving
+    bytestrings.  In Python3 input files are automatically opened in ``rb`` if
+    opening in ``r`` mode.  When passing in an already open file, the file must
+    have been opened in ``rb`` mode.
+
     https://github.com/msgpack/msgpack-python
     """
 
@@ -170,12 +178,15 @@ class MsgPack(_BaseDriver):
 
     def open(self, path, mode='r', **kwargs):
 
+        if six.PY3 and mode == 'r':
+            mode = 'rb'
+
         if isinstance(path, six.string_types):
             f = open(path, mode=mode)
         else:
             f = path
 
-        if mode == 'r':
+        if mode in ('r', 'rb'):
             return _MsgPackReader(f, **kwargs)
         else:
             return _MsgPackWriter(f, **kwargs)
