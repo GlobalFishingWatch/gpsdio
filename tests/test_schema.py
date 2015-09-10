@@ -33,30 +33,6 @@ class TestCurrentSchema(unittest.TestCase):
                 self.assertTrue(hasattr(definition['export'], '__call__'))
 
 
-class TestValidateMessage(unittest.TestCase):
-
-    def test_invalid(self):
-        self.assertFalse(
-            gpsdio.schema.validate_msg(
-                {'type': 5,
-                 'shipname': None,
-                 }))
-
-    def test_invalid_type(self):
-        msg = gpsdio.schema.get_default_msg(1)
-        self.assertTrue(gpsdio.schema.validate_msg(msg))
-        msg['lat'] = 'foo'
-        self.assertFalse(gpsdio.schema.validate_msg(msg))
-
-    def test_valid(self):
-        self.assertTrue(
-            gpsdio.schema.validate_msg(
-                gpsdio.schema.get_default_msg(1)))
-
-    def test_error(self):
-        self.assertFalse(gpsdio.schema.validate_msg(None))
-
-
 class TestForce_Msg(unittest.TestCase):
 
     def setUp(self):
