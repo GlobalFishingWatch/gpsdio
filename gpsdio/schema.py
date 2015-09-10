@@ -103,8 +103,6 @@ def force_msg(msg, schema=CURRENT, keep_fields=False):
         msg = strip_msg(msg, schema=schema)
     return complete_msg(msg, schema=schema)
 
-    message = get_default_msg(int(msg['type']), schema=schema)
-
 
 def import_msg(row, skip_failures=False, cast_values=False):
 
