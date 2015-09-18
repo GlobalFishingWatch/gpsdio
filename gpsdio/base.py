@@ -93,7 +93,7 @@ class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
         self.close()
 
     def __iter__(self):
-        return iter(self._stream)
+        return self
 
     def open(self, name, mode='r'):
 
@@ -123,7 +123,6 @@ class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
 
         # Explicitly defined so that __iter__ can work properly.  Otherwise
         # __getattr__ gets in the way.
-
         return next(self._stream)
 
     next = __next__
