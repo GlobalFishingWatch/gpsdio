@@ -83,7 +83,7 @@ setup(
         'click>=3',
         'click-plugins',
         'msgpack-python',
-        'newlinejson',
+        'newlinejson>=1.0',
         'python-dateutil',
         'str2type>=0.4',
         'six>=1.8',
