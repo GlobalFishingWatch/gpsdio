@@ -21,9 +21,6 @@ from gpsdio.base import BaseCompressionDriver as _BaseCompressionDriver
 from gpsdio.base import BaseDriver as _BaseDriver
 
 
-newlinejson.JSON = ujson
-
-
 logger = logging.getLogger('gpsdio')
 
 
@@ -90,7 +87,9 @@ class NewlineJSON(_BaseDriver):
     extensions = ('json', 'nljson')
 
     def open(self, path, mode='r', **kwargs):
-        if isinstance(path, nlj.core.Stream):
+        # Make sure we're using ujson
+        kwargs.update(json_lib=kwargs.pop('json_lib', ujson))
+        if isinstance(path, nlj.NLJBaseStream):
             return path
         else:
             return newlinejson.open(path, mode=mode, **kwargs)
