@@ -1,4 +1,9 @@
 language: python
+sudo: false
+
+cache:
+  directories:
+    - ~/.cache/pip
 
 python:
   - 2.7
@@ -6,7 +11,7 @@ python:
   - 3.4
 
 install:
-  - pip install -e .\[dev\]
+  - pip install -e .\[dev\] --upgrade
 
 script:
   - py.test tests --cov gpsdio --cov-report term-missing
