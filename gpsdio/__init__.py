@@ -5,16 +5,30 @@
 AIS I/O with Python, dictionaries, and the GPSd AIVDM schema.
 """
 
+
 import logging
-
-
 logger = logging.getLogger('gpsdio')
 
+import warnings
 
-from gpsdio.core import open
-from gpsdio.core import filter
-from gpsdio.core import sort
+from gpsdio.io import open
+from gpsdio.io import GPSDIOBaseStream
 from gpsdio import schema
+
+
+__all__ = ['open', 'GPSDIOBaseStream', 'GPSDIOReader', 'GPSDIOWriter', 'schema']
+
+
+def filter(*args, **kwargs):
+    from gpsdio import ops as _ops
+    warnings.warn("gpsdio.filter() has been moved to gpsdio.ops.filter()")
+    return _ops.filter(*args, **kwargs)
+
+
+def sort(*args, **kwargs):
+    from gpsdio import ops as _ops
+    warnings.warn("gpsdio.sort() has been moved to gpsdio.ops.sort()")
+    return _ops.sort(*args, **kwargs)
 
 
 __version__ = '0.0.8'
@@ -33,7 +47,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-   http://www.apache.org/licenses/LICENSE-2.0
+     http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
