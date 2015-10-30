@@ -8,18 +8,22 @@ import logging
 import click
 
 import gpsdio
+from gpsdio import ops
 from gpsdio.cli import options
 
 
 @click.command(name='cat')
 @click.argument('infile', required=True)
+@click.option(
+    '--geojson', is_flag=True,
+    help="Experimental.  Print messages as GeoJSON.  Non-positional messages are dropped.")
 @options.input_driver
 @options.input_compression
 @options.input_driver_opts
 @options.input_compression_opts
 @options.output_driver_opts
 @click.pass_context
-def cat(ctx, infile, input_driver,
+def cat(ctx, infile, input_driver, geojson,
         input_compression, input_driver_opts, input_compression_opts, output_driver_opts):
 
     """
@@ -40,5 +44,6 @@ def cat(ctx, infile, input_driver,
                          driver='NewlineJSON',
                          compression=False,
                          do=output_driver_opts) as dst:
-            for msg in src:
+            iterator = ops.geojson(src) if geojson else src
+            for msg in iterator:
                 dst.write(msg)
