@@ -125,6 +125,67 @@ must subclass ``gpsdio.base.BaseDriver`` or ``gpsdio.base.BaseCompressionDriver`
 See the docstrings on those two objects for subclassing information.
 
 
+Roadmap
+-------
+
+**v0.1**
+
+We will have reached ``v0.1`` and can confidently share this project with others.  To do that,
+we need to support the syntax below.  The schema building is a little rough, but the assumption
+is that users only need to do this to being non-GPSd data into gpsdio, which they should only
+need to do once.  We will make this easier in the near future with a ``gpsdio-nmea-driver``.
+Either way, there need to be some functions to assemble the schema.  This example brings
+points with limited information into the ``GPSd`` schema:
+
+.. code-block:: python
+
+    import gpsdio
+    from gpsdio.schema import build_schema
+
+
+    # Define which fields we will see for each type
+    fields_by_type = {
+        1: ('mmsi', 'lat', 'lon', 'course', 'speed', 'shipname')
+    }
+    fields_by_type[2] = fields_by_type[1]
+    fields_by_type[3] = fields_by_type[1]
+    fields = {
+        'type': int,
+        'mmsi': int,
+        'lat': float,
+        'lon': float,
+        'course': float,
+        'speed': float,
+        'shipname': str
+    }
+    schema = build_schema(fields_by_type, fields)
+
+
+    with gpsdio.open('infile.json', schema=schema) as src, gpsdio.open('outfile.json', 'w') as dst:
+        for msg in src:
+
+            # Fill in fields not included in the message to match the destination schema
+            msg = dst.fill_msg(msg)
+
+            # Write to output file
+            dst.write(msg)
+
+* Functions to easily assemble a custom schema.
+* Included schema should only define AIVDM types and _maybe_ a ``timestamp``.
+* Take another pass at the driver and compression class structure, but don't let that hold up a release.
+* Support experimental driver plugin registration.
+* Support experimental schema extension registration.
+
+
+**v1.0**
+
+* Try pretty hard not to change the schema but if it needs to change, change it.
+* Probably no dependencies that require a C compiler, except maybe an optional speedups module that re-implements some of the core I/O objects and transforms in Cython.
+* Move ``MsgPack`` driver to an external project.
+* ``gpsdio-nmea-driver`` for reading raw NMEA.
+* GeoJSON support as an interface to GDAL.  Maybe a ``gpsdio-vector-driver``.
+
+
 Installation
 ------------
 

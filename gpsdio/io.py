@@ -122,10 +122,16 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
 
     logger.debug("Built base I/O stream: %s", stream)
 
-    return GPSDIOStream(stream, mode=mode, **kwargs)
+    if mode == 'r':
+        logger.debug("Starting read session")
+        return GPSDIOReader(stream, mode=mode, **kwargs)
+    elif mode in ('w', 'a'):
+        logger.debug("Starting write or append session")
+        return GPSDIOWriter(stream, mode=mode, **kwargs)
+    return GPSDIOBaseStream(stream, mode=mode, **kwargs)
 
 
-class GPSDIOStream(object):
+class GPSDIOBaseStream(object):
 
     def __init__(self, stream, mode='r', convert=True, skip_failures=False):
 
@@ -177,35 +183,6 @@ class GPSDIOStream(object):
     def name(self):
         return getattr(self._stream, 'name', None)
 
-    def __next__(self):
-
-        if self.mode != 'r':
-            raise IOError("Stream not open for reading")
-        elif self.closed:
-            raise IOError("Can't operate on a closed stream")
-        
-        try:
-            
-            msg = next(self._stream)
-            
-            if self.convert:
-                msg = {
-                    fld: schema.schema_import_functions.get(fld, lambda x: x)(v)
-                    for fld, v in six.iteritems(msg)}
-
-            return msg
-
-        except StopIteration:
-            raise 
-        
-        except Exception as e:
-            # TODO: Include a traceback for better error handling
-            logger.exception(str(e))
-            if not self.skip_failures:
-                raise e
-
-    next = __next__
-
     def close(self):
 
         """
@@ -214,16 +191,71 @@ class GPSDIOStream(object):
 
         return self._stream.close()
 
+
+class GPSDIOReader(GPSDIOBaseStream):
+
+    """
+    Read GPSd messages.  Some overhead is removed by abstracting this class,
+    which can be significant when multiplied across a large number of messages.
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        """
+        Instantiate a reader object and make sure the I/O mode matches.
+        """
+
+        assert kwargs['mode'] == 'r', \
+            "{name} can only read data.".format(self.__class__.__name__)
+        super(GPSDIOReader, self).__init__(*args, **kwargs)
+
+    def __next__(self):
+
+        try:
+
+            msg = next(self._stream)
+
+            if self.convert:
+                msg = {
+                    fld: schema.schema_import_functions.get(fld, lambda x: x)(v)
+                    for fld, v in six.iteritems(msg)}
+
+            return msg
+
+        except StopIteration:
+            raise
+
+        except Exception as e:
+            # TODO: Include a traceback for better error handling
+            logger.exception(str(e))
+            if not self.skip_failures:
+                raise e
+
+    next = __next__
+
+
+class GPSDIOWriter(GPSDIOBaseStream):
+
+    """
+    Write GPSd messages.  Some overhead is removed by abstracting this class,
+    which can be significant when multiplied across a large number of messages.
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        """
+        Instantiate a writer object and make sure the I/O mode matches.
+        """
+
+        assert kwargs['mode'] in ('w', 'a'), \
+            "{name} can only write and append data.".format(self.__class__.__name__)
+        super(GPSDIOWriter, self).__init__(*args, **kwargs)
+
     def write(self, msg):
 
         """
         Write a message to disk.
         """
-
-        if self.mode not in ('w', 'a'):
-            raise IOError("Stream not open for writing")
-        elif self.closed:
-            raise IOError("Can't operate on a closed stream")
 
         try:
 
@@ -238,87 +270,3 @@ class GPSDIOStream(object):
             logger.exception(str(e))
             if not self.skip_failures:
                 raise e
-
-
-def filter(expressions, stream):
-
-    """
-    A generator to filter a stream of data with boolean Pythonic expressions.
-    Multiple expressions can be provided but only messages that evaluate as
-    `True` for all will be yielded.
-
-    `eval()` is used for expression evaluation but it is given a modified global
-    scope that doesn't include some blacklisted items like `exec()`, `eval()`, etc.
-
-    Example:
-
-        >>> import gpsdio
-        >>> criteria = ("type in (1, 2, 3)", "lat' in msg", "mmsi == 366268061")
-        >>> with gpsdio.open('sample-data/types.msg.gz') as stream:
-        ...     for msg in gpsdio.filter(stream, criteria):
-        ...        # Do something
-
-    Parameter
-    ---------
-    stream : iter
-        An iterable producing one message per iteration.
-    expressions : str or tuple
-        A single expression or multiple expressions to be applied to each
-        message.  Only messages that pass all filters will be yielded
-
-    Yields
-    ------
-    dict
-        Messages that pass all expressions.
-    """
-
-    if isinstance(expressions, six.string_types):
-        expressions = expressions,
-
-    scope_blacklist = ('eval', 'compile', 'exec', 'execfile', 'builtin', 'builtins',
-                       '__builtin__', '__builtins__', 'globals', 'locals')
-
-    global_scope = {
-        k: v for k, v in globals().items() if k not in ('builtins', '__builtins__')}
-    global_scope['__builtins__'] = {
-        k: v for k, v in globals()['__builtins__'].items() if k not in scope_blacklist}
-    global_scope['builtins'] = global_scope['__builtins__']
-
-    for msg in stream:
-        local_scope = msg.copy()
-        local_scope['msg'] = msg
-        for expr in expressions:
-            try:
-                result = eval(expr, global_scope, local_scope)
-            except NameError:
-                # A message doesn't contain something in the expression so just
-                # force a failure since we don't need to check the other expressions.
-                result = False
-
-            if not result:
-                break
-        else:
-            yield msg
-
-
-def sort(stream, field='timestamp'):
-
-    """
-    A generator to sort data by the specified field.  Requires the entire stream
-    to be held in memory.  Messages lacking the specified field are dropped.
-
-    Parameters
-    ----------
-    stream : iter
-        Iterator producing one message per iteration.
-    field : str, optional
-        Field to sort by.  Defaults to sorting by `timestamp`.
-    """
-
-    queue = six.moves.queue.PriorityQueue()
-    for msg in stream:
-        if field in msg:
-            queue.put((msg[field], msg))
-
-    while not queue.empty():
-        yield queue.get()[1]

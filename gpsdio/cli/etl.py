@@ -8,6 +8,7 @@ import logging
 import click
 
 import gpsdio
+import gpsdio.ops
 from gpsdio.cli import options
 
 
@@ -92,6 +93,6 @@ def etl(ctx, infile, outfile, filter_expr, sort_field,
                          do=output_driver_opts,
                          co=output_compression_opts) as dst:
 
-            iterator = gpsdio.filter(filter_expr, src) if filter_expr else src
-            for msg in gpsdio.sort(iterator, sort_field) if sort_field else iterator:
+            iterator = gpsdio.ops.filter(filter_expr, src) if filter_expr else src
+            for msg in gpsdio.ops.sort(iterator, sort_field) if sort_field else iterator:
                 dst.write(msg)

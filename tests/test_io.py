@@ -70,9 +70,9 @@ def test_io_on_closed_stream(tmpdir):
         with gpsdio.open(pth, mode=mode, driver='NewlineJSON') as src:
             src.close()
         assert src.closed
-        with pytest.raises(IOError):
+        with pytest.raises((ValueError, TypeError)):
             next(src)
-        with pytest.raises(IOError):
+        with pytest.raises(AttributeError):
             src.write(None)
 
 
@@ -82,7 +82,7 @@ def test_read_from_write_stream(types_msg_gz_path, tmpdir):
             gpsdio.open(pth, 'w', driver='NewlineJSON') as dst:
         for msg in src:
             dst.write(msg)
-        with pytest.raises(IOError):
+        with pytest.raises(TypeError):
             next(dst)
 
 
@@ -136,50 +136,6 @@ def test_detect_compression_type():
         raise TypeError("Above line should have raised a ValueError.")
     except ValueError:
         pass
-
-
-def test_filter(types_msg_gz_path, types_json_gz_path):
-
-    # Pass all through unaltered
-    with gpsdio.open(types_msg_gz_path) as actual, gpsdio.open(types_msg_gz_path) as expected:
-        for a, e in zip(gpsdio.filter("isinstance(mmsi, int)", actual), expected):
-            assert a == e
-
-    # Extract only types 1, 2, and 3
-    passed = []
-    with gpsdio.open(types_msg_gz_path) as stream:
-        for msg in gpsdio.filter("type in (1,2,3)", stream):
-            passed.append(msg)
-            assert msg['type'] in (1, 2, 3)
-    assert len(passed) >= 3
-
-    # Filter out everything
-    with gpsdio.open(types_msg_gz_path) as stream:
-        for msg in gpsdio.filter(("type is 5", "mmsi is -1000"), stream):
-            assert False, "Above loop should not have executed because the filter should " \
-                          "not have yielded anything."
-
-    # Multiple expressions
-    passed = []
-    with gpsdio.open(types_msg_gz_path) as stream:
-        for msg in gpsdio.filter(
-                ("status == 'Under way using engine'", "mmsi is 366268061"), stream):
-            passed.append(msg)
-            assert msg['mmsi'] is 366268061
-
-    # Reference the entire message
-    passed = []
-    with gpsdio.open(types_json_gz_path) as stream:
-        for msg in gpsdio.filter(("isinstance(msg, dict)", "'lat' in msg"), stream):
-            passed.append(msg)
-            assert 'lat' in msg
-    assert len(passed) >= 9
-
-    # Multiple complex filters
-    criteria = ("turn is 0 and second is 0", "mmsi == 366268061", "'lat' in msg")
-    with gpsdio.open(types_json_gz_path) as stream:
-        passed = [m for m in gpsdio.filter(criteria, stream)]
-        assert len(passed) >= 1
 
 
 def test_mode_passed_to_driver(tmpdir):
