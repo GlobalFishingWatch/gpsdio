@@ -55,7 +55,7 @@ def test_filter_old_location(types_msg_gz_path, types_json_gz_path):
 
 
 def test_warnings():
-    with pytest.warns(UserWarning):
+    with pytest.warns(FutureWarning):
         gpsdio.sort(None, None)
-    with pytest.warns(UserWarning):
+    with pytest.warns(FutureWarning):
         gpsdio.filter(None, None)

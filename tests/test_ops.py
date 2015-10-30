@@ -50,9 +50,8 @@ def test_filter(types_msg_gz_path, types_json_gz_path):
 
     # Filter out everything
     with gpsdio.open(types_msg_gz_path) as stream:
-        for msg in gpsdio.ops.filter(("type is 5", "mmsi is -1000"), stream):
-            assert False, "Above loop should not have executed because the filter should " \
-                          "not have yielded anything."
+        msgs = list(gpsdio.ops.filter(("type is 5", "mmsi is -1000"), stream))
+        assert len(msgs) is 0
 
     # Multiple expressions
     passed = []
