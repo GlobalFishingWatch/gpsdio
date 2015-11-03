@@ -134,7 +134,8 @@ class BZ2(_BaseCompressionDriver):
         return self.f.read(*args, **kwargs)
 
     def dump(self, msg):
-        getattr(msg, 'encode', lambda x: msg)('utf-8')
+        if not isinstance(msg, six.binary_type):
+            msg.encode('utf-8')
         return msg
 
 

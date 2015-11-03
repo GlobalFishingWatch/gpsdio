@@ -4,9 +4,7 @@ Unittests for gpsdio.io
 
 
 import itertools
-import gzip
 
-import newlinejson as nlj
 import pytest
 import six
 

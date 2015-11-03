@@ -180,7 +180,7 @@ _FIELDS = {
         'description': "Ship ID number.",
     },
     'callsign': {  # TODO: Does voluptuous have a better NoneType test?
-        'validate': Any(str, In([None])),
+        'validate': Any(Any(*six.string_types), In([None])),
         'units': 'N/A',
         'description': "Vessel callsign",
         'default': None
@@ -266,7 +266,7 @@ _FIELDS = {
         'default': 0  # TODO: Is this a valid default?
     },
     'data': {
-        'validate': Any(str, In([None])),
+        'validate': Any(Any(*six.string_types), In([None])),
         'units': 'N/A',
         'description': "Binary data.",  # TODO: Better description
         'default': None
@@ -341,7 +341,7 @@ _FIELDS = {
         'default': 0
     },
     'text': {
-        'validate': Any(str, In([None])),
+        'validate': Any(Any(*six.string_types), In([None])),
         'units': 'N/A',
         'description': "Plain text info specific to broadcast message type.",
         'default': None
@@ -522,7 +522,7 @@ _FIELDS = {
         'default': 0
     },
     'name_extension': {  # TODO: Valid default?
-        'validate': Any(str, In([None])),
+        'validate': Any(Any(*six.string_types), In([None])),
         'units': 'N/A',
         'description': "TODO: Finish.  Is this a good field name?",
         'default': None
@@ -630,7 +630,7 @@ _FIELDS = {
         'default': 0
     },
     'vendorid': {
-        'validate': Any(str, In([None])),
+        'validate': Any(Any(*six.string_types), In([None])),
         'units': 'N/A',
         'description': "Name of the AIS equipment vendor.",
         'default': None
@@ -661,7 +661,7 @@ _FIELDS = {
         'default': 0
     },
     'structured': {  # TODO: Is validation correct?  Default?
-        'validate': Any(str, In([None])),
+        'validate': Any(Any(*six.string_types), In([None])),
         'units': 'N/A',
         'description': "TODO: Finish",
         'default': None
@@ -679,37 +679,37 @@ _FIELDS = {
         'default': 1
     },
     'destination': {
-        'validate': Any(str, In([None])),
+        'validate': Any(Any(*six.string_types), In([None])),
         'units': 'N/A',
         'description': "UN/LOCODE or ERI terminal code.",
         'default': None
     },
     'shipname': {
-        'validate': Any(str, In([None])),
+        'validate': Any(Any(*six.string_types), In([None])),
         'units': 'N/A',
         'description': "Vessel name.",
         'default': None
     },
     'reserved': {
-        'validate': Any(str, In([None])),
+        'validate': Any(Any(*six.string_types), In([None])),
         'units': 'N/A',
         'description': "Bits reserved for future use.",
         'default': None
     },
     'name': {
-        'validate': Any(str, In([None])),
+        'validate': Any(Any(*six.string_types), In([None])),
         'units': 'N/A',
         'description': "Name of aid to navigation for type 21.",
         'default': None
     },
     'off_position': {
-        'validate': Any(str, In([None])),
+        'validate': Any(Any(*six.string_types), In([None])),
         'units': 'N/A',
         'description': "TODO: Finish.  Valid types?",
         'default': None
     },
     'virtual_aid': {
-        'validate': Any(str, In([None])),
+        'validate': Any(Any(*six.string_types), In([None])),
         'units': 'N/A',
         'description': "TODO: Finish.  Valid types?",
         'default': None
