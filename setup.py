@@ -88,6 +88,7 @@ setup(
         'str2type>=0.4',
         'six>=1.8',
         'ujson',
+        'voluptuous'
     ],
     license='Apache 2.0',
     long_description=readme,
