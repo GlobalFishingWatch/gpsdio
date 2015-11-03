@@ -60,7 +60,3 @@ target/
 .idea
 venv
 venv2
-*.msg
-*.gz
-*.nmea
-roundtrip.json
