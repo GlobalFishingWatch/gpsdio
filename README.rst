@@ -1,3 +1,4 @@
+======
 gpsdio
 ======
 
@@ -48,7 +49,7 @@ For more information on what ``gpsdio.open()`` returns, see the section on `mess
 
     import gpsdio
 
-    with gpsdio.open('sample-data/types.json') as src:
+    with gpsdio.open('tests/data/types.json') as src:
         with gpsdio.open('with-num-fields.msg.gz', 'w', driver='MsgPack', compression='GZIP') as dst:
             for msg in src:
                 msg['num_fields'] = len(msg)
@@ -91,7 +92,7 @@ happen as data parsed and brought into the ``gpsdio`` world.  After that the
 user knows far more about their data and is likely adding additional fields
 during processing.
 
-See `sample-data <https://github.com/SkyTruth/gpsdio/blob/master/sample-data>`_
+See `tests/data <https://github.com/SkyTruth/gpsdio/blob/master/tests/data>`_
 for some data ``gpsdio`` can immediately read and write.
 
 

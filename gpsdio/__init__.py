@@ -7,34 +7,16 @@ AIS I/O with Python, dictionaries, and the GPSd AIVDM schema.
 
 
 import logging
+
+logging.basicConfig()
 logger = logging.getLogger('gpsdio')
 
-import warnings
-
 from gpsdio.io import open
-from gpsdio.io import GPSDIOBaseStream
-from gpsdio import schema
+from gpsdio.io import GPSDIOReader
+from gpsdio.io import GPSDIOWriter
 
 
-__all__ = ['open', 'GPSDIOBaseStream', 'GPSDIOReader', 'GPSDIOWriter', 'schema']
-
-
-def filter(*args, **kwargs):
-    from gpsdio import ops as _ops
-    warnings.warn(
-        "gpsdio.filter() has been moved to gpsdio.ops.filter()",
-        FutureWarning,
-        stacklevel=2)
-    return _ops.filter(*args, **kwargs)
-
-
-def sort(*args, **kwargs):
-    from gpsdio import ops as _ops
-    warnings.warn(
-        "gpsdio.sort() has been moved to gpsdio.ops.sort()",
-        FutureWarning,
-        stacklevel=2)
-    return _ops.sort(*args, **kwargs)
+__all__ = ('open', 'GPSDIOReader', 'GPSDIOWriter')
 
 
 __version__ = '0.0.8'

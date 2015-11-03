@@ -1,4 +1,6 @@
-"""Unittests for `gpsdio.core`"""
+"""
+Unittests for gpsdio.io
+"""
 
 
 import itertools
@@ -70,9 +72,9 @@ def test_io_on_closed_stream(tmpdir):
         with gpsdio.open(pth, mode=mode, driver='NewlineJSON') as src:
             src.close()
         assert src.closed
-        with pytest.raises((ValueError, TypeError)):
+        with pytest.raises((IOError, TypeError)):
             next(src)
-        with pytest.raises(AttributeError):
+        with pytest.raises((IOError, OSError, AttributeError)):
             src.write(None)
 
 
@@ -89,7 +91,7 @@ def test_read_from_write_stream(types_msg_gz_path, tmpdir):
 def test_get_driver():
 
     for d in [_d for _d in gpsdio.drivers._BaseDriver.by_name.values()]:
-        rd = gpsdio.drivers.get_driver(d.driver_name)
+        rd = gpsdio.drivers.get_driver(d.name)
         assert rd == d, "%r != %r" % (d, rd)
     try:
         gpsdio.drivers.get_driver('__---Invalid---__')
@@ -136,44 +138,6 @@ def test_detect_compression_type():
         raise TypeError("Above line should have raised a ValueError.")
     except ValueError:
         pass
-
-
-def test_mode_passed_to_driver(tmpdir):
-    outfile = str(tmpdir.mkdir('out').join('outfile.msg.gz'))
-    with gpsdio.open(outfile, 'w') as dst:
-        assert dst._stream.mode == dst.mode == 'w'
-
-
-def test_io_open_file_pointer(
-        compare_msg, types_json_gz_path, types_msg_gz_path, types_json_path):
-    # msg gz
-    with gzip.open(types_msg_gz_path) as gz, \
-            gpsdio.open(gz, driver='MsgPack', compression='GZIP') as actual, \
-            gpsdio.open(types_json_gz_path) as expected:
-        for e, a in zip(expected, actual):
-            assert compare_msg(e, a)
-    # json gz
-    with gzip.open(types_json_gz_path) as gz, \
-            gpsdio.open(gz, driver='NewlineJSON', compression='GZIP') as actual, \
-            gpsdio.open(types_json_gz_path) as expected:
-        for e, a in zip(expected, actual):
-            assert compare_msg(e, a)
-    # json fully opened
-    with nlj.open(types_json_path) as f, gpsdio.open(f, driver='NewlineJSON') as actual, \
-            gpsdio.open(types_json_path) as expected:
-        for e, a in zip(expected, actual):
-            assert compare_msg(e, a)
-
-
-def test_name_property(types_msg_path):
-    with gpsdio.open(types_msg_path) as src:
-        assert src.name == types_msg_path
-
-
-def test_read_bad_msg():
-    with gpsdio.open(six.StringIO("{"), driver='NewlineJSON') as src:
-        with pytest.raises(Exception):
-            next(src)
 
 
 def test_write_bad_msg(tmpdir):

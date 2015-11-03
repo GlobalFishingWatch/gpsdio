@@ -9,10 +9,12 @@ import click
 import six
 
 import gpsdio
+import gpsdio._schema
+import gpsdio.schema
 from gpsdio.cli import options
 import gpsdio.drivers
-from gpsdio.drivers import registered_compression
-from gpsdio.drivers import registered_drivers
+from gpsdio.drivers import _COMPRESSION
+from gpsdio.drivers import _DRIVERS
 
 
 @click.group()
@@ -36,11 +38,11 @@ def drivers_cmd(name):
 
     if name:
         try:
-            click.echo(registered_drivers[name].__doc__)
+            click.echo(_DRIVERS[name].__doc__)
         except Exception:
             raise click.ClickException('Unrecognized driver: {}'.format(name))
     else:
-        for n, driver in gpsdio.drivers.registered_drivers.items():
+        for n, driver in gpsdio.drivers._DRIVERS.items():
             click.echo("%s - %s" % (n, driver.io_modes))
 
 
@@ -57,11 +59,11 @@ def drivers_cmd(name):
 
     if name:
         try:
-            click.echo(registered_compression[name].__doc__)
+            click.echo(_COMPRESSION[name].__doc__)
         except Exception:
             raise click.ClickException('Unrecognized driver: {}'.format(name))
     else:
-        for n, driver in gpsdio.drivers.registered_compression.items():
+        for n, driver in gpsdio.drivers._COMPRESSION.items():
             click.echo("%s - %s" % (n, driver.io_modes))
 
 
@@ -87,10 +89,10 @@ def _scrub_dict(dictionary):
         return _scrub_val(dictionary)
 
 
-@env.command(name='schema', short_help="Information about the schema.")
+@env.command(name='fields', short_help="Information about schema fields.")
 @click.argument('field', required=False)
 @options.indent_opt
-def schema_cmd(field, indent):
+def fields_cmd(field, indent):
 
     """
     To get information about a specific field:
@@ -101,10 +103,42 @@ def schema_cmd(field, indent):
 
     if field:
         try:
-            val = gpsdio.schema.CURRENT[field]
+            val = gpsdio.schema._FIELDS[field]
         except Exception:
             raise click.ClickException("Unrecognized field: {}".format(field))
     else:
-        val = gpsdio.schema.CURRENT
+        val = gpsdio.schema._FIELDS
 
     click.echo(json.dumps(_scrub_dict(val), indent=indent, sort_keys=True))
+
+
+@env.command(name='types', short_help="Information about message types.")
+@click.argument('msg_type', type=click.INT, required=False)
+@click.option(
+    '--describe', is_flag=True,
+    help="Print short human readable type description.")
+@options.indent_opt
+def types_cmd(msg_type, indent, describe):
+
+    """
+    To get information about a specific message type:
+
+    \b
+        $ gpsdio env schema ${TYPE}
+    """
+
+    if msg_type is not None:
+        try:
+            val = gpsdio.schema._FIELDS_BY_TYPE[msg_type]
+        except Exception:
+            raise click.ClickException("Unrecognized message type: {}".format(msg_type))
+    else:
+        val = gpsdio.schema._FIELDS_BY_TYPE
+
+    # Print human-readable field definition
+    if describe and msg_type is not None:
+        click.echo(gpsdio._schema._HUMAN_TYPE_DESCRIPTION[msg_type])
+
+    # Print some dictionary
+    else:
+        click.echo(json.dumps(_scrub_dict(val), indent=indent, sort_keys=True))

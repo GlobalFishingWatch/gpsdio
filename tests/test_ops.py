@@ -6,33 +6,6 @@ Unittests for gpsdio.ops
 import gpsdio.ops
 
 
-def test_strip_msgs_no_keep():
-    messages = [
-        {'type': 3, 'mmsi': 123456789, 'imo': 1234},
-        {'type': 5, 'mmsi': 987654321, 'imo': 4321, 'BAD-FIELD': 'uh-oh'},
-    ]
-    expected = [
-        {'type': 3, 'mmsi': 123456789},
-        {'type': 5, 'mmsi': 987654321, 'imo': 4321},
-    ]
-    for e, a in zip(expected, gpsdio.ops.strip_msgs(messages)):
-        assert e == a
-
-
-def test_strip_msgs_keep():
-    messages = [
-        {'type': 3, 'mmsi': 123456789, 'imo': 1234},
-        {'type': 5, 'mmsi': 987654321, 'imo': 4321, 'BAD-FIELD': 'uh-oh'},
-    ]
-    expected = [
-        {'type': 3, 'mmsi': 123456789, 'ikey': {'imo': 1234}},
-        {'type': 5, 'mmsi': 987654321, 'imo': 4321, 'ikey': {'BAD-FIELD': 'uh-oh'}},
-    ]
-    strip = gpsdio.ops.strip_msgs(messages, keep_invalid=True, invalid_key='ikey')
-    for e, a in zip(expected, strip):
-        assert e == a
-
-
 def test_filter(types_msg_gz_path, types_json_gz_path):
 
     # Pass all through unaltered
@@ -68,9 +41,3 @@ def test_filter(types_msg_gz_path, types_json_gz_path):
             passed.append(msg)
             assert 'lat' in msg
     assert len(passed) >= 9
-
-    # Multiple complex filters
-    criteria = ("turn is 0 and second is 0", "mmsi == 366268061", "'lat' in msg")
-    with gpsdio.open(types_json_gz_path) as stream:
-        passed = [m for m in gpsdio.ops.filter(criteria, stream)]
-        assert len(passed) >= 1

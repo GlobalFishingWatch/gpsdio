@@ -6,85 +6,109 @@ Base objects to avoid import errors.
 import logging
 
 import six
+import voluptuous
+
+from gpsdio.schema import build_validator
 
 
 logger = logging.getLogger('gpsdio')
 
 
-class _RegisterDriver(type):
+class GPSDIOBaseStream(object):
+
+    def __init__(self, stream, mode='r', schema=None, validator=None):
+
+        """
+        Read or write a stream of AIS data.
+
+        Parameters
+        ----------
+        stream : file-like object or iterable
+            Expects one dictionary per iteration.
+        mode : str, optional
+            Determines if stream is operating in read, write, or append mode.
+        force_message : bool, optional
+
+        """
+
+        if schema and validator:
+            raise ValueError("Cannot supply both schema and validator.")
+
+        self._schema = schema
+        self._validator = validator or build_validator(self._schema)
+        self._voluptuous_schema = {
+            k: voluptuous.Schema(v) for k, v in six.iteritems(self._validator)}
+        self._stream = stream
+        self._mode = mode
+
+    @property
+    def schema(self):
+        return self._schema
+
+    def validate_msg(self, msg):
+        try:
+            return self._voluptuous_schema[msg['type']](msg)
+        except voluptuous.Invalid as e:
+            raise ValueError("{e}: {msg}".format(e=str(e), msg=str(msg)))
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._stream.close()
+
+    @property
+    def closed(self):
+        return self._stream.closed
+
+    @property
+    def mode(self):
+        return self._mode
+
+    @property
+    def name(self):
+        return getattr(self._stream, 'name', '<unknown name>')
+
+    def close(self):
+
+        """
+        Close the underlying stream and flush to disk.
+        """
+
+        return self._stream.close()
+
+
+class _DriverRegistry(type):
 
     """
     Keep track of drivers, their names, and extensions for easy retrieval later.
     """
 
     def __init__(driver, name, bases, members):
-        # TODO: Add validation.  What methods are required?
+
         """
         Register drivers by name in one dictionary and by extension in another.
         """
 
+        # TODO: Add validation.  What methods are required?
+
         type.__init__(driver, name, bases, members)
-        if members.get('register', True):
-            driver.by_name[driver.driver_name] = driver
+        if driver.name not in ('BaseDriver', 'BaseCompressionDriver'):
+            driver.by_name[driver.name] = driver
             for ext in driver.extensions:
                 driver.by_extension[ext] = driver
 
 
-class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
-
-    """
-    Provides driver registration and the baseline methods required for driver
-    operation.  All other non-compression drivers must subclass this class if
-    they want to be registered.  Compression drivers should subclass
-    `BaseCompressionDriver()`.
-
-
-    Creating a driver
-    -----------------
-
-    Generally speaking drivers behave just like an instance of `file`, except
-    they operate on data stored in a very specific way.  Drivers must handle file
-    opening, closing, reading, and writing, via an `open()` method that accepts a
-    file path, connection string, etc., `mode`, and `**kwargs` and returns an
-    open file-like object.
-
-    Additional critical methods are `__iter__()` and `write()`.  The former must
-    yield one dictionary per iteration and the latter must accept a dictionary
-    and write it to disk.
-
-    See the `NewlineJSON()` driver for an example of a really simple driver
-    and the `MsgPack()` driver for one that is more complex.
-    """
+class BaseDriver(six.with_metaclass(_DriverRegistry, object)):
 
     by_name = {}
     by_extension = {}
-    register = False
-    io_modes = ('r', 'w', 'a')
+    name = 'BaseDriver'
 
-    def __init__(self, path, mode='r', **kwargs):
-
-        """
-        Creates an object that transparently interacts with all supported drivers
-        by calling `stream`'s methods.
-
-        Parameters
-        ----------
-        stream : <object>
-            An object provided by a driver that behaves like `file`.
-        """
-
-        if mode not in self.io_modes:
-            raise ValueError("Mode '{mode}' is unsupported: {io_modes}"
-                             .format(mode=mode, io_modes=str(self.io_modes)))
-        self._stream = self.open(path, mode=mode, **kwargs)
-        self._mode = mode
-
-    def __repr__(self):
-        return "<%s driver %s, mode '%s'>" % (
-            'closed' if self.closed else 'open',
-            self.driver_name,
-            self.mode
-        )
+    def __init__(self, schema=None):
+        self._f = None
+        self._mode = None
+        self._schema = schema
 
     def __enter__(self):
         return self
@@ -92,66 +116,54 @@ class BaseDriver(six.with_metaclass(_RegisterDriver, object)):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def __iter__(self):
-        return self
+    def __next__(self):
+        return self.load(next(self.f))
 
-    def open(self, name, mode='r'):
+    next = __next__
 
-        """
-        Open a file, datasource, stream, etc. for reading or writing.
-        """
+    def write(self, msg):
+        return self.f.write(self.dump(msg))
 
-        # This is implemented on the BaseDriver to prevent a recursion error
-        # when instantiating the BaseDRiver directly.
-
-        raise NotImplementedError("Drivers must implement this method.")
-
+    @property
+    def f(self):
+        return self._f
 
     @property
     def mode(self):
         return self._mode
 
     @property
+    def io_modes(self):
+        raise NotImplementedError
+
+    @property
+    def schema(self):
+        return self._schema
+
+    @property
     def closed(self):
-        return self._stream.closed
+        return self.f.closed
 
-    def __next__(self):
+    def load(self, msg):
+        return msg
 
-        """
-        Get the next message from the underlying stream.
-        """
+    def dump(self, msg):
+        return msg
 
-        # Explicitly defined so that __iter__ can work properly.  Otherwise
-        # __getattr__ gets in the way.
-        return next(self._stream)
+    def start(self, name, mode='r', **kwargs):
+        if mode not in self.io_modes:
+            raise ValueError(
+                "I/O mode '{m}' unsupported: {modes}".format(m=mode, modes=self.io_modes))
+        self._f = self.open(name=name, mode=mode, **kwargs)
 
-    next = __next__
-
-    def write(self, msg):
-
-        """
-        Write a message.
-        """
-
-        self._stream.write(msg)
+    def stop(self):
+        self.close()
 
     def close(self):
+        return self._f.close()
 
-        """
-        Close the underlying stream.
-        """
-
-        # Explicitly defined otherwise __getattr__ gets in the way.
-
-        self._stream.close()
-
-    def __getattr__(self, item):
-
-        """
-        For all other methods, just get it from the underlying `_stream`.
-        """
-
-        return getattr(self._stream, item)
+    def open(self, name, mode, **kwargs):
+        raise NotImplementedError
 
 
 class BaseCompressionDriver(BaseDriver):
@@ -163,12 +175,7 @@ class BaseCompressionDriver(BaseDriver):
 
     by_name = {}
     by_extension = {}
-    register = False
+    name = 'BaseCompressionDriver'
 
-    def open(self, name, mode='r'):
-
-        """
-        Compression drivers must implement this method.  See `BaseDriver()`.
-        """
-
+    def open(self, name, mode, **kwargs):
         raise NotImplementedError

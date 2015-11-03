@@ -13,6 +13,9 @@ import gpsdio
 from gpsdio.cli import options
 
 
+logger = logging.getLogger('gpsdio')
+
+
 @click.command(name='info')
 @click.argument('infile')
 @click.option(
@@ -47,18 +50,18 @@ from gpsdio.cli import options
     help="Include a histogram of field names and message counts."
 )
 @options.indent_opt
-@click.option(
-    '--min-timestamp', 'meta_member', flag_value='min_timestamp',
-    help="Print only the minimum timestamp."
-)
-@click.option(
-    '--max-timestamp', 'meta_member', flag_value='max_timestamp',
-    help="Print only the maximum timestamp."
-)
-@click.option(
-    '--sorted', 'meta_member', flag_value='sorted',
-    help="Print only whether or not the datasource is sorted by timestamp."
-)
+# @click.option(
+#     '--min-timestamp', 'meta_member', flag_value='min_timestamp',
+#     help="Print only the minimum timestamp."
+# )
+# @click.option(
+#     '--max-timestamp', 'meta_member', flag_value='max_timestamp',
+#     help="Print only the maximum timestamp."
+# )
+# @click.option(
+#     '--sorted', 'meta_member', flag_value='sorted',
+#     help="Print only whether or not the datasource is sorted by timestamp."
+# )
 @click.option(
     '--num-unique-mmsi', 'meta_member', flag_value='num_unique_mmsi',
     help="Print only the number of unique MMSI numbers."
@@ -94,7 +97,6 @@ def info(ctx, infile, indent, meta_member, with_mmsi_hist, with_type_hist, with_
     Tools reading the JSON output will need account for this when parsing.
     """
 
-    logger = logging.getLogger('gpsdio-cli-info')
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting info')
 
@@ -110,19 +112,20 @@ def info(ctx, infile, indent, meta_member, with_mmsi_hist, with_type_hist, with_
     mmsi_hist = {}
     type_hist = {}
     field_hist = {}
-    is_sorted = True
+    # is_sorted = True
     prev_ts = None
 
-    with gpsdio.open(infile,
-                     driver=input_driver,
-                     compression=input_compression,
-                     do=input_driver_opts,
-                     co=input_compression_opts) as src:
+    with gpsdio.open(
+            infile,
+            driver=input_driver,
+            compression=input_compression,
+            do=input_driver_opts,
+            co=input_compression_opts) as src:
 
         idx = 0  # In case file is empty
         for idx, msg in enumerate(src):
 
-            ts = msg.get('timestamp')
+            # ts = msg.get('timestamp')
             x = msg.get('lon')
             y = msg.get('lat')
             mmsi = msg.get('mmsi')
@@ -132,19 +135,19 @@ def info(ctx, infile, indent, meta_member, with_mmsi_hist, with_type_hist, with_
                 field_hist.setdefault(key, 0)
                 field_hist[key] += 1
 
-            if ts is not None:
-
-                # Adjust min and max timestamp
-                if ts_min is None or ts < ts_min:
-                    ts_min = ts
-                if ts_max is None or ts > ts_max:
-                    ts_max = ts
-
-                # Figure out if the data is sorted by time
-                if prev_ts is None:
-                    prev_ts = ts
-                elif (ts and prev_ts) and ts < prev_ts:
-                    is_sorted = False
+            # if ts is not None:
+            #
+            #     # Adjust min and max timestamp
+            #     if ts_min is None or ts < ts_min:
+            #         ts_min = ts
+            #     if ts_max is None or ts > ts_max:
+            #         ts_max = ts
+            #
+            #     # Figure out if the data is sorted by time
+            #     if prev_ts is None:
+            #         prev_ts = ts
+            #     elif (ts and prev_ts) and ts < prev_ts:
+            #         is_sorted = False
 
             if x is not None and y is not None:
 
@@ -169,9 +172,9 @@ def info(ctx, infile, indent, meta_member, with_mmsi_hist, with_type_hist, with_
     stats = {
         'bounds': (xmin, ymin, xmax, ymax),
         'count': idx + 1,
-        'min_timestamp': gpsdio.schema.datetime2str(ts_min),
-        'max_timestamp': gpsdio.schema.datetime2str(ts_max),
-        'sorted': is_sorted,
+        # 'min_timestamp': gpsdio.schema.datetime2str(ts_min),
+        # 'max_timestamp': gpsdio.schema.datetime2str(ts_max),
+        # 'sorted': is_sorted,
         'num_unique_mmsi': len(set(mmsi_hist.keys())),
         'num_unique_type': len(set(type_hist.keys())),
         'num_unique_field': len(set(field_hist.keys()))

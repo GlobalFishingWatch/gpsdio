@@ -12,6 +12,9 @@ import gpsdio.ops
 from gpsdio.cli import options
 
 
+logger = logging.getLogger('gpsdio')
+
+
 @click.command()
 @click.argument('infile', required=True)
 @click.argument('outfile', required=True)
@@ -77,7 +80,6 @@ def etl(ctx, infile, outfile, filter_expr, sort_field,
             --sort timestamp
     """
 
-    logger = logging.getLogger('gpsdio-cli-etl')
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting etl')
 

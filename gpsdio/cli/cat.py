@@ -12,6 +12,9 @@ from gpsdio import ops
 from gpsdio.cli import options
 
 
+logger = logging.getLogger('gpsdio')
+
+
 @click.command(name='cat')
 @click.argument('infile', required=True)
 @click.option(
@@ -30,7 +33,6 @@ def cat(ctx, infile, input_driver, geojson,
     Print messages to stdout as newline JSON.
     """
 
-    logger = logging.getLogger('gpsdio-cli-cat')
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting cat')
 

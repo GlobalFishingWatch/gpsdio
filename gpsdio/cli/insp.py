@@ -14,6 +14,9 @@ import gpsdio
 from gpsdio.cli import options
 
 
+logger = logging.getLogger('gpsdio')
+
+
 @click.command()
 @click.argument('infile', required=True)
 @click.option(
@@ -28,7 +31,7 @@ from gpsdio.cli import options
 def insp(ctx, infile, interpreter,
          input_driver, input_compression, input_driver_opts, input_compression_opts):
 
-    # A good idea borrowed from Fiona and Rasterio
+    # A good idea borrowed from Fiona and rasterio
     # https://github.com/Toblerity/Fiona
     # https://github.com/Mapbox/rasterio
 
@@ -45,7 +48,6 @@ def insp(ctx, infile, interpreter,
         ...     # Operations
     """
 
-    logger = logging.getLogger('gpsdio-cli-insp')
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting insp')
 

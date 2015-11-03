@@ -11,6 +11,9 @@ import gpsdio
 from gpsdio.cli import options
 
 
+logger = logging.getLogger('gpsdio')
+
+
 @click.command(name='load')
 @click.argument('outfile', required=True)
 @options.input_driver_opts
@@ -26,7 +29,6 @@ def load(ctx, outfile, input_driver_opts,
     Load newline JSON msgs from stdin to a file.
     """
 
-    logger = logging.getLogger('gpsdio-cli-load')
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting load')
 

@@ -1,51 +1,12 @@
 """
-Message modification operations.
+Operations
 """
 
 
-import copy
-import warnings
-
 import six
 
-import gpsdio.schema
-from gpsdio.schema import export_msg
 
-
-def strip_msgs(stream, keep_invalid=False, invalid_key='__invalid__'):
-
-    """
-    Remove unrecognized fields from a stream of messages.  Messages can be kept
-    and moved to a specific key if desired.
-
-    Parameters
-    ----------
-    stream : iter
-        Iterable producing GPSd messages.
-    keep_invalid : bool, optional
-        Place unrecognized fields into a dictionary in `invalid_key`.
-    invalid_key : str, optional
-        Key to store unrecognized fields.
-    """
-
-    for msg in stream:
-
-        # Copy the input message to make sure we don't modify the dicts outside
-        # this scope.  Valid fields are removed from this `invalid` dict, which
-        # just leaves us with the invalid keys
-        invalid = copy.deepcopy(msg)
-
-        m = {
-            k: invalid.pop(k) for k in tuple(invalid.keys())
-            if k in gpsdio.schema.fields_by_msg_type[msg['type']]}
-
-        if keep_invalid and invalid:
-            m[invalid_key] = invalid
-
-        yield m
-
-
-def sort(stream, field='timestamp'):
+def sort(stream, field, default=None):
 
     """
     A generator to sort data by the specified field.  Requires the entire stream
@@ -59,13 +20,8 @@ def sort(stream, field='timestamp'):
         Field to sort by.  Defaults to sorting by `timestamp`.
     """
 
-    queue = six.moves.queue.PriorityQueue()
-    for msg in stream:
-        if field in msg:
-            queue.put((msg[field], msg))
-
-    while not queue.empty():
-        yield queue.get()[1]
+    for msg in sorted(stream, key=lambda x: x.get(field, default)):
+        yield msg
 
 
 def filter(expressions, stream):
@@ -153,8 +109,6 @@ def geojson(stream):
         GeoJSON features.
     """
 
-    warnings.warn("gpsdio.ops.geojson() is experimental.")
-
     for msg in stream:
         lat = msg.get('lat')
         lon = msg.get('lon')
@@ -162,8 +116,7 @@ def geojson(stream):
             yield {
                 'type': 'Feature',
                 'properties': {
-                    k: v for k, v in six.iteritems(export_msg(msg))
-                    if (k != 'lat' or k != 'lon')},
+                    k: v for k, v in six.iteritems(msg) if (k != 'lat' or k != 'lon')},
                 'geometry': {
                     'type': 'Point',
                     'coordinates': (lon, lat)

@@ -4,7 +4,6 @@ other commands.
 """
 
 
-import itertools
 import logging
 from pkg_resources import iter_entry_points
 import sys
