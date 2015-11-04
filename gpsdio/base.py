@@ -16,7 +16,7 @@ logger = logging.getLogger('gpsdio')
 
 class GPSDIOBaseStream(object):
 
-    def __init__(self, stream, mode='r', schema=None, validator=None):
+    def __init__(self, stream, mode='r', schema=None, _validator=None):
 
         """
         Read or write a stream of AIS data.
@@ -27,17 +27,15 @@ class GPSDIOBaseStream(object):
             Expects one dictionary per iteration.
         mode : str, optional
             Determines if stream is operating in read, write, or append mode.
-        force_message : bool, optional
-
         """
 
-        if schema and validator:
+        if schema and _validator:
             raise ValueError("Cannot supply both schema and validator.")
 
         self._schema = schema
-        self._validator = validator or build_validator(self._schema)
+        self._validator = _validator or build_validator(self._schema)
         self._voluptuous_schema = {
-            k: voluptuous.Schema(v) for k, v in six.iteritems(self._validator)}
+            k: voluptuous.Schema(v, required=True) for k, v in six.iteritems(self._validator)}
         self._stream = stream
         self._mode = mode
 
