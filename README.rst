@@ -40,7 +40,7 @@ pipelines in mind.
 Example I/O
 -----------
 
-Here's a small example of how to read data stored as `newline delimited JSON <https://github.com/geowurster/newlinejson>`_,
+Here's a small example of how to read data stored as `newline delimited JSON <https://github.com/geowurster/NewlineJSON>`_,
 add a field, and write as GZIP compressed `MsgPack <http://msgpack.org/index.html>`_.
 The driver and compression are explicitly given but can also be detected from the file path.
 For more information on what ``gpsdio.open()`` returns, see the section on `messages <README.rst#Messages>`_.
@@ -52,7 +52,7 @@ For more information on what ``gpsdio.open()`` returns, see the section on `mess
     with gpsdio.open('tests/data/types.json') as src:
         with gpsdio.open('with-num-fields.msg.gz', 'w', driver='MsgPack', compression='GZIP') as dst:
             for msg in src:
-                msg['num_fields'] = len(msg)
+                dst.write(msg)
 
 
 Parsing NMEA Sentences
