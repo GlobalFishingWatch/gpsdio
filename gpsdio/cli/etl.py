@@ -20,13 +20,11 @@ logger = logging.getLogger('gpsdio')
 @click.argument('outfile', required=True)
 @click.option(
     '--filter', 'filter_expr', metavar='EXPR', multiple=True,
-    help="Apply a filtering expression to the messages."
-)
+    help="Apply a filtering expression to the messages.")
 @click.option(
     '--sort', 'sort_field', metavar='FIELD',
     help="Sort output messages by field.  Holds the entire file in memory and drops messages "
-         "lacking the specified field."
-)
+         "lacking the specified field.")
 @options.input_driver
 @options.input_driver_opts
 @options.input_compression
@@ -83,17 +81,19 @@ def etl(ctx, infile, outfile, filter_expr, sort_field,
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting etl')
 
-    with gpsdio.open(infile,
-                     driver=input_driver,
-                     compression=input_compression,
-                     do=input_driver_opts,
-                     co=input_compression_opts) as src:
+    with gpsdio.open(
+            infile,
+            driver=input_driver,
+            compression=input_compression,
+            do=input_driver_opts,
+            co=input_compression_opts) as src:
 
-        with gpsdio.open(outfile, 'w',
-                         driver=output_driver,
-                         compression=output_compression,
-                         do=output_driver_opts,
-                         co=output_compression_opts) as dst:
+        with gpsdio.open(
+                outfile, 'w',
+                driver=output_driver,
+                compression=output_compression,
+                do=output_driver_opts,
+                co=output_compression_opts, **ctx.obj['define']) as dst:
 
             iterator = gpsdio.ops.filter(filter_expr, src) if filter_expr else src
             for msg in gpsdio.ops.sort(iterator, sort_field) if sort_field else iterator:

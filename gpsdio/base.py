@@ -18,7 +18,7 @@ logger = logging.getLogger('gpsdio')
 
 class GPSDIOBaseStream(object):
 
-    def __init__(self, stream, mode='r', schema=None, _validator=None, _dv=True):
+    def __init__(self, stream, mode='r', schema=None, _validator=None, _check=True):
 
         """
         Read or write a stream of AIS data.
@@ -29,6 +29,21 @@ class GPSDIOBaseStream(object):
             Expects one dictionary per iteration.
         mode : str, optional
             Determines if stream is operating in read, write, or append mode.
+
+        Experimental Parameters
+        -----------------------
+        _validator : dict, optional
+            A dictionary that matches the output of `build_validator()`.  Can
+            be used to bypass building a full schema.
+        _check : bool, optional
+            Should messages be checked against the schema?
+
+        Returns
+        -------
+        GPSDIOReader
+            If a read mode is used.
+        GPSDIOWriter
+            If a write mode is used.
         """
 
         if schema and _validator:
@@ -41,14 +56,34 @@ class GPSDIOBaseStream(object):
         self._stream = stream
         self._mode = mode
         self._iterator = stream
-        self._dv = _dv
+        self._check = _check
 
     @property
     def schema(self):
         return self._schema
 
     def validate_msg(self, msg):
-        if self._dv:
+
+        """
+        Validate a message against the supplied schema.
+
+        Parameters
+        ----------
+        msg : dict
+            GPSd message.
+
+        Raises
+        ------
+        ValueError
+            Message does not match schema.
+
+        Returns
+        -------
+        dict
+            GPSd message.
+        """
+
+        if self._check:
             try:
                 return self._voluptuous_schema[msg['type']](msg)
             except voluptuous.Invalid as e:

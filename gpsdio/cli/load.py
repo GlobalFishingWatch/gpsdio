@@ -32,14 +32,18 @@ def load(ctx, outfile, input_driver_opts,
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting load')
 
-    with gpsdio.open('-',
-                     driver='NewlineJSON',
-                     compression=False,
-                     do=input_driver_opts) as src, \
-            gpsdio.open(outfile, 'w',
-                        driver=output_driver,
-                        compression=output_compression,
-                        co=output_compression_opts,
-                        do=output_driver_opts) as dst:
-        for msg in src:
-            dst.write(msg)
+    with gpsdio.open(
+            '-',
+            driver='NewlineJSON',
+            compression=False,
+            do=input_driver_opts, **ctx.obj['define']) as src:
+
+        with gpsdio.open(
+                outfile, 'w',
+                driver=output_driver,
+                compression=output_compression,
+                co=output_compression_opts,
+                do=output_driver_opts, **ctx.obj['define']) as dst:
+
+            for msg in src:
+                dst.write(msg)

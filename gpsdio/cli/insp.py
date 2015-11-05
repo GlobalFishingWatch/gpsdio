@@ -21,8 +21,7 @@ logger = logging.getLogger('gpsdio')
 @click.argument('infile', required=True)
 @click.option(
     '--ipython', 'interpreter', flag_value='ipython',
-    help="Use IPython as the interpreter."
-)
+    help="Use IPython as the interpreter.")
 @options.input_driver
 @options.input_compression
 @options.input_driver_opts
@@ -56,8 +55,13 @@ def insp(ctx, infile, interpreter,
         % (gpsdio.__version__, '.'.join(map(str, sys.version_info[:3]))),
         'Try "help(src)" or "next(src)".'))
 
-    with gpsdio.open(infile, driver=input_driver, compression=input_compression,
-                     do=input_driver_opts, co=input_compression_opts) as src:
+    with gpsdio.open(
+            infile,
+            driver=input_driver,
+            compression=input_compression,
+            do=input_driver_opts,
+            co=input_compression_opts,
+            **ctx.obj['define']) as src:
 
         scope = {
             'src': src,

@@ -42,7 +42,8 @@ def cat(ctx, infile, input_driver, geojson,
                      driver=input_driver,
                      compression=input_compression,
                      do=input_driver_opts,
-                     co=input_compression_opts) as src:
+                     co=input_compression_opts,
+                     **ctx.obj['define']) as src:
 
         base_driver = gpsdio.base.BaseDriver(schema=src.schema)
 
@@ -54,7 +55,7 @@ def cat(ctx, infile, input_driver, geojson,
                     out, 'w',
                     driver='NewlineJSON',
                     compression=False,
-                    do=output_driver_opts) as dst:
+                    do=output_driver_opts, **ctx.obj['define']) as dst:
 
             for msg in src:
                 if geojson:
