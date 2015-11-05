@@ -13,8 +13,74 @@ Field Definitions
 """
 
 
+import datetime
+
 import six
-from voluptuous import All, Any, Schema, Range, In
+from voluptuous import All, Any, Range, In, Invalid
+
+
+DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
+
+
+def str2datetime(string, fmt=DATETIME_FORMAT):
+
+    """
+    Convert a string to a datetime.
+
+    Parameters
+    ----------
+    string : str
+        Matcing the `fmt`
+    fmt : str, optional
+        Datetime parsing string.
+
+    Returns
+    -------
+    datetime.datetime
+    """
+
+    return datetime.datetime.strptime(string, fmt)
+
+
+def datetime2str(datetime_obj, fmt=DATETIME_FORMAT):
+
+    """
+    Convert a datetime object to a string.
+
+    Parameters
+    ----------
+    datetime_obj : datetime.datetime
+
+    fmt : str, optional
+    """
+
+    return datetime_obj.strftime(fmt)
+
+
+def DateTime(obj, fmt=DATETIME_FORMAT):
+
+    """
+    Coerce and validate strings to datetimes.
+
+    Parameters
+    ----------
+    value : str or datetime.datetime
+        Object to be validated.
+    fmt : str, optional
+        Datetime parsing format.
+
+    Returns
+    -------
+    datetime.datetime
+    """
+
+    if isinstance(obj, datetime.datetime):
+        return obj
+    else:
+        try:
+            return str2datetime(obj, fmt=fmt)
+        except ValueError:
+            raise Invalid("Datetime string '{}' cannot be parsed with '%s'".format(obj, fmt))
 
 
 _FIELDS = {
@@ -733,6 +799,13 @@ _FIELDS = {
                        "(162.025 MHz) respectively. Regional authorities may set different "
                        "frequencies.",
         'default': 2088
+    },
+    'timestamp': {
+        'validate': Any(None, DateTime),
+        'units': 'N/A',
+        'description': "Timestamp message was broadcast.  Not part of the AIVDM spec, but "
+                       "critical to working with AIS data.",
+        'default': None
     }
 }
 
@@ -870,6 +943,147 @@ _FIELDS_BY_TYPE = {
         'accuracy', 'assigned', 'course', 'gnss', 'lat', 'lon', 'mmsi',
         'mothership_mmsi', 'raim', 'repeat', 'speed', 'status', 'to_port',
         'to_starboard', 'to_stern', 'type', 'zonesize'
+    )
+}
+
+
+_FIELDS_BY_TYPE = {
+    1: (
+        'accuracy', 'course', 'heading', 'lat', 'lon', 'maneuver', 'mmsi',
+        'spare', 'radio', 'raim', 'repeat', 'second', 'speed', 'status',
+        'turn', 'type', 'timestamp'
+    ),
+    2: (
+        'accuracy', 'course', 'heading', 'lat', 'lon', 'maneuver', 'mmsi',
+        'spare', 'radio', 'raim', 'repeat', 'second', 'speed', 'status',
+        'turn', 'type', 'timestamp'
+    ),
+    3: (
+        'accuracy', 'course', 'heading', 'lat', 'lon', 'maneuver', 'mmsi',
+        'spare', 'radio', 'raim', 'repeat', 'second', 'speed', 'status',
+        'turn', 'type', 'timestamp'
+    ),
+    4: (
+        'accuracy', 'day', 'epfd', 'hour', 'lat', 'lon', 'minute', 'mmsi',
+        'month', 'radio', 'raim', 'repeat', 'second', 'type', 'year', 'spare',
+        'timestamp'
+    ),
+    5: (
+        'ais_version', 'callsign', 'day', 'destination', 'draught', 'dte',
+        'epfd', 'hour', 'imo', 'minute', 'mmsi', 'month', 'repeat', 'shipname',
+        'shiptype', 'to_bow', 'to_port', 'to_starboard', 'to_stern', 'type',
+        'spare', 'timestamp'
+    ),
+    6: (
+        'type', 'repeat', 'mmsi', 'seqno', 'dest_mmsi', 'retransmit', 'spare',
+        'dac', 'fid', 'data', 'timestamp'
+    ),
+    7: (
+        'day', 'destination', 'draught', 'dte', 'epfd', 'hour', 'minute',
+        'mmsi', 'mmsi1', 'mmsi2', 'mmsi3', 'mmsi4', 'mmsiseq1', 'mmsiseq2',
+        'mmsiseq3', 'mmsiseq4', 'month', 'repeat', 'type', 'timestamp'
+    ),
+    8: (
+        'assigned', 'course', 'dac', 'data', 'destination', 'draught', 'dte',
+        'fid', 'lat', 'minute', 'mmsi', 'radio', 'raim', 'regional', 'repeat',
+        'second', 'type', 'timestamp'
+    ),
+    9: (
+        'accuracy', 'alt', 'assigned', 'course', 'destination', 'draught',
+        'dte', 'lat', 'lon', 'minute', 'mmsi', 'radio', 'raim', 'regional',
+        'repeat', 'second', 'speed9', 'type', 'timestamp'
+    ),
+    10: (
+        'assigned', 'course', 'dest_mmsi', 'destination', 'draught', 'dte',
+        'lat', 'lon', 'minute', 'mmsi', 'radio', 'raim', 'regional', 'repeat',
+        'second', 'type', 'timestamp'
+    ),
+    11: (
+        'accuracy', 'day', 'epfd', 'hour', 'lat', 'lon', 'minute', 'mmsi',
+        'month', 'radio', 'raim', 'repeat', 'second', 'type', 'year', 'timestamp'
+    ),
+    12: (
+        'assigned', 'course', 'dest_mmsi', 'destination', 'draught', 'dte',
+        'minute', 'mmsi', 'radio', 'raim', 'regional', 'repeat', 'retransmit',
+        'second', 'seqno', 'text', 'type', 'timestamp'
+    ),
+    13: (
+        'day', 'destination', 'draught', 'dte', 'epfd', 'hour', 'minute',
+        'mmsi', 'mmsi1', 'mmsi2', 'mmsi3', 'mmsi4', 'mmsiseq1', 'mmsiseq2',
+        'mmsiseq3', 'mmsiseq4', 'month', 'repeat', 'type', 'timestamp'
+    ),
+    14: (
+        'assigned', 'course', 'destination', 'draught', 'dte', 'minute',
+        'mmsi', 'radio', 'raim', 'regional', 'repeat', 'retransmit', 'second',
+        'text', 'type', 'timestamp'
+    ),
+    15: (
+        'destination', 'draught', 'dte', 'minute', 'mmsi', 'mmsi1', 'mmsi2',
+        'offset1_1', 'offset1_2', 'offset2_1', 'radio', 'repeat', 'type',
+        'type1_1', 'type1_2', 'type2_1', 'timestamp'
+    ),
+    16: (
+        'destination', 'draught', 'dte', 'increment1', 'minute', 'mmsi',
+        'mmsi1', 'mmsi2', 'offset1', 'offset2', 'offset2_1', 'radio', 'repeat',
+        'type', 'type2_1', 'timestamp'
+    ),
+    17: (
+        'data', 'lat', 'lon', 'mmsi', 'repeat', 'type', 'timestamp'
+    ),
+    18: (
+        'accuracy', 'assigned', 'band', 'course', 'cs', 'display', 'dsc',
+        'heading', 'lat', 'lon', 'mmsi', 'msg22', 'radio', 'raim', 'regional',
+        'repeat', 'reserved', 'second', 'speed', 'type', 'timestamp'
+    ),
+    19: (
+        'accuracy', 'assigned', 'course', 'dte', 'epfd', 'heading', 'lat',
+        'lon', 'mmsi', 'raim', 'regional', 'repeat', 'reserved', 'second',
+        'shipname', 'shiptype', 'speed', 'to_bow', 'to_port', 'to_starboard',
+        'to_stern', 'type', 'timestamp'
+    ),
+    20: (
+        'assigned', 'dte', 'increment1', 'increment2', 'increment3',
+        'increment4', 'mmsi', 'number1', 'number2', 'number3', 'number4',
+        'offset1', 'offset2', 'offset3', 'offset4', 'repeat', 'timeout1',
+        'timeout2', 'timeout3', 'timeout4', 'type', 'timestamp'
+    ),
+    21: (
+        'accuracy', 'aid_type', 'assigned', 'epfd', 'lat', 'lon', 'mmsi',
+        'name', 'off_position', 'raim', 'regional', 'repeat', 'second',
+        'to_bow', 'to_port', 'to_starboard', 'to_stern', 'type', 'virtual_aid',
+        'timestamp'
+    ),
+    22: (
+        'addressed', 'assigned', 'band_a', 'band_b', 'channel_a', 'channel_b',
+        'dest1', 'dest2', 'mmsi', 'ne_lat', 'ne_lon', 'power', 'repeat',
+        'sw_lat', 'sw_lon', 'txrx', 'type', 'zonesize', 'timestamp'
+    ),
+    23: (
+        'assigned', 'band_a', 'band_b', 'interval', 'mmsi', 'ne_lat', 'ne_lon',
+        'quiet', 'repeat', 'ship_type', 'station_type', 'sw_lat', 'sw_lon',
+        'txrx', 'type', 'zonesize', 'timestamp'
+    ),
+    24: (
+        'assigned', 'callsign', 'mmsi', 'model', 'mothership_mmsi', 'partno',
+        'repeat', 'serial', 'shipname', 'shiptype', 'to_bow', 'to_port',
+        'to_starboard', 'to_stern', 'type', 'vendorid', 'zonesize', 'timestamp'
+    ),
+    25: (
+        'addressed', 'app_id', 'assigned', 'callsign', 'data', 'dest_mmsi',
+        'mmsi', 'model', 'mothership_mmsi', 'repeat', 'serial', 'structured',
+        'to_bow', 'to_port', 'to_starboard', 'to_stern', 'type', 'zonesize',
+        'timestamp'
+    ),
+    26: (
+        'addressed', 'app_id', 'assigned', 'callsign', 'data', 'dest_mmsi',
+        'mmsi', 'mothership_mmsi', 'radio', 'repeat', 'serial', 'structured',
+        'to_bow', 'to_port', 'to_starboard', 'to_stern', 'type', 'zonesize',
+        'timestamp'
+    ),
+    27: (
+        'accuracy', 'assigned', 'course', 'gnss', 'lat', 'lon', 'mmsi',
+        'mothership_mmsi', 'raim', 'repeat', 'speed', 'status', 'to_port',
+        'to_starboard', 'to_stern', 'type', 'zonesize', 'timestamp'
     )
 }
 
