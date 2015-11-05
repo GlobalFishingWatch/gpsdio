@@ -85,6 +85,88 @@ def filter(expressions, stream):
             yield msg
 
 
+def msg2geojson(msg):
+
+    """
+    **Experimental**
+
+    Convert a single positional message to GeoJSON.  `lat` and `lon` are used
+    to create the geometry and all other fields are placed in the `properties`
+    key.
+
+    Input:
+
+        {
+          "radio": 0,
+          "course": 321.1000061035,
+          "accuracy": 0,
+          "maneuver": 0,
+          "lon": 94.9923782349,
+          "mmsi": 373061000,
+          "repeat": 0,
+          "turn": 0,
+          "raim": false,
+          "type": 1,
+          "status": 0,
+          "speed": 9.6999998093,
+          "second": 59,
+          "lat": -12.2402667999,
+          "spare": 0,
+          "heading": 320,
+          "timestamp": "2015-01-01T00:00:00.000000Z"
+        }
+
+    Output:
+
+        {
+            "type": "Feature",
+            "properties": {
+                "radio": 0,
+                "course": 321.1000061035,
+                "accuracy": 0,
+                "maneuver": 0,
+                "mmsi": 373061000,
+                "repeat": 0,
+                "turn": 0,
+                "raim": false,
+                "type": 1,
+                "status": 0,
+                "speed": 9.6999998093,
+                "second": 59,
+                "spare": 0,
+                "heading": 320,
+                "timestamp": "2015-01-01T00:00:00.000000Z"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": (94.9923782349, -12.2402667999)
+        }
+
+    Parameters
+    ----------
+    msg : dict
+        GPSd message.
+
+    Returns
+    -------
+    dict
+        GeoJSON
+    """
+
+    y = msg.pop('lat')
+    x = msg.pop('lon')
+
+    return {
+        'type': 'Feature',
+        'properties': {
+            k: v for k, v in six.iteritems(msg) if (k != 'lat' or k != 'lon')},
+        'geometry': {
+            'type': 'Point',
+            'coordinates': (x, y)
+        }
+    }
+
+
 def geojson(stream):
 
     """
@@ -110,15 +192,8 @@ def geojson(stream):
     """
 
     for msg in stream:
-        lat = msg.get('lat')
-        lon = msg.get('lon')
-        if lat is not None and lon is not None:
-            yield {
-                'type': 'Feature',
-                'properties': {
-                    k: v for k, v in six.iteritems(msg) if (k != 'lat' or k != 'lon')},
-                'geometry': {
-                    'type': 'Point',
-                    'coordinates': (lon, lat)
-                }
-            }
+        try:
+            yield msg2geojson(msg)
+        # Non-posit message
+        except KeyError:
+            pass

@@ -8,6 +8,7 @@ import logging
 import click
 
 import gpsdio
+import gpsdio.base
 from gpsdio import ops
 from gpsdio.cli import options
 import newlinejson as nlj
@@ -43,9 +44,10 @@ def cat(ctx, infile, input_driver, geojson,
                      do=input_driver_opts,
                      co=input_compression_opts) as src:
 
+        base_driver = gpsdio.base.BaseDriver(schema=src.schema)
+
         # Use the newlinejson library directly for geojson output because the gpsdio
         # schema can't handle it
-
         out = click.get_text_stream('stdout')
         with nlj.open(out, 'w', **output_driver_opts) if geojson else \
                 gpsdio.open(
@@ -54,6 +56,10 @@ def cat(ctx, infile, input_driver, geojson,
                     compression=False,
                     do=output_driver_opts) as dst:
 
-            iterator = ops.geojson(src) if geojson else src
-            for msg in iterator:
+            for msg in src:
+                if geojson:
+                    if 'lat' in msg and 'lon' in msg:
+                        msg = gpsdio.ops.msg2geojson(base_driver.dump(msg))
+                    else:
+                        continue
                 dst.write(msg)
