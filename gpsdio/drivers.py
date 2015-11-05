@@ -6,6 +6,7 @@ Drivers for reading and writing a variety of formats and compression.
 
 
 import bz2
+import datetime
 import logging
 import gzip
 import sys
@@ -70,8 +71,11 @@ class NewlineJSON(_BaseDriver):
     extensions = ('json', 'nljson')
     io_modes = ('r', 'w', 'a')
 
+
     def open(self, name, mode='r', **kwargs):
         import newlinejson as nlj
+        import ujson
+        kwargs.update(json_lib=kwargs.get('json_lib', ujson))
         return nlj.open(name, mode=mode, **kwargs)
 
 
@@ -101,7 +105,7 @@ class GZIP(_BaseCompressionDriver):
     def load(self, msg):
         if hasattr(msg, 'decode'):
             msg = msg.decode('utf-8')
-        return msg
+        return super(GZIP, self).load(msg)
 
     def dump(self, msg):
         if six.PY3 and isinstance(msg, six.string_types):
@@ -135,8 +139,8 @@ class BZ2(_BaseCompressionDriver):
 
     def dump(self, msg):
         if not isinstance(msg, six.binary_type):
-            msg.encode('utf-8')
-        return msg
+            msg = six.binary_type(msg, encoding='utf-8')
+        return super(BZ2, self).dump(msg)
 
 
 class NMEA(_BaseDriver):
@@ -165,16 +169,19 @@ class NMEA(_BaseDriver):
         return ais.open(name, mode=mode, **kwargs)
 
     def load(self, msg):
+
+        timestamp = datetime.datetime.utcfromtimestamp(msg['matches'][-1]['time'])
         msg = {self.field_map.get(k, k): v for k, v in six.iteritems(msg['decoded'])}
         msg = {
             fld: msg.get(fld, dfn.get('default'))
             for fld, dfn in self.schema[msg['type']].items()}
 
         # Adjust libais not-available values to match AIVDM
+        # TODO: libais gives float for draught.  Should be int?
         if 'course' in msg and msg['course'] == 360:
             msg['course'] = self.schema[msg['type']]['course']['default']
         if 'second' in msg and msg['second'] > 60:
-            msg['second'] = self.schema[msg['type']]['course']['default']
+            msg['second'] = self.schema[msg['type']]['second']['default']
         if msg['type'] != 9 and 'speed' in msg and round(msg['speed'], 0) == 102:
             msg['speed'] = self.schema[msg['type']]['speed']['default']
         if 'maneuver' in msg and msg['maneuver'] == 3:
@@ -186,11 +193,44 @@ class NMEA(_BaseDriver):
         if 'heading' in msg and msg['heading'] > 359:
             msg['heading'] = self.schema[msg['type']]['heading']['default']
 
-        # TODO: libais gives float for draught.  Should be int?
+        msg['timestamp'] = timestamp
+
+        if six.PY2:
+            msg = {k: int(v) if isinstance(v, long) else v for k, v in six.iteritems(msg)}
 
         # Return formatted message and strip whitespace from strings
         return {k: v.strip() if isinstance(v, six.string_types) else v
                 for k, v in six.iteritems(msg)}
+
+
+class _NullGuy:
+
+    def __init__(self, name, mode='r'):
+        self.name = name
+        self.mode = mode
+        self.closed = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def close(self):
+        self.closed = True
+
+    def write(self, line):
+        pass
+
+
+class NULL(_BaseDriver):
+
+    name = 'NULL'
+    extensions = 'null',
+    io_modes = ('w', 'a')
+
+    def open(self, name, mode, **kwargs):
+        return _NullGuy(name, mode=mode)
 
 
 class MsgPack(_BaseDriver):
@@ -222,7 +262,7 @@ class MsgPack(_BaseDriver):
         if mode == 'r':
             mode = 'rb' if six.PY3 else 'r'
         elif mode == 'w':
-            mode = 'w'
+            mode = 'wb'
 
         if isinstance(name, six.string_types):
             return open(name, mode=mode)
@@ -237,6 +277,7 @@ class MsgPack(_BaseDriver):
     next = __next__
 
     def dump(self, msg):
+        msg = super(MsgPack, self).dump(msg)
         return self.packer.pack(msg)
 
 

@@ -3,11 +3,13 @@ Base objects to avoid import errors.
 """
 
 
+import datetime
 import logging
 
 import six
 import voluptuous
 
+from gpsdio.schema import datetime2str
 from gpsdio.schema import build_validator
 
 
@@ -16,7 +18,7 @@ logger = logging.getLogger('gpsdio')
 
 class GPSDIOBaseStream(object):
 
-    def __init__(self, stream, mode='r', schema=None, _validator=None):
+    def __init__(self, stream, mode='r', schema=None, _validator=None, _dv=True):
 
         """
         Read or write a stream of AIS data.
@@ -38,16 +40,21 @@ class GPSDIOBaseStream(object):
             k: voluptuous.Schema(v, required=True) for k, v in six.iteritems(self._validator)}
         self._stream = stream
         self._mode = mode
+        self._iterator = stream
+        self._dv = _dv
 
     @property
     def schema(self):
         return self._schema
 
     def validate_msg(self, msg):
-        try:
-            return self._voluptuous_schema[msg['type']](msg)
-        except voluptuous.Invalid as e:
-            raise ValueError("{e}: {msg}".format(e=str(e), msg=str(msg)))
+        if self._dv:
+            try:
+                return self._voluptuous_schema[msg['type']](msg)
+            except voluptuous.Invalid as e:
+                raise ValueError("{e}: {msg}".format(e=str(e), msg=str(msg)))
+        else:
+            return msg
 
     def __enter__(self):
         return self
@@ -143,10 +150,46 @@ class BaseDriver(six.with_metaclass(_DriverRegistry, object)):
         return self.f.closed
 
     def load(self, msg):
+
+        """
+        Drivers should override this method if they have special handling for
+        specific types.  This implementation assumes the line read from disk
+        is ready to be validated.
+
+        Parameters
+        ----------
+        msg : dict
+            GPSd message.
+
+        Returns
+        -------
+        dict
+            GPSd message.
+        """
+
         return msg
 
     def dump(self, msg):
-        return msg
+
+        """
+        Serialize message to be flushed to disk.  Converts datetimes to str.
+        Drivers should override this method if they have special handling for
+        specific types.  This implementation assumes the driver wants everything
+        to be an `int`, `float`, or `str`.
+
+        Parameters
+        ----------
+        msg : dict
+            GPSd message.
+
+        Returns
+        -------
+        dict
+            GPSd message with serialized values.
+        """
+
+        return {k: datetime2str(v) if isinstance(v, datetime.datetime) else v
+                for k, v in six.iteritems(msg)}
 
     def start(self, name, mode='r', **kwargs):
         if mode not in self.io_modes:
@@ -177,3 +220,9 @@ class BaseCompressionDriver(BaseDriver):
 
     def open(self, name, mode, **kwargs):
         raise NotImplementedError
+
+    def dump(self, msg):
+        return msg
+
+    def load(self, msg):
+        return msg

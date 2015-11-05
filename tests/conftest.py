@@ -85,3 +85,19 @@ def compare_msg():
 @pytest.fixture(scope='function')
 def runner():
     return click.testing.CliRunner()
+
+
+@pytest.fixture(scope='function')
+def msg_almost_equal():
+    def _msg_almost_equal(m1, m2, precision=7):
+        m1keys = sorted(m1.keys())
+        m2keys = sorted(m2.keys())
+        assert m1keys == m2keys
+        for m1k, m2k in zip(m1keys, m2keys):
+            m1v = m1[m1k]
+            m2v = m2[m2k]
+            if isinstance(m1v, float) or isinstance(m1v, float):
+                assert round(m1v, precision) == round(m2v, precision)
+            else:
+                assert m1v == m2v
+    return _msg_almost_equal
