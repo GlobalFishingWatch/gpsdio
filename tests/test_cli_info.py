@@ -89,9 +89,9 @@ def test_single_members(types_msg_gz_path, types_json_path):
         '--mmsi-hist': 'mmsi_histogram',
         '--type-hist': 'type_histogram',
         '--field-hist': 'field_histogram',
-        # '--min-timestamp': 'min_timestamp',
-        # '--max-timestamp': 'max_timestamp',
-        # '--sorted': 'sorted',
+        '--min-timestamp': 'min_timestamp',
+        '--max-timestamp': 'max_timestamp',
+        '--sorted': 'sorted',
         '--num-unique-mmsi': 'num_unique_mmsi',
         '--num-unique-type': 'num_unique_type'
     }
@@ -101,6 +101,8 @@ def test_single_members(types_msg_gz_path, types_json_path):
             types_json_path,
             flag
         ])
+        print(single.output)
+        print(flag, member)
         assert single.exit_code == 0
 
         val = json.loads(full.output)[member]
@@ -120,10 +122,8 @@ def test_with_all(types_msg_gz_path):
     actual = list(map(six.text_type, sorted(json.loads(result.output).keys())))
     expected = list(map(six.text_type, sorted(
         ['bounds', 'count', 'field_histogram', 'mmsi_histogram',
-         'num_unique_mmsi', 'type_histogram', 'num_unique_type', 'num_unique_field'])))
-    # expected = list(map(six.text_type, sorted(
-    #     ['bounds', 'count', 'field_histogram', 'mmsi_histogram',
-    #      'num_unique_mmsi', 'type_histogram', 'max_timestamp',
-    #      'min_timestamp', 'num_unique_type', 'sorted', 'num_unique_field'])))
-
+         'num_unique_mmsi', 'type_histogram', 'max_timestamp',
+         'min_timestamp', 'num_unique_type', 'sorted', 'num_unique_field'])))
+    print(expected)
+    print(actual)
     assert actual == expected
