@@ -186,4 +186,4 @@ class GPSDIOWriter(gpsdio.base.GPSDIOBaseStream):
         if self.closed:
             raise IOError("Cannot operate on a closed stream.")
 
-        return self._stream.write(msg)
+        return self._stream.write(self.validate_msg(msg))
