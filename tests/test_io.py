@@ -89,7 +89,7 @@ def test_bad_message():
     stream = StringIO(json.dumps(message))
     with pytest.raises(ValueError):
         with gpsdio.open(stream, driver='NewlineJSON', compression=False) as src:
-            next(src)
+            print(next(src))
 
 
 def test_stream_attrs(types_json_path):

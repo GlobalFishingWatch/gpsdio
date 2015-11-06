@@ -51,8 +51,6 @@ class GPSDIOBaseStream(object):
 
         self._schema = schema
         self._validator = _validator or build_validator(self._schema)
-        self._voluptuous_schema = {
-            k: voluptuous.Schema(v, required=True) for k, v in six.iteritems(self._validator)}
         self._stream = stream
         self._iterator = stream
         self._check = _check
@@ -85,7 +83,9 @@ class GPSDIOBaseStream(object):
 
         if self._check:
             try:
-                return self._voluptuous_schema[msg['type']](msg)
+                return {n: v(msg[n]) for n, v in six.iteritems(self._validator[msg['type']])}
+            except KeyError as e:
+                raise ValueError("Missing field '{}' from message: {}".format(e.args[0], msg))
             except voluptuous.Invalid as e:
                 raise ValueError("{e}: {msg}".format(e=str(e), msg=str(msg)))
         else:

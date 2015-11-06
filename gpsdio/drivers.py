@@ -165,34 +165,34 @@ class BZ2(_BaseCompressionDriver):
 #                 for k, v in six.iteritems(msg)}
 #
 #
-# class _NullGuy:
-#
-#     def __init__(self, name, mode='r'):
-#         self.name = name
-#         self.mode = mode
-#         self.closed = False
-#
-#     def __enter__(self):
-#         return self
-#
-#     def __exit__(self, exc_type, exc_val, exc_tb):
-#         self.close()
-#
-#     def close(self):
-#         self.closed = True
-#
-#     def write(self, line):
-#         pass
-#
-#
-# class NULL(_BaseDriver):
-#
-#     driver_name = 'NULL'
-#     extensions = 'null',
-#     io_modes = ('w', 'a')
-#
-#     def open(self, name, mode, **kwargs):
-#         return _NullGuy(name, mode=mode)
+class _NullGuy:
+
+    def __init__(self, name, mode='r'):
+        self.name = name
+        self.mode = mode
+        self.closed = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def close(self):
+        self.closed = True
+
+    def write(self, line):
+        pass
+
+
+class NULL(_BaseDriver):
+
+    driver_name = 'NULL'
+    extensions = 'null',
+    io_modes = ('w', 'a')
+
+    def open(self, name, mode, **kwargs):
+        return _NullGuy(name, mode=mode)
 
 
 class MsgPack(_BaseDriver):
