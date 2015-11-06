@@ -21,43 +21,6 @@ from gpsdio.base import BaseCompressionDriver as _BaseCompressionDriver
 logger = logging.getLogger('gpsdio')
 
 
-def get_driver(name):
-
-    """
-    Accepts a string and returns the driver class associated with that name.
-    """
-
-    if name in _BaseDriver.by_name:
-        return _BaseDriver.by_name[name]
-    else:
-        raise ValueError("Unrecognized driver name: %s" % name)
-
-
-def get_compression(name):
-
-    """
-    Accepts a string and returns the driver class associated with that name.
-    """
-
-    if name in _BaseCompressionDriver.by_name:
-        return _BaseCompressionDriver.by_name[name]
-    else:
-        raise ValueError("Unrecognized compression name: %s" % name)
-
-
-def detect_file_type(path):
-
-    """
-    Given an file path, attempt to determine appropriate driver.
-    """
-
-    for ext in path.split('.')[-2:]:
-        if ext in _BaseDriver.by_extension:
-            return _BaseDriver.by_extension[ext]
-    else:
-        raise ValueError("Can't determine driver: %s" % path)
-
-
 class NewlineJSON(_BaseDriver):
 
     """
@@ -142,94 +105,94 @@ class BZ2(_BaseCompressionDriver):
         return super(BZ2, self).dump(msg)
 
 
-class NMEA(_BaseDriver):
-
-    driver_name = 'NMEA'
-    extensions = 'nmea',
-    io_modes = 'r',
-    field_map = {
-        'cog': 'course',
-        'id': 'type',
-        'nav_status': 'status',
-        'position_accuracy': 'accuracy',
-        'repeat_indicator': 'repeat',
-        'rot': 'turn',
-        'sog': 'speed',
-        'special_manoeuvre': 'maneuver',
-        'timestamp': 'second',
-        'true_heading': 'heading',
-        'imo_num': 'imo',
-        'x': 'lon',
-        'y': 'lat'
-    }
-
-    def open(self, name, mode='r', **kwargs):
-        import ais
-        return ais.open(name, mode=mode, **kwargs)
-
-    def load(self, msg):
-
-        timestamp = datetime.datetime.utcfromtimestamp(msg['matches'][-1]['time'])
-        msg = {self.field_map.get(k, k): v for k, v in six.iteritems(msg['decoded'])}
-        msg = {
-            fld: msg.get(fld, dfn.get('default'))
-            for fld, dfn in self.schema[msg['type']].items()}
-
-        # Adjust libais not-available values to match AIVDM
-        # TODO: libais gives float for draught.  Should be int?
-        if 'course' in msg and msg['course'] == 360:
-            msg['course'] = self.schema[msg['type']]['course']['default']
-        if 'second' in msg and msg['second'] > 60:
-            msg['second'] = self.schema[msg['type']]['second']['default']
-        if msg['type'] != 9 and 'speed' in msg and round(msg['speed'], 0) == 102:
-            msg['speed'] = self.schema[msg['type']]['speed']['default']
-        if 'maneuver' in msg and msg['maneuver'] == 3:
-            msg['maneuver'] = self.schema[msg['type']]['maneuver']['default']
-        if 'hour' in msg and msg['hour'] > 23:
-            msg['hour'] = self.schema[msg['type']]['hour']['default']
-        if 'seqno' in msg and msg['seqno'] is None:
-            msg['seqno'] = self.schema[msg['type']]['seqno']['default']
-        if 'heading' in msg and msg['heading'] > 359:
-            msg['heading'] = self.schema[msg['type']]['heading']['default']
-
-        msg['timestamp'] = timestamp
-
-        if six.PY2:
-            msg = {k: int(v) if isinstance(v, long) else v for k, v in six.iteritems(msg)}
-
-        # Return formatted message and strip whitespace from strings
-        return {k: v.strip() if isinstance(v, six.string_types) else v
-                for k, v in six.iteritems(msg)}
-
-
-class _NullGuy:
-
-    def __init__(self, name, mode='r'):
-        self.name = name
-        self.mode = mode
-        self.closed = False
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
-
-    def close(self):
-        self.closed = True
-
-    def write(self, line):
-        pass
-
-
-class NULL(_BaseDriver):
-
-    driver_name = 'NULL'
-    extensions = 'null',
-    io_modes = ('w', 'a')
-
-    def open(self, name, mode, **kwargs):
-        return _NullGuy(name, mode=mode)
+# class NMEA(_BaseDriver):
+#
+#     driver_name = 'NMEA'
+#     extensions = 'nmea',
+#     io_modes = 'r',
+#     field_map = {
+#         'cog': 'course',
+#         'id': 'type',
+#         'nav_status': 'status',
+#         'position_accuracy': 'accuracy',
+#         'repeat_indicator': 'repeat',
+#         'rot': 'turn',
+#         'sog': 'speed',
+#         'special_manoeuvre': 'maneuver',
+#         'timestamp': 'second',
+#         'true_heading': 'heading',
+#         'imo_num': 'imo',
+#         'x': 'lon',
+#         'y': 'lat'
+#     }
+#
+#     def open(self, name, mode='r', **kwargs):
+#         import ais
+#         return ais.open(name, mode=mode, **kwargs)
+#
+#     def load(self, msg):
+#
+#         timestamp = datetime.datetime.utcfromtimestamp(msg['matches'][-1]['time'])
+#         msg = {self.field_map.get(k, k): v for k, v in six.iteritems(msg['decoded'])}
+#         msg = {
+#             fld: msg.get(fld, dfn.get('default'))
+#             for fld, dfn in self.schema[msg['type']].items()}
+#
+#         # Adjust libais not-available values to match AIVDM
+#         # TODO: libais gives float for draught.  Should be int?
+#         if 'course' in msg and msg['course'] == 360:
+#             msg['course'] = self.schema[msg['type']]['course']['default']
+#         if 'second' in msg and msg['second'] > 60:
+#             msg['second'] = self.schema[msg['type']]['second']['default']
+#         if msg['type'] != 9 and 'speed' in msg and round(msg['speed'], 0) == 102:
+#             msg['speed'] = self.schema[msg['type']]['speed']['default']
+#         if 'maneuver' in msg and msg['maneuver'] == 3:
+#             msg['maneuver'] = self.schema[msg['type']]['maneuver']['default']
+#         if 'hour' in msg and msg['hour'] > 23:
+#             msg['hour'] = self.schema[msg['type']]['hour']['default']
+#         if 'seqno' in msg and msg['seqno'] is None:
+#             msg['seqno'] = self.schema[msg['type']]['seqno']['default']
+#         if 'heading' in msg and msg['heading'] > 359:
+#             msg['heading'] = self.schema[msg['type']]['heading']['default']
+#
+#         msg['timestamp'] = timestamp
+#
+#         if six.PY2:
+#             msg = {k: int(v) if isinstance(v, long) else v for k, v in six.iteritems(msg)}
+#
+#         # Return formatted message and strip whitespace from strings
+#         return {k: v.strip() if isinstance(v, six.string_types) else v
+#                 for k, v in six.iteritems(msg)}
+#
+#
+# class _NullGuy:
+#
+#     def __init__(self, name, mode='r'):
+#         self.name = name
+#         self.mode = mode
+#         self.closed = False
+#
+#     def __enter__(self):
+#         return self
+#
+#     def __exit__(self, exc_type, exc_val, exc_tb):
+#         self.close()
+#
+#     def close(self):
+#         self.closed = True
+#
+#     def write(self, line):
+#         pass
+#
+#
+# class NULL(_BaseDriver):
+#
+#     driver_name = 'NULL'
+#     extensions = 'null',
+#     io_modes = ('w', 'a')
+#
+#     def open(self, name, mode, **kwargs):
+#         return _NullGuy(name, mode=mode)
 
 
 class MsgPack(_BaseDriver):

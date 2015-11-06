@@ -68,40 +68,6 @@ def test_read_from_write_stream(types_msg_gz_path, tmpdir):
             next(dst)
 
 
-def test_get_driver():
-
-    for d in [_d for _d in gpsdio.drivers._BaseDriver.by_name.values()]:
-        rd = gpsdio.drivers.get_driver(d.driver_name)
-        assert rd == d, "%r != %r" % (d, rd)
-    with pytest.raises(ValueError):
-        gpsdio.drivers.get_driver('__---Invalid---__')
-
-
-def test_get_compression():
-
-    for c in [_d for _d in gpsdio.drivers._BaseDriver.by_name if getattr(_d, 'compresion', False)]:
-        cd = gpsdio.drivers.get_compression(c.name)
-        assert cd == c, "%r != %r" % (c, cd)
-    try:
-        gpsdio.drivers.get_compression('__---Invalid---__')
-        raise TypeError("Above line should have raised a ValueError.")
-    except ValueError:
-        pass
-
-
-def test_detect_file_type():
-
-    for d in [_d for _d in gpsdio.drivers._BaseDriver.by_name if getattr(_d, 'compresion', False)]:
-        for ext in d.extensions:
-            rd = gpsdio.drivers.detect_file_type('path.%s.ext' % ext)
-            assert d == rd, "%r != %r" % (d, rd)
-    try:
-        gpsdio.drivers.detect_file_type('__---Invalid---__.ext.ext2')
-        raise TypeError("Above line should have raised a ValueError.")
-    except ValueError:
-        pass
-
-
 def test_write_bad_msg(tmpdir):
     pth = str(tmpdir.mkdir('test').join('test_write_bad_msg'))
     with gpsdio.open(pth, 'w', driver='NewlineJSON') as dst:

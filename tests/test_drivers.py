@@ -34,3 +34,12 @@ def test_msg_gz_round_robin(types_msg_gz_path, tmpdir):
     with gpsdio.open(types_msg_gz_path) as src, gpsdio.open(pth, 'w') as dst:
         for msg in src:
             dst.write(msg)
+
+
+def test_open_gzip(types_json_gz_path):
+    with open(types_json_gz_path, 'rb') as f:
+        with gpsdio.open(f, driver='NewlineJSON', compression='GZIP') as src:
+            for msg in src:
+                assert 'mmsi' in msg
+                assert 'type' in msg
+                assert 'timestamp' in msg
