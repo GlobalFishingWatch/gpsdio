@@ -9,7 +9,6 @@ import click
 import six
 
 import gpsdio
-import gpsdio._schema
 import gpsdio.schema
 from gpsdio.cli import options
 import gpsdio.drivers
@@ -48,7 +47,7 @@ def drivers_cmd(name):
 
 @env.command(name='compression', short_help="Print compression drivers and their I/O modes.")
 @click.argument('name', required=False)
-def drivers_cmd(name):
+def compression_cmd(name):
 
     """
     To get more information about a specific compression driver:
@@ -75,18 +74,18 @@ def _scrub_val(val):
         return str(val)
 
 
-def _scrub_dict(dictionary):
+def _scrub_dict(obj):
 
     """
     Converts non-JSON serializable objects to strings.
     """
 
-    if isinstance(dictionary, dict):
-        return {k: _scrub_dict(v) for k, v in dictionary.items()}
-    elif isinstance(dictionary, (list, tuple)):
-        return list(map(str, dictionary))
+    if isinstance(obj, dict):
+        return {k: _scrub_dict(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return list(map(str, obj))
     else:
-        return _scrub_val(dictionary)
+        return _scrub_val(obj)
 
 
 @env.command(name='fields', short_help="Information about schema fields.")
@@ -136,8 +135,10 @@ def types_cmd(msg_type, indent, describe):
         val = gpsdio.schema._FIELDS_BY_TYPE
 
     # Print human-readable field definition
-    if describe and msg_type is not None:
-        click.echo(gpsdio._schema._HUMAN_TYPE_DESCRIPTION[msg_type])
+    if describe and msg_type is None:
+        raise click.ClickException("Need a message type to describe.")
+    elif describe:
+        click.echo(gpsdio.schema._HUMAN_TYPE_DESCRIPTION[msg_type])
 
     # Print some dictionary
     else:

@@ -51,9 +51,9 @@ def insp(ctx, infile, interpreter,
     logger.debug('Starting insp')
 
     header = os.linesep.join((
-        "gpsdio %s Interactive Inspector Session (Python %s)"
-        % (gpsdio.__version__, '.'.join(map(str, sys.version_info[:3]))),
-        'Try "help(src)" or "next(src)".'))
+        "gpsdio {gversion} Interactive Inspector Session (Python {pyversion})".format(
+            gversion=gpsdio.__version__, pyversion='.'.join(map(str, sys.version_info[:3]))
+        ), 'Try "help(src)" or "next(src)".'))
 
     with gpsdio.open(
             infile,

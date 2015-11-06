@@ -4,26 +4,14 @@ Unittests for gpsdio.io
 
 
 import itertools
+import json
 
 import pytest
-import six
+from six.moves import StringIO
 
 import gpsdio
 import gpsdio.schema
 import gpsdio.drivers
-
-
-VALID_ROWS = [
-    {'type': 5, 'shipname': 'fishy fishy', 'shiptype': 1},
-    {'type': 5, 'shipname': 'fishy fishy', 'shiptype': 2},
-    {'type': 5, 'shipname': 'fishy fishy', 'shiptype': 3},
-    {'type': 5, 'shipname': 'fishy fishy', 'shiptype': 4}
-]
-
-INVALID_ROWS = [
-    {'type': 1, 'timestamp': 'morning'},
-    {'type': 1, 'timestamp': 'late'}
-]
 
 
 def test_standard(
@@ -50,12 +38,6 @@ def test_no_detect_compression(types_msg_path):
 def test_default_mode_is_read(types_msg_path):
     with gpsdio.open(types_msg_path) as stream:
         assert stream.mode == 'r'
-
-
-def test_attrs(types_msg_path):
-    with gpsdio.open(types_msg_path) as stream:
-        assert isinstance(stream.__repr__(), six.string_types)
-        assert hasattr(stream, '__next__')
 
 
 def test_io_on_closed_stream(tmpdir):
@@ -89,13 +71,10 @@ def test_read_from_write_stream(types_msg_gz_path, tmpdir):
 def test_get_driver():
 
     for d in [_d for _d in gpsdio.drivers._BaseDriver.by_name.values()]:
-        rd = gpsdio.drivers.get_driver(d.name)
+        rd = gpsdio.drivers.get_driver(d.driver_name)
         assert rd == d, "%r != %r" % (d, rd)
-    try:
+    with pytest.raises(ValueError):
         gpsdio.drivers.get_driver('__---Invalid---__')
-        raise TypeError("Above line should have raised a ValueError.")
-    except ValueError:
-        pass
 
 
 def test_get_compression():
@@ -123,23 +102,56 @@ def test_detect_file_type():
         pass
 
 
-def test_detect_compression_type():
-
-    for c in [_d for _d in gpsdio.drivers._BaseDriver.by_name if getattr(_d, 'compresion', False)]:
-        print(c)
-        print(c.extensions)
-        for ext in c.extensions:
-            cd = gpsdio.drivers.detect_compression_type(('path.something.%s' % ext))
-            assert c == cd, "%r != %r" % (c, cd)
-    try:
-        gpsdio.drivers.get_compression('__---Invalid---__.ext.ext2')
-        raise TypeError("Above line should have raised a ValueError.")
-    except ValueError:
-        pass
-
-
 def test_write_bad_msg(tmpdir):
     pth = str(tmpdir.mkdir('test').join('test_write_bad_msg'))
     with gpsdio.open(pth, 'w', driver='NewlineJSON') as dst:
         with pytest.raises(Exception):
             dst.write({'field': six})
+
+
+def test_no_validate_messages():
+    message = {'field': 'val'}
+    stream = StringIO(json.dumps(message))
+    with gpsdio.open(stream, driver='NewlineJSON', compression=False, _check=False) as src:
+        msgs = list(src)
+        assert len(msgs) is 1
+        assert msgs[0] == message
+
+
+def test_bad_message():
+    message = {'mmsi': 123456789, 'type': 1}
+    stream = StringIO(json.dumps(message))
+    with pytest.raises(ValueError):
+        with gpsdio.open(stream, driver='NewlineJSON', compression=False) as src:
+            next(src)
+
+
+def test_stream_attrs(types_json_path):
+
+    # Valid path
+    with gpsdio.open(types_json_path) as src:
+        assert src.name == types_json_path
+
+    # Stream with no name
+    with gpsdio.open(StringIO(), driver='NewlineJSON', compression=False) as src:
+        assert src.name == "<unknown name>"
+
+    # I/O mode
+    for m in ('r', 'w', 'a'):
+        with gpsdio.open(StringIO(), mode=m, driver='NewlineJSON', compression=False) as src:
+            assert src.mode == m
+
+    # Schema structure
+    with gpsdio.open(types_json_path) as src:
+        # Stream is a driver that should also have the schema attached
+        assert src._stream.schema == gpsdio.schema.build_schema()
+
+    # Stop method, which is really just included because there's a start(),
+    # so there should be a stop()
+    with gpsdio.drivers.NewlineJSON() as drv:
+        drv.start(types_json_path)
+        assert not drv.closed
+        assert not drv.f.closed
+        drv.stop()
+        assert drv.closed
+        assert drv.f.closed

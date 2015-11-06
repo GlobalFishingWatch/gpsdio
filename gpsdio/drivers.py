@@ -67,10 +67,9 @@ class NewlineJSON(_BaseDriver):
     https://github.com/geowurster/NewlineJSON
     """
 
-    name = 'NewlineJSON'
+    driver_name = 'NewlineJSON'
     extensions = ('json', 'nljson')
     io_modes = ('r', 'w', 'a')
-
 
     def open(self, name, mode='r', **kwargs):
         import newlinejson as nlj
@@ -89,7 +88,7 @@ class GZIP(_BaseCompressionDriver):
     https://docs.python.org/3/library/gzip.html
     """
 
-    name = 'GZIP'
+    driver_name = 'GZIP'
     extensions = 'gz',
     io_modes = ('r', 'w', 'a')
 
@@ -125,7 +124,7 @@ class BZ2(_BaseCompressionDriver):
     https://docs.python.org/3/library/bz2.html
     """
 
-    name = 'BZ2'
+    driver_name = 'BZ2'
     extensions = 'bz2',
     io_modes = 'r', 'w', 'a'
 
@@ -145,7 +144,7 @@ class BZ2(_BaseCompressionDriver):
 
 class NMEA(_BaseDriver):
 
-    name = 'NMEA'
+    driver_name = 'NMEA'
     extensions = 'nmea',
     io_modes = 'r',
     field_map = {
@@ -225,7 +224,7 @@ class _NullGuy:
 
 class NULL(_BaseDriver):
 
-    name = 'NULL'
+    driver_name = 'NULL'
     extensions = 'null',
     io_modes = ('w', 'a')
 
@@ -245,7 +244,7 @@ class MsgPack(_BaseDriver):
     https://github.com/msgpack/msgpack-python
     """
 
-    name = 'MsgPack'
+    driver_name = 'MsgPack'
     extensions = ('msg', 'msgpack')
     io_modes = ('r', 'w', 'a')
 

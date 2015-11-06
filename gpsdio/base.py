@@ -54,9 +54,9 @@ class GPSDIOBaseStream(object):
         self._voluptuous_schema = {
             k: voluptuous.Schema(v, required=True) for k, v in six.iteritems(self._validator)}
         self._stream = stream
-        self._mode = mode
         self._iterator = stream
         self._check = _check
+        self._mode = mode
 
     @property
     def schema(self):
@@ -133,8 +133,8 @@ class _DriverRegistry(type):
         # TODO: Add validation.  What methods are required?
 
         type.__init__(driver, name, bases, members)
-        if driver.name not in ('BaseDriver', 'BaseCompressionDriver'):
-            driver.by_name[driver.name] = driver
+        if driver.driver_name not in ('BaseDriver', 'BaseCompressionDriver'):
+            driver.by_name[driver.driver_name] = driver
             for ext in driver.extensions:
                 driver.by_extension[ext] = driver
 
@@ -143,12 +143,12 @@ class BaseDriver(six.with_metaclass(_DriverRegistry, object)):
 
     by_name = {}
     by_extension = {}
-    name = 'BaseDriver'
+    driver_name = 'BaseDriver'  # Use driver_name to prevent a file.name collision
 
     def __init__(self, schema=None):
         self._f = None
-        self._mode = None
         self._schema = schema
+        self._mode = None
 
     def __enter__(self):
         return self
@@ -165,12 +165,16 @@ class BaseDriver(six.with_metaclass(_DriverRegistry, object)):
         return self.f.write(self.dump(msg))
 
     @property
+    def name(self):
+        return self._f.name
+
+    @property
     def f(self):
         return self._f
 
     @property
     def mode(self):
-        return self._mode
+        return self._f.mode
 
     @property
     def io_modes(self):
@@ -231,6 +235,7 @@ class BaseDriver(six.with_metaclass(_DriverRegistry, object)):
             raise ValueError(
                 "I/O mode '{m}' unsupported: {modes}".format(m=mode, modes=self.io_modes))
         self._f = self.open(name=name, mode=mode, **kwargs)
+        self._mode = mode
 
     def stop(self):
         self.close()
@@ -251,7 +256,7 @@ class BaseCompressionDriver(BaseDriver):
 
     by_name = {}
     by_extension = {}
-    name = 'BaseCompressionDriver'
+    driver_name = 'BaseCompressionDriver'
 
     def open(self, name, mode, **kwargs):
         raise NotImplementedError
