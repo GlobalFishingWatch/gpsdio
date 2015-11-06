@@ -5,7 +5,6 @@ Unittsts for gpsdio.schema and gpsdio._schema
 
 import datetime
 
-import voluptuous
 import pytest
 
 import gpsdio.schema
@@ -28,7 +27,8 @@ def test_ensure_public_api_access():
 def test_DateTime():
     dt = datetime.datetime.now()
 
-    assert dt == DateTime(dt)
-    assert dt == DateTime(dt.strftime(DATETIME_FORMAT))
-    with pytest.raises(voluptuous.Invalid):
-        DateTime(None)
+    v = DateTime()
+    assert dt == v(dt)
+    assert dt == v(dt.strftime(DATETIME_FORMAT))
+    with pytest.raises(gpsdio.schema.Invalid):
+        v(None)

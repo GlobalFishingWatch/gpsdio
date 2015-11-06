@@ -101,8 +101,6 @@ def test_single_members(types_msg_gz_path, types_json_path):
             types_json_path,
             flag
         ])
-        print(single.output)
-        print(flag, member)
         assert single.exit_code == 0
 
         val = json.loads(full.output)[member]

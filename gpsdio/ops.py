@@ -17,7 +17,7 @@ def sort(stream, field, default=None):
     stream : iter
         Iterator producing one message per iteration.
     field : str, optional
-        Field to sort by.  Defaults to sorting by `timestamp`.
+        Field to sort by.
     """
 
     for msg in sorted(stream, key=lambda x: x.get(field, default)):

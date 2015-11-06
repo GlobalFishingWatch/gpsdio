@@ -21,8 +21,9 @@ def test_cat(types_msg_gz_path, msg_almost_equal):
     with gpsdio.open(types_msg_gz_path) as expected:
         with gpsdio.open(six.moves.StringIO(result), driver='NewlineJSON', compression=False) as actual:
             for e, a in zip(expected, actual):
+                print(e)
+                print(a)
                 msg_almost_equal(e, a)
-                # assert e == a
 
 
 def test_cat_geojson(types_msg_gz_path):

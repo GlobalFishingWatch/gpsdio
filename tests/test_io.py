@@ -3,7 +3,6 @@ Unittests for gpsdio.io
 """
 
 
-import itertools
 import json
 
 import pytest
@@ -12,19 +11,6 @@ from six.moves import StringIO
 import gpsdio
 import gpsdio.schema
 import gpsdio.drivers
-
-
-def test_standard(
-        types_msg_path, types_msg_gz_path, types_json_path, types_json_gz_path, compare_msg):
-
-    with gpsdio.open(types_msg_path) as fp_msg, \
-            gpsdio.open(types_msg_gz_path) as fp_msg_gz, \
-            gpsdio.open(types_json_path) as fp_json, \
-            gpsdio.open(types_json_gz_path) as fp_json_gz:
-
-        for lines in zip(fp_msg, fp_msg_gz, fp_json, fp_json_gz):
-            for pair in itertools.combinations(lines, 2):
-                assert compare_msg(*pair)
 
 
 def test_no_detect_compression(types_msg_path):

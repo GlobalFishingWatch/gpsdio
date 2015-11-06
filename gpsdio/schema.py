@@ -17,7 +17,7 @@ import datetime
 import logging
 
 import six
-from voluptuous import All, Any, Range, In, Invalid
+from voluptuous import Range
 
 
 logger = logging.getLogger('gpsdio')
@@ -26,7 +26,7 @@ logger = logging.getLogger('gpsdio')
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
-def str2datetime(string, fmt=DATETIME_FORMAT):
+def str2datetime(string):
 
     """
     Convert a string to a datetime.
@@ -34,19 +34,25 @@ def str2datetime(string, fmt=DATETIME_FORMAT):
     Parameters
     ----------
     string : str
-        Matcing the `fmt`
-    fmt : str, optional
-        Datetime parsing string.
+        Matching the global `DATETIME_FORMAT`.
 
     Returns
     -------
     datetime.datetime
     """
 
-    return datetime.datetime.strptime(string, fmt)
+    return datetime.datetime(
+        year=int(string[:4]),
+        month=int(string[5:7]),
+        day=int(string[8:10]),
+        hour=int(string[11:13]),
+        minute=int(string[14:16]),
+        second=int(string[17:19]),
+        microsecond=int(string[20:-1])
+    )
 
 
-def datetime2str(datetime_obj, fmt=DATETIME_FORMAT):
+def datetime2str(datetime_obj):
 
     """
     Convert a datetime object to a string.
@@ -54,37 +60,38 @@ def datetime2str(datetime_obj, fmt=DATETIME_FORMAT):
     Parameters
     ----------
     datetime_obj : datetime.datetime
-
-    fmt : str, optional
     """
 
-    return datetime_obj.strftime(fmt)
+    return datetime_obj.strftime(DATETIME_FORMAT)
 
 
-def DateTime(obj, fmt=DATETIME_FORMAT):
+class Invalid(Exception):
 
     """
-    Coerce and validate strings to datetimes.
-
-    Parameters
-    ----------
-    value : str or datetime.datetime
-        Object to be validated.
-    fmt : str, optional
-        Datetime parsing format.
-
-    Returns
-    -------
-    datetime.datetime
+    Schema validation failed.
     """
 
-    if isinstance(obj, datetime.datetime):
+
+class DateTime:
+
+    __slots__ = ['coerce']
+
+    def __init__(self, coerce=True):
+        self.coerce = coerce
+
+    def __call__(self, obj):
+        if self.coerce and not isinstance(obj, datetime.datetime):
+            try:
+                obj = str2datetime(obj)
+            except (TypeError, ValueError):
+                raise Invalid("Datetime string '{}' cannot be parsed with '%s'".format(obj, DATETIME_FORMAT))
+        else:
+            try:
+                assert isinstance(obj, datetime.datetime)
+            except AssertionError:
+                raise Invalid("Value '{}' is not a datetime".format(obj))
+
         return obj
-    else:
-        try:
-            return str2datetime(obj, fmt=fmt)
-        except (TypeError, ValueError):
-            raise Invalid("Datetime string '{}' cannot be parsed with '%s'".format(obj, fmt))
 
 
 class IntRange:
@@ -242,8 +249,52 @@ class Instance:
         return obj
 
 
-class NoneType:
-    pass
+class Any:
+
+    __slots__ = ['tests']
+
+    def __init__(self, *tests):
+        self.tests = tests
+
+    def __call__(self, obj):
+        for t in self.tests:
+            try:
+                return t(obj)
+            except Exception:
+                pass
+        else:
+            raise Invalid("Value '{}' failed all tests: {}".format(obj, ', '.join(self.tests)))
+
+
+class All:
+
+    __slots__ = ['tests']
+
+    def __init__(self, *tests):
+        self.tests = tests
+
+    def __call__(self, obj):
+        for t in self.tests:
+            try:
+                obj = t(obj)
+            except Exception as e:
+                raise Invalid("Value '{}' failed test '{}': {}".format(obj, t, str(e)))
+        return obj
+
+
+class In:
+
+    __slots__ = ['values']
+
+    def __init__(self, values):
+        self.values = values
+
+    def __call__(self, obj):
+        try:
+            assert obj in self.values
+        except AssertionError:
+            raise Invalid("Value '{}' not in: {}".format(', '.join(self.values)))
+        return obj
 
 
 _FIELDS = {
@@ -286,7 +337,7 @@ _FIELDS = {
         'default': 128,
     },
     'speed': {  # TODO: libais can give 102.30000305175781
-        'validate': All(Any(float, int), Any(Range(0, 102), In([1022, 1023, 1022.0, 1023.0]))),
+        'validate': All(Instance(float, int), Any(Range(0, 102), In([1022, 1023, 1022.0, 1023.0]))),
         'units': "knots",
         'description': "Speed over ground is in 0.1-knot resolution from 0 to 102 knots. "
                        "Value 1023 indicates speed is not available, value 1022 indicates "
@@ -773,25 +824,25 @@ _FIELDS = {
         'default': 0
     },
     'ne_lon': {
-        'validate': Any(Float, In([0x1a838])),
+        'validate': Any(Float(), In([0x1a838])),
         'units': 'WGS84 degress',
         'description': "TODO: Description.",
         'default': 0x1a838
     },
     'ne_lat': {
-        'validate': Any(Float, In([0xd548])),
+        'validate': Any(Float(), In([0xd548])),
         'units': 'WGS84 degress',
         'description': "TODO: Description.",
         'default': 0xd548
     },
     'sw_lon': {
-        'validate': Any(Float, In([0x1a838])),
+        'validate': Any(Float(), In([0x1a838])),
         'units': 'WGS84 degress',
         'description': "TODO: Description.",
         'default': 0x1a838
     },
     'sw_lat': {
-        'validate': Any(Float, In([0x1a838])),
+        'validate': Any(Float(), In([0x1a838])),
         'units': 'WGS84 degress',
         'description': "TODO: Description.",
         'default': 0x1a838
@@ -964,7 +1015,7 @@ _FIELDS = {
         'default': 2088
     },
     'timestamp': {
-        'validate': Any(None, DateTime),
+        'validate': Any(Instance(type(None)), DateTime()),
         'units': 'N/A',
         'description': "Timestamp message was broadcast.  Not part of the AIVDM spec, but "
                        "critical to working with AIS data.",
