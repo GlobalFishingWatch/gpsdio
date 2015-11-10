@@ -6,14 +6,14 @@ AIS I/O with Python, dictionaries, and the GPSd AIVDM schema.
 """
 
 
+from gpsdio.io import open
+from gpsdio.io import GPSDIOReader
+from gpsdio.io import GPSDIOWriter
+
 import logging
 
 logging.basicConfig()
 logger = logging.getLogger('gpsdio')
-
-from gpsdio.io import open
-from gpsdio.io import GPSDIOReader
-from gpsdio.io import GPSDIOWriter
 
 
 __all__ = ('open', 'GPSDIOReader', 'GPSDIOWriter')
