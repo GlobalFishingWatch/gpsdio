@@ -45,11 +45,12 @@ _FIELDS = {
         'default': 0,
     },
     'mmsi': {
-        'validate': Int(),
+        'validate': Any(Int(), Instance(type(None))),
         'units': 'N/A',
         'description': "Mobile Marine Service Identifier.  The official AIVDM spec requires "
                        "MMSI values to be 9 digits, but gpsdio only enforces type to support "
-                       "non-AIS data sources and analysis of invalid values."
+                       "non-AIS data sources and analysis of invalid values.",
+        'default': None
     },
     'status': {
         'validate': IntRange(0, 15),
@@ -57,13 +58,13 @@ _FIELDS = {
         'description': "Navigation status.",
         'default': 15
     },
-    'turn': {  # TODO: Finish.  libais gives a float but spec says int?
+    'turn': {
         'validate': Instance(int, float),
         'units': "Degrees / minute",
         'description': "TODO: Finish.",
         'default': 128,
     },
-    'speed': {  # TODO: libais can give 102.30000305175781
+    'speed': {
         'validate': All(
             Instance(float, int), Any(Range(0, 102), In([1022, 1023, 1022.0, 1023.0]))),
         'units': "knots",
@@ -182,10 +183,11 @@ _FIELDS = {
         'description': "Version of AIS broadcast.  Currently only ITU1371.",
         'default': 0
     },
-    'imo': {  # TODO: Better description and a default (?)
-        'validate': Int(),
+    'imo': {  # TODO: Better description
+        'validate': Any(Int(), Instance(type(None))),
         'units': 'N/A',
         'description': "Ship ID number.",
+        'default': None
     },
     'callsign': {
         'validate': Instance(type(None), *six.string_types),
@@ -240,7 +242,7 @@ _FIELDS = {
     'dte': {
         'validate': IntIn([0, 1]),
         'units': 'N/A',
-        'description': "",  # TODO: Need a description
+        'description': "TODO: Need a description.",
         'default': 1
     },
     'seqno': {  # TODO: What are valid values?
@@ -250,12 +252,12 @@ _FIELDS = {
         'default': 0
     },
     'dest_mmsi': {
-        'validate': Int(),
+        'validate': Any(Int(), Instance(type(None))),
         'units': 'N/A',
-        'description': "Message is asking for a response from this MMSI.",  # TODO: Description
-        'default': 0  # TODO: Not valid MMSI, but seems like this should have a default
+        'description': "Message is asking for a response from this MMSI.",
+        'default': None
     },
-    'retransmit': {    # TODO: Make boolean?  Check what libais does.
+    'retransmit': {
         'validate': IntIn([0, 1]),
         'units': 'N/A',
         'description': "If True, the message was re-broadcast by an intermediary station.",
@@ -276,56 +278,56 @@ _FIELDS = {
     'data': {
         'validate': Instance(type(None), *six.string_types),
         'units': 'N/A',
-        'description': "Binary data.",  # TODO: Better description
+        'description': "TODO: Better description. - Binary data.",
         'default': None
     },
     'mmsi1': {  # TODO: Finish - see Type 7
-        'validate': Int(),
+        'validate': Any(Int(), Instance(type(None))),
         'units': 'N/A',
         'description': "",
-        'default': 0
+        'default': None
     },
     'mmsiseq1': {  # TODO: Finish - see Type 7
-        'validate': Int(),
+        'validate': Any(Int(), Instance(type(None))),
         'units': 'N/A',
         'description': "Not used.",
-        'default': 0
+        'default': None
     },
     'mmsi2': {  # TODO: Finish - see Type 7
-        'validate': Int(),
+        'validate': Any(Int(), Instance(type(None))),
         'units': 'N/A',
         'description': "Interrogated MMSI.",
-        'default': 0
+        'default': None
     },
     'mmsiseq2': {  # TODO: Finish - see Type 7
-        'validate': Int(),
+        'validate': Any(Int(), Instance(type(None))),
         'units': 'N/A',
         'description': "Not used.",
-        'default': 0
+        'default': None
     },
     'mmsi3': {  # TODO: Finish - see Type 7
-        'validate': Int(),
+        'validate': Any(Int(), Instance(type(None))),
         'units': 'N/A',
         'description': "Interrogated MMSI.",
-        'default': 0
+        'default': None
     },
     'mmsiseq3': {  # TODO: Finish - see Type 7
-        'validate': Int(),
+        'validate': Any(Int(), Instance(type(None))),
         'units': 'N/A',
         'description': "Not used.",
-        'default': 0
+        'default': None
     },
     'mmsi4': {  # TODO: Finish - see Type 7
-        'validate': Int(),
+        'validate': Any(Int(), Instance(type(None))),
         'units': 'N/A',
         'description': "Interrogated MMSI.",
-        'default': 0
+        'default': None
     },
     'mmsiseq4': {  # TODO: Finish - see Type 7
-        'validate': Int(),
+        'validate': Any(Int(), Instance(type(None))),
         'units': 'N/A',
         'description': "Not used.",
-        'default': 0
+        'default': None
     },
     'alt': {
         'validate': IntRange(0, 4095),
@@ -656,14 +658,14 @@ _FIELDS = {
         'default': 0
     },
     'mothership_mmsi': {  # TODO: Valid default?
-        'validate': Int(),
+        'validate': Any(Int(), Instance(type(None))),
         'units': 'N/A',
         'description': "If vessel is a support craft, this is the MMSI of the vessel it is "
                        "supporting.",
-        'default': 0
+        'default': None
     },
     'addressed': {  # TODO: Boolean?  Valid default?
-        'validate': In([0]),
+        'validate': IntIn([0, 1]),
         'units': 'N/A',
         'description': "broadcast=0, addressed=1",
         'default': 0

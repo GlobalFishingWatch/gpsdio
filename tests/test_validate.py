@@ -22,6 +22,8 @@ def test_BaseValidator():
     """Default test lets any object through."""
     v = validate.BaseValidator()
     assert v(int) is int
+    assert validate.BaseValidator.coerce('ah') == 'ah'
+    assert validate.BaseValidator.serialize(pytest) == pytest
 
 
 def test_DateTime():

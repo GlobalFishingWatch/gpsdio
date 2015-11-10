@@ -5,7 +5,6 @@ Objects used to define
 
 import datetime
 from operator import lt, gt, ge, le
-
 import six
 from gpsdio.errors import SchemaError
 
@@ -83,8 +82,14 @@ class BaseValidator(object):
     """
 
     types = object
-    coerce = lambda x: x
-    serialize = lambda x: x
+
+    @staticmethod
+    def coerce(obj):
+        return obj
+
+    @staticmethod
+    def serialize(obj):
+        return obj
 
     def validate(self, obj):
 
@@ -224,7 +229,8 @@ class Instance(BaseValidator):
         self.types = tuple(types)
 
     def __repr__(self):
-        return "{name}({types})".format(name=self.__class__.__name__, types=', '.join([o.__name__ for o in self.types]))
+        return "{name}({types})".format(
+            name=self.__class__.__name__, types=', '.join([o.__name__ for o in self.types]))
 
 
 class Any(BaseValidator):
