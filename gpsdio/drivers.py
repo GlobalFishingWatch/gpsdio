@@ -6,7 +6,6 @@ Drivers for reading and writing a variety of formats and compression.
 
 
 import bz2
-import datetime
 import logging
 import gzip
 import sys
@@ -21,7 +20,7 @@ from gpsdio.base import BaseCompressionDriver as _BaseCompressionDriver
 logger = logging.getLogger('gpsdio')
 
 
-class NewlineJSON(_BaseDriver):
+class NewlineJSONDriver(_BaseDriver):
 
     """
     Access data stored as newline delimited JSON.  Driver options are passed to
@@ -41,7 +40,7 @@ class NewlineJSON(_BaseDriver):
         return nlj.open(name, mode=mode, **kwargs)
 
 
-class GZIP(_BaseCompressionDriver):
+class GZIPDriver(_BaseCompressionDriver):
 
     """
     Access data stored as GZIP using Python's builtin ``gzip`` library.  Driver
@@ -67,7 +66,7 @@ class GZIP(_BaseCompressionDriver):
     def load(self, msg):
         if hasattr(msg, 'decode'):
             msg = msg.decode('utf-8')
-        return super(GZIP, self).load(msg)
+        return super(GZIPDriver, self).load(msg)
 
     def dump(self, msg):
         if six.PY3 and isinstance(msg, six.string_types):
@@ -78,7 +77,7 @@ class GZIP(_BaseCompressionDriver):
         return self.f.read(*args, **kwargs)
 
 
-class BZ2(_BaseCompressionDriver):
+class BZ2Driver(_BaseCompressionDriver):
 
     """
     Access data stored as BZ2 with Python's builtin ``bz2`` library.  Driver
@@ -102,10 +101,10 @@ class BZ2(_BaseCompressionDriver):
     def dump(self, msg):
         if not isinstance(msg, six.binary_type):
             msg = six.binary_type(msg, encoding='utf-8')
-        return super(BZ2, self).dump(msg)
+        return super(BZ2Driver, self).dump(msg)
 
 
-# class NMEA(_BaseDriver):
+# class NMEADriver(_BaseDriver):
 #
 #     driver_name = 'NMEA'
 #     extensions = 'nmea',
@@ -139,7 +138,6 @@ class BZ2(_BaseCompressionDriver):
 #             for fld, dfn in self.schema[msg['type']].items()}
 #
 #         # Adjust libais not-available values to match AIVDM
-#         # TODO: libais gives float for draught.  Should be int?
 #         if 'course' in msg and msg['course'] == 360:
 #             msg['course'] = self.schema[msg['type']]['course']['default']
 #         if 'second' in msg and msg['second'] > 60:
@@ -165,37 +163,37 @@ class BZ2(_BaseCompressionDriver):
 #                 for k, v in six.iteritems(msg)}
 #
 #
-class _NullGuy:
+# class _NullGuy:
+#
+#     def __init__(self, name, mode='r'):
+#         self.name = name
+#         self.mode = mode
+#         self.closed = False
+#
+#     def __enter__(self):
+#         return self
+#
+#     def __exit__(self, exc_type, exc_val, exc_tb):
+#         self.close()
+#
+#     def close(self):
+#         self.closed = True
+#
+#     def write(self, line):
+#         pass
+#
+#
+# class NULLDriver(_BaseDriver):
+#
+#     driver_name = 'NULL'
+#     extensions = 'null',
+#     io_modes = ('w', 'a')
+#
+#     def open(self, name, mode, **kwargs):
+#         return _NullGuy(name, mode=mode)
 
-    def __init__(self, name, mode='r'):
-        self.name = name
-        self.mode = mode
-        self.closed = False
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
-
-    def close(self):
-        self.closed = True
-
-    def write(self, line):
-        pass
-
-
-class NULL(_BaseDriver):
-
-    driver_name = 'NULL'
-    extensions = 'null',
-    io_modes = ('w', 'a')
-
-    def open(self, name, mode, **kwargs):
-        return _NullGuy(name, mode=mode)
-
-
-class MsgPack(_BaseDriver):
+class MsgPackDriver(_BaseDriver):
 
     """
     Read and write data stored as MsgPack.  When reading, driver options are
@@ -239,7 +237,7 @@ class MsgPack(_BaseDriver):
     next = __next__
 
     def dump(self, msg):
-        msg = super(MsgPack, self).dump(msg)
+        msg = super(MsgPackDriver, self).dump(msg)
         return self.packer.pack(msg)
 
 
