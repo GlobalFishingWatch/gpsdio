@@ -9,8 +9,9 @@ import pytest
 from six.moves import StringIO
 
 import gpsdio
-import gpsdio.schema
 import gpsdio.drivers
+import gpsdio.errors
+import gpsdio.schema
 
 
 def test_no_detect_compression(types_msg_path):
@@ -73,9 +74,9 @@ def test_no_validate_messages():
 def test_bad_message():
     message = {'mmsi': 123456789, 'type': 1}
     stream = StringIO(json.dumps(message))
-    with pytest.raises(ValueError):
+    with pytest.raises(gpsdio.errors.SchemaError):
         with gpsdio.open(stream, driver='NewlineJSON', compression=False) as src:
-            print(next(src))
+            next(src)
 
 
 def test_stream_attrs(types_json_path):
