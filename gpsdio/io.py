@@ -15,7 +15,6 @@ import sys
 import six
 
 import gpsdio.base
-import gpsdio.schema
 
 
 logger = logging.getLogger('gpsdio')
@@ -32,8 +31,8 @@ def open(
         **kwargs):
 
     """
-    Return a `Stream`() instance that is set up to read or write with the
-    specified driver.
+    Return a `GPSDIOReader()` or `GPSDIOWriter() instance that is set up to
+    read or write with the specified driver.
 
     Parameters
     ----------
@@ -60,6 +59,7 @@ def open(
 
     # Drivers have to be imported inside open in order to prevent an import
     # collision when registering external drivers.
+    import gpsdio.schema
     from gpsdio.drivers import _COMPRESSION
     from gpsdio.drivers import _COMPRESSION_BY_EXT
     from gpsdio.drivers import _DRIVERS
