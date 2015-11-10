@@ -100,7 +100,7 @@ def test_stream_attrs(types_json_path):
 
     # Stop method, which is really just included because there's a start(),
     # so there should be a stop()
-    with gpsdio.drivers.NewlineJSON() as drv:
+    with gpsdio.drivers.NewlineJSONDriver() as drv:
         drv.start(types_json_path)
         assert not drv.closed
         assert not drv.f.closed

@@ -27,7 +27,7 @@ def test_GPSDIOBaseStream_schema_and_validator(types_json_path):
 
 def test_BaseDriver_ctxmgr(types_json_path):
     # Test through the NewlinJSON driver because its easier
-    with gpsdio.drivers.NewlineJSON() as drv:
+    with gpsdio.drivers.NewlineJSONDriver() as drv:
         drv.start(types_json_path)
         assert not drv.closed
     assert drv.closed
@@ -36,7 +36,7 @@ def test_BaseDriver_ctxmgr(types_json_path):
 def test_BaseDriver_attrs(tmpdir):
     pth = str(tmpdir.mkdir('test').join('test_BaseDriver_attrs.json'))
     for m in ('w', 'a', 'r'):  # w first creates file
-        with gpsdio.drivers.NewlineJSON() as drv:
+        with gpsdio.drivers.NewlineJSONDriver() as drv:
             drv.start(pth, mode=m)
             assert drv.mode == m
 

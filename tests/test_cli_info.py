@@ -1,3 +1,9 @@
+"""
+Unittests for gpsdio info
+"""
+
+
+import datetime
 import json
 
 from click.testing import CliRunner
@@ -122,6 +128,29 @@ def test_with_all(types_msg_gz_path):
         ['bounds', 'count', 'field_histogram', 'mmsi_histogram',
          'num_unique_mmsi', 'type_histogram', 'max_timestamp',
          'min_timestamp', 'num_unique_type', 'sorted', 'num_unique_field'])))
-    print(expected)
-    print(actual)
     assert actual == expected
+
+
+def test_unsorted(types_json_path, tmpdir, runner):
+    out = str(tmpdir.mkdir('test').join('test_unsorted.json'))
+
+    # Get two messages from the input file, sort them in reverse by
+    # some new timestamps, and write to a temporary file.
+    ts1 = datetime.datetime.now()
+    ts2 = datetime.datetime.now()
+    with gpsdio.open(types_json_path) as src, gpsdio.open(out, 'w') as dst:
+        messages = [next(src), next(src)]
+        messages[0]['timestamp'] = ts1
+        messages[1]['timestamp'] = ts2
+        for msg in reversed(sorted(messages, key=lambda x: x['timestamp'])):
+            dst.write(msg)
+
+    # Run info and make sure the result is unsorted
+    result = runner.invoke(gpsdio.cli.main.main_group, [
+        'info',
+        out,
+        '--sort-field',
+        'timestamp'
+    ])
+    assert result.exit_code == 0
+    assert json.loads(result.output)['sorted'] is False

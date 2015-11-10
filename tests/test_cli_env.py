@@ -28,7 +28,7 @@ def test_driver_help(runner):
         'env', 'drivers', 'NewlineJSON'
     ])
     assert result.exit_code is 0
-    assert result.output.strip() == gpsdio.drivers.NewlineJSON.__doc__.strip()
+    assert result.output.strip() == gpsdio.drivers.NewlineJSONDriver.__doc__.strip()
 
 
 def test_compression(runner):
@@ -45,7 +45,7 @@ def test_compression_help(runner):
         'env', 'compression', 'GZIP'
     ])
     assert result.exit_code is 0
-    assert result.output.strip() == gpsdio.drivers.GZIP.__doc__.strip()
+    assert result.output.strip() == gpsdio.drivers.GZIPDriver.__doc__.strip()
 
 
 def test_schema(runner):

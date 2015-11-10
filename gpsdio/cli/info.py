@@ -11,6 +11,7 @@ import click
 
 import gpsdio
 import gpsdio.schema
+import gpsdio.validate
 from gpsdio.cli import options
 
 
@@ -166,8 +167,8 @@ def info(
     stats = {
         'bounds': (xmin, ymin, xmax, ymax),
         'count': idx + 1,
-        'min_timestamp': gpsdio.schema.datetime2str(ts_min),
-        'max_timestamp': gpsdio.schema.datetime2str(ts_max),
+        'min_timestamp': gpsdio.validate.datetime2str(ts_min),
+        'max_timestamp': gpsdio.validate.datetime2str(ts_max),
         'sorted': is_sorted,
         'num_unique_mmsi': len(set(mmsi_hist.keys())),
         'num_unique_type': len(set(msg_typehist.keys())),

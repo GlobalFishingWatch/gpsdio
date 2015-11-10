@@ -13,303 +13,15 @@ Field Definitions
 """
 
 
-import datetime
 import logging
 
 import six
-from voluptuous import Range
+
+from gpsdio.validate import (
+    Int, IntRange, DateTime, FloatRange, IntIn, Float, Instance, Any, All, In, Range)
 
 
 logger = logging.getLogger('gpsdio')
-
-
-DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
-
-
-def str2datetime(string):
-
-    """
-    Convert a string to a datetime.
-
-    Parameters
-    ----------
-    string : str
-        Matching the global `DATETIME_FORMAT`.
-
-    Returns
-    -------
-    datetime.datetime
-    """
-
-    return datetime.datetime(
-        year=int(string[:4]),
-        month=int(string[5:7]),
-        day=int(string[8:10]),
-        hour=int(string[11:13]),
-        minute=int(string[14:16]),
-        second=int(string[17:19]),
-        microsecond=int(string[20:-1])
-    )
-
-
-def datetime2str(datetime_obj):
-
-    """
-    Convert a datetime object to a string.
-
-    Parameters
-    ----------
-    datetime_obj : datetime.datetime
-    """
-
-    return datetime_obj.strftime(DATETIME_FORMAT)
-
-
-class Invalid(Exception):
-
-    """
-    Schema validation failed.
-    """
-
-
-class DateTime:
-
-    __slots__ = ['coerce']
-
-    def __init__(self, coerce=True):
-        self.coerce = coerce
-
-    def __call__(self, obj):
-        if self.coerce and not isinstance(obj, datetime.datetime):
-            try:
-                obj = str2datetime(obj)
-            except (TypeError, ValueError):
-                raise Invalid("Datetime string '{}' cannot be parsed with '%s'".format(obj, DATETIME_FORMAT))
-        else:
-            try:
-                assert isinstance(obj, datetime.datetime)
-            except AssertionError:
-                raise Invalid("Value '{}' is not a datetime".format(obj))
-
-        return obj
-
-
-class IntRange:
-
-    """
-    Ensure a value is an integer
-    """
-
-    __slots__ = ['minimum', 'maximum', 'coerce']
-
-    def __init__(self, minimum=None, maximum=None, coerce=True):
-        if minimum is None and maximum is None:
-            raise ValueError("Need a value for minimum or maximum.")
-        self.minimum = minimum
-        self.maximum = maximum
-        self.coerce = coerce
-
-    def __call__(self, obj):
-        if self.coerce:
-            try:
-                obj = int(obj)
-            except ValueError:
-                raise Invalid("Value '{}' is not an int".format(obj))
-        else:
-            try:
-                assert isinstance(obj, six.integer_types)
-            except AssertionError:
-                raise Invalid("Bad value for IntRange() - not an int: {}".format(obj))
-
-        if self.minimum is not None:
-            try:
-                assert obj >= self.minimum
-            except AssertionError:
-                raise Invalid(
-                    "Value '{}' is less than minimum '{}'".format(obj, self.minimum))
-        if self.maximum is not None:
-            try:
-                assert obj <= self.maximum
-            except AssertionError:
-                raise Invalid(
-                    "Value '{}' is greater than maximum '{}'".format(obj, self.minimum))
-        return obj
-
-
-class FloatRange:
-
-    """
-    Ensure a value is an float
-    """
-
-    __slots__ = ['minimum', 'maximum', 'coerce']
-
-    def __init__(self, minimum=None, maximum=None, coerce=True):
-        if minimum is None and maximum is None:
-            raise Invalid("Need a value for minimum or maximum.")
-        self.minimum = minimum
-        self.maximum = maximum
-        self.coerce = coerce
-
-    def __call__(self, obj):
-        if self.coerce:
-            try:
-                obj = float(obj)
-            except ValueError:
-                raise Invalid("Value '{}' is not a float".format(obj))
-        else:
-            try:
-                assert isinstance(obj, float)
-            except AssertionError:
-                raise Invalid("Bad value for FloatRange() - not a float: {}".format(obj))
-
-        if self.minimum is not None:
-            try:
-                assert obj >= self.minimum
-            except AssertionError:
-                raise Invalid(
-                    "Value '{}' is less than minimum '{}'".format(obj, self.minimum))
-        if self.maximum is not None:
-            try:
-                assert obj <= self.maximum
-            except AssertionError:
-                raise Invalid(
-                    "Value '{}' is greater than maximum '{}'".format(obj, self.minimum))
-        return obj
-
-
-class IntIn:
-
-    __slots__ = ['values', 'coerce']
-
-    def __init__(self, values, coerce=True):
-        self.values = values
-        self.coerce = coerce
-
-    def __call__(self, obj):
-        if self.coerce:
-            try:
-                obj = int(obj)
-            except ValueError:
-                raise Invalid("Value '{}' is not an int".format(obj))
-        else:
-            try:
-                assert isinstance(obj, six.integer_types)
-            except AssertionError:
-                raise Invalid("Bad value for IntIn() - not an int: {}".format(obj))
-
-        try:
-            assert obj in self.values
-        except AssertionError:
-            raise Invalid("Value '{}' not in: {}".format(obj, ', '.join(self.values)))
-        
-        return obj
-
-
-class Int:
-    
-    __slots__ = ['coerce']
-    
-    def __init__(self, coerce=True):
-        self.coerce = coerce
-    
-    def __call__(self, obj):
-        if self.coerce:
-            try:
-                obj = int(obj)
-            except ValueError:
-                raise Invalid("Value '{}' is not an int".format(obj))
-        else:
-            try:
-                assert isinstance(obj, six.integer_types)
-            except AssertionError:
-                raise Invalid("Value '{}' is not an int".format(obj))
-        return obj
-
-
-class Float:
-
-    __slots__ = ['coerce']
-
-    def __init__(self, coerce=True):
-        self.coerce = coerce
-
-    def __call__(self, obj):
-        if self.coerce:
-            try:
-                obj = float(obj)
-            except ValueError:
-                raise Invalid("Value '{}' is not a float".format(obj))
-        else:
-            try:
-                assert isinstance(obj, six.integer_types)
-            except AssertionError:
-                raise Invalid("Value '{}' is not a float".format(obj))
-        return obj
-
-
-class Instance:
-
-    __slots__ = ['types']
-
-    def __init__(self, *types):
-        self.types = tuple(types)
-
-    def __call__(self, obj):
-        try:
-            assert type(obj) in self.types
-        except AssertionError:
-            raise Invalid("Object '{}' is not an instance of: {}".format(obj, ', '.join(self.types)))
-
-        return obj
-
-
-class Any:
-
-    __slots__ = ['tests']
-
-    def __init__(self, *tests):
-        self.tests = tests
-
-    def __call__(self, obj):
-        for t in self.tests:
-            try:
-                return t(obj)
-            except Exception:
-                pass
-        else:
-            raise Invalid("Value '{}' failed all tests: {}".format(obj, ', '.join(self.tests)))
-
-
-class All:
-
-    __slots__ = ['tests']
-
-    def __init__(self, *tests):
-        self.tests = tests
-
-    def __call__(self, obj):
-        for t in self.tests:
-            try:
-                obj = t(obj)
-            except Exception as e:
-                raise Invalid("Value '{}' failed test '{}': {}".format(obj, t, str(e)))
-        return obj
-
-
-class In:
-
-    __slots__ = ['values']
-
-    def __init__(self, values):
-        self.values = values
-
-    def __call__(self, obj):
-        try:
-            assert obj in self.values
-        except AssertionError:
-            raise Invalid("Value '{}' not in: {}".format(', '.join(self.values)))
-        return obj
 
 
 _FIELDS = {
@@ -352,7 +64,8 @@ _FIELDS = {
         'default': 128,
     },
     'speed': {  # TODO: libais can give 102.30000305175781
-        'validate': All(Instance(float, int), Any(Range(0, 102), In([1022, 1023, 1022.0, 1023.0]))),
+        'validate': All(
+            Instance(float, int), Any(Range(0, 102), In([1022, 1023, 1022.0, 1023.0]))),
         'units': "knots",
         'description': "Speed over ground is in 0.1-knot resolution from 0 to 102 knots. "
                        "Value 1023 indicates speed is not available, value 1022 indicates "
@@ -385,7 +98,7 @@ _FIELDS = {
     },
     'course': {
         'validate': All(
-            Instance(int, float), Any(Range(0, 360, max_included=False), In([3600, 3600.0]))),
+            Instance(int, float), Any(Range(0, 360, include_max=False), In([3600, 3600.0]))),
         'units': 'degrees',
         'description': "Course over ground - degrees from true north to 0.1 degree precision",
         'default': 3600.0
@@ -474,7 +187,7 @@ _FIELDS = {
         'units': 'N/A',
         'description': "Ship ID number.",
     },
-    'callsign': {  # TODO: Does voluptuous have a better NoneType test?
+    'callsign': {
         'validate': Instance(type(None), *six.string_types),
         'units': 'N/A',
         'description': "Vessel callsign",
@@ -519,10 +232,10 @@ _FIELDS = {
         'default': 0
     },
     'draught': {  # TODO: The spec says `meters / 10` (decimeters), but maybe should be meters?
-        'validate': FloatRange(0),
+        'validate': Any(FloatRange(0), IntIn([0])),
         'units': 'decimeters',
         'description': "Vessel draught in meters.",
-        'default': 0
+        'default': 0.0
     },
     'dte': {
         'validate': IntIn([0, 1]),
@@ -1219,11 +932,4 @@ def build_schema(fields_by_type=_FIELDS_BY_TYPE, fields=_FIELDS):
             name = fields[fld].get('sub_name', fld)
             definition[name] = fields[name]
         out[mtype] = definition
-    return out
-
-
-def build_validator(schema):
-    out = {}
-    for mtype, fields in six.iteritems(schema):
-        out[mtype] = {k: v['validate'] for k, v in six.iteritems(fields)}
     return out

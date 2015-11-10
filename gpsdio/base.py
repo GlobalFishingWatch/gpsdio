@@ -9,9 +9,9 @@ import logging
 import six
 
 import gpsdio
-from gpsdio.schema import datetime2str
-from gpsdio.schema import build_validator
-import voluptuous
+import gpsdio.errors
+from gpsdio.validate import datetime2str
+from gpsdio.validate import build_validator
 
 
 logger = logging.getLogger('gpsdio')
@@ -86,9 +86,8 @@ class GPSDIOBaseStream(object):
             try:
                 return {n: v(msg[n]) for n, v in six.iteritems(self._validator[msg['type']])}
             except KeyError as e:
-                raise ValueError("Missing field '{}' from message: {}".format(e.args[0], msg))
-            except (gpsdio.schema.Invalid, voluptuous.Invalid) as e:
-                raise ValueError("{e}: {msg}".format(e=str(e), msg=str(msg)))
+                raise gpsdio.errors.SchemaError(
+                    "Missing field '{}' from message: {}".format(e.args[0], msg))
         else:
             return msg
 

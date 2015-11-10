@@ -11,13 +11,13 @@ import gpsdio.drivers
 
 
 def test_get_compression():
-    assert gpsdio.drivers.GZIP == gpsdio.drivers._COMPRESSION['GZIP']
+    assert gpsdio.drivers.GZIPDriver == gpsdio.drivers._COMPRESSION['GZIP']
     with pytest.raises(KeyError):
         gpsdio.drivers._COMPRESSION["bad-name"]
 
 
 def test_gzip_cannot_read_from_stdin():
-    d = gpsdio.drivers.GZIP()
+    d = gpsdio.drivers.GZIPDriver()
     with pytest.raises(IOError):
         d.open(name=sys.stdin, mode='r')
 
