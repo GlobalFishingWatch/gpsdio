@@ -12,7 +12,8 @@ python:
   - 3.5
 
 install:
-  - pip install cython pip setuptools -e .\[dev\] --upgrade
+  - pip install cython pip setuptools --upgrade
+  - pip install -e .\[dev\] --upgrade
 
 script:
   - py.test tests --cov gpsdio --cov-report term-missing
