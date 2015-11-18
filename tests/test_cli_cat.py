@@ -38,8 +38,7 @@ def test_cat_geojson(types_msg_gz_path):
 
 
 def test_cat_geojson_non_posit(types_json_path, tmpdir):
-    # pth = str(tmpdir.mkdir('test').join('test_cat_geojson_non_posit.json'))
-    pth = 'AH.json'
+    pth = str(tmpdir.mkdir('test').join('test_cat_geojson_non_posit.json'))
     with gpsdio.open(types_json_path) as src, gpsdio.open(pth, 'w') as dst:
         # Write a single type 1 and a single type 5 - one posit and one non-posit
         messages = {msg['type']: msg for msg in src}
