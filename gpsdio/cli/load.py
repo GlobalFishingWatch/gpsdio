@@ -36,14 +36,16 @@ def load(ctx, outfile, input_driver_opts,
             '-',
             driver='NewlineJSON',
             compression=False,
-            do=input_driver_opts, **ctx.obj['define']) as src:
+            do=input_driver_opts,
+            **ctx.obj['idefine']) as src:
 
         with gpsdio.open(
                 outfile, 'w',
                 driver=output_driver,
                 compression=output_compression,
                 co=output_compression_opts,
-                do=output_driver_opts, **ctx.obj['define']) as dst:
+                do=output_driver_opts,
+                **ctx.obj['odefine']) as dst:
 
             for msg in src:
                 dst.write(msg)

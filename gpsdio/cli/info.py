@@ -114,7 +114,8 @@ def info(
             driver=input_driver,
             compression=input_compression,
             do=input_driver_opts,
-            co=input_compression_opts) as src:
+            co=input_compression_opts,
+            **ctx.obj['idefine']) as src:
 
         idx = 0  # In case file is empty
         for idx, msg in enumerate(src):

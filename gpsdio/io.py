@@ -28,6 +28,7 @@ def open(
         do=None,
         co=None,
         schema=None,
+        extensions=True,
         **kwargs):
 
     """
@@ -48,13 +49,17 @@ def open(
         Additional options to pass to the driver.
     co : dict, optional
         Additional options to pass to the compression driver.
+    exctensions : bool, optional
+        Use external field extensions?  Ignored if a `schema` is given.
     kwargs : **kwargs, optional
-        Additional options to pass to `Stream()`.
+        Additional options to pass to the file-like object.
 
     Returns
     -------
-    Stream
-        A loaded instance of stream ready for I/O operations.
+    GPSDIOReader
+        If reading.
+    GPSDIOWriter
+        If writing or appending.
     """
 
     # Drivers have to be imported inside open in order to prevent an import
@@ -76,7 +81,7 @@ def open(
     # Handle defaults
     do = do or {}
     co = co or {}
-    schema = schema or gpsdio.schema.build_schema()
+    schema = schema or gpsdio.schema.build_schema(extensions=extensions)
 
     in_name = name if isinstance(name, six.string_types) else getattr(name, 'name', None)
 

@@ -44,7 +44,7 @@ def cat(ctx, infile, input_driver, geojson,
                      compression=input_compression,
                      do=input_driver_opts,
                      co=input_compression_opts,
-                     **ctx.obj['define']) as src:
+                     **ctx.obj['idefine']) as src:
 
         base_driver = gpsdio.base.BaseDriver(schema=src.schema)
 
@@ -59,7 +59,7 @@ def cat(ctx, infile, input_driver, geojson,
                 'compression': False,
                 'do': output_driver_opts
             }
-            kwargs.update(**ctx.obj['define'])
+            kwargs.update(**ctx.obj['odefine'])
 
         out = click.get_text_stream('stdout')
         with outlib.open(out, 'w', **kwargs) as dst:

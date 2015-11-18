@@ -27,11 +27,15 @@ entry_points = list(iter_entry_points('gpsdio.gpsdio_commands')) \
 @click.option('-v', '--verbose', count=True, help="Increase verbosity.")
 @click.option('-q', '--quiet', count=True, help="Decrease verbosity.")
 @click.option(
-    '-D', 'define', metavar='NAME=VAL', multiple=True, callback=click_cb_key_val,
-    help="Define values within the gpsdio environment.  Poorly documented, experimental, and"
-         "maybe not permanent.")
+    '-d', 'idefine', metavar='NAME=VAL', multiple=True, callback=click_cb_key_val,
+    help="Define values within the gpsdio environment on read.  Poorly documented, "
+         "experimental, and maybe not permanent.")
+@click.option(
+    '-D', 'odefine', metavar='NAME=VAL', multiple=True, callback=click_cb_key_val,
+    help="Define values within the gpsdio environment on write.  Poorly documented, "
+         "experimental, and maybe not permanent.")
 @click.pass_context
-def main_group(ctx, verbose, quiet, define):
+def main_group(ctx, verbose, quiet, idefine, odefine):
     """
     gpsdio command line interface
 
@@ -43,5 +47,6 @@ def main_group(ctx, verbose, quiet, define):
 
     ctx.obj = {
         'verbosity': verbosity,
-        'define': define
+        'idefine': idefine,
+        'odefine': odefine
     }

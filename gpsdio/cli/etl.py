@@ -86,14 +86,16 @@ def etl(ctx, infile, outfile, filter_expr, sort_field,
             driver=input_driver,
             compression=input_compression,
             do=input_driver_opts,
-            co=input_compression_opts) as src:
+            co=input_compression_opts,
+            **ctx.obj['idefine']) as src:
 
         with gpsdio.open(
                 outfile, 'w',
                 driver=output_driver,
                 compression=output_compression,
                 do=output_driver_opts,
-                co=output_compression_opts, **ctx.obj['define']) as dst:
+                co=output_compression_opts,
+                **ctx.obj['odefine']) as dst:
 
             iterator = gpsdio.ops.filter(filter_expr, src) if filter_expr else src
             for msg in gpsdio.ops.sort(iterator, sort_field) if sort_field else iterator:

@@ -100,13 +100,16 @@ def fields_cmd(field, indent):
         $ gpsdio env schema ${FIELD}
     """
 
+    all_fields = gpsdio.schema.merge_fields(
+        gpsdio.schema._FIELDS, gpsdio.schema.FIELD_EXTENSIONS)
+
     if field:
         try:
-            val = gpsdio.schema._FIELDS[field]
+            val = all_fields[field]
         except Exception:
             raise click.ClickException("Unrecognized field: {}".format(field))
     else:
-        val = gpsdio.schema._FIELDS
+        val = all_fields
 
     click.echo(json.dumps(_scrub_dict(val), indent=indent, sort_keys=True))
 
@@ -126,13 +129,16 @@ def types_cmd(msg_type, indent, describe):
         $ gpsdio env schema ${TYPE}
     """
 
+    all_types = gpsdio.schema.merge_fields_by_type(
+        gpsdio.schema._FIELDS_BY_TYPE, gpsdio.schema.FIELDS_BY_TYPE_EXTENSIONS)
+
     if msg_type is not None:
         try:
-            val = gpsdio.schema._FIELDS_BY_TYPE[msg_type]
+            val = all_types[msg_type]
         except Exception:
             raise click.ClickException("Unrecognized message type: {}".format(msg_type))
     else:
-        val = gpsdio.schema._FIELDS_BY_TYPE
+        val = all_types
 
     # Print human-readable field definition
     if describe and msg_type is None:

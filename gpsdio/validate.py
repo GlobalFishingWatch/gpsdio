@@ -126,7 +126,8 @@ class Instance(BaseValidator):
 
     def __repr__(self):
         return "{name}({types})".format(
-            name=self.__class__.__name__, types=', '.join([o.__name__ for o in self.types]))
+            name=self.__class__.__name__, types=', '.join(
+                [o.__class__.__name__ for o in self.types]))
 
 
 class Any(BaseValidator):

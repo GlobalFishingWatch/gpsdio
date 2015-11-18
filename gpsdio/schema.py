@@ -14,6 +14,7 @@ Field Definitions
 
 
 from collections import defaultdict
+from itertools import chain
 import logging
 from pkg_resources import iter_entry_points
 
@@ -934,7 +935,7 @@ _HUMAN_TYPE_DESCRIPTION = {
 }
 
 
-def build_schema(fields_by_type=None, fields=None):
+def build_schema(fields_by_type=None, fields=None, extensions=True):
 
     """
     Merge a fields-by-type dictionary and fields dictionary.
@@ -965,10 +966,16 @@ def build_schema(fields_by_type=None, fields=None):
     """
 
     if fields_by_type is None:
-        fields_by_type = merge_fields_by_type(_FIELDS_BY_TYPE, FIELDS_BY_TYPE_EXTENSIONS)
+        if extensions:
+            fields_by_type = merge_fields_by_type(_FIELDS_BY_TYPE, FIELDS_BY_TYPE_EXTENSIONS)
+        else:
+            fields_by_type = _FIELDS_BY_TYPE
 
     if fields is None:
-        fields = merge_fields(_FIELDS, FIELD_EXTENSIONS)
+        if extensions:
+            fields = merge_fields(_FIELDS, FIELD_EXTENSIONS)
+        else:
+            fields = _FIELDS
 
     out = {}
     for mtype, mfields in six.iteritems(fields_by_type):
@@ -1023,11 +1030,14 @@ def merge_fields_by_type(*fbt):
         }
     """
 
+    # Make sure an actual dictionary is returned.  Accessing a defaultdict with a
+    # non-existent key returns the default object.
+
     out = defaultdict(list)
     for fdef in fbt:
         for mtype, fields in six.iteritems(fdef):
-            out[mtype] = tuple(set(list(fields) + out[mtype]))
-    return out
+            out[mtype] = tuple(chain(fields, out[mtype]))
+    return dict(out)
 
 
 for ep in iter_entry_points('gpsdio.field_extensions'):
@@ -1038,7 +1048,7 @@ for ep in iter_entry_points('gpsdio.field_extensions'):
         logger.exception("Failed to load external fields from '%s': %s", ep.name)
 
 
-for ep in iter_entry_points('gpsdio.field_by_type_extensions'):
+for ep in iter_entry_points('gpsdio.fields_by_type_extensions'):
     try:
         FIELDS_BY_TYPE_EXTENSIONS = merge_fields_by_type(FIELDS_BY_TYPE_EXTENSIONS, ep.load())
         logger.info("Registered external fields by type from: %s", ep.name)

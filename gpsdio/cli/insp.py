@@ -61,7 +61,7 @@ def insp(ctx, infile, interpreter,
             compression=input_compression,
             do=input_driver_opts,
             co=input_compression_opts,
-            **ctx.obj['define']) as src:
+            **ctx.obj['idefine']) as src:
 
         scope = {
             'src': src,
