@@ -9,25 +9,31 @@ with gpsdio.open(infile) as src, gpsdio.open(outfile, 'w') as dst:
 
 
 import logging
+import os
 import sys
 
 import six
 
-from gpsdio import schema
+import gpsdio.base
 
 
 logger = logging.getLogger('gpsdio')
 
 
-__all__ = ['open', 'Stream']
-
-
-def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
-         do=None, co=None, **kwargs):
+def open(
+        name,
+        mode='r',
+        compression=None,
+        driver=None,
+        do=None,
+        co=None,
+        schema=None,
+        schema_extensions=True,
+        **kwargs):
 
     """
-    Return a `Stream`() instance that is set up to read or write with the
-    specified driver.
+    Return a `GPSDIOReader()` or `GPSDIOWriter() instance that is set up to
+    read or write with the specified driver.
 
     Parameters
     ----------
@@ -43,230 +49,140 @@ def open(path, mode='r', dmode=None, cmode=None, compression=None, driver=None,
         Additional options to pass to the driver.
     co : dict, optional
         Additional options to pass to the compression driver.
+    schema_extensions : bool, optional
+        Use external field extensions?  Ignored if a `schema` is given.
     kwargs : **kwargs, optional
-        Additional options to pass to `Stream()`.
+        Additional options to pass to the file-like object.
 
     Returns
     -------
-    Stream
-        A loaded instance of stream ready for I/O operations.
+    GPSDIOReader
+        If reading.
+    GPSDIOWriter
+        If writing or appending.
     """
 
     # Drivers have to be imported inside open in order to prevent an import
     # collision when registering external drivers.
-    from gpsdio.drivers import detect_compression_type
-    from gpsdio.drivers import detect_file_type
-    from gpsdio.drivers import registered_compression
-    from gpsdio.drivers import registered_drivers
+    import gpsdio.schema
+    from gpsdio.drivers import _COMPRESSION
+    from gpsdio.drivers import _COMPRESSION_BY_EXT
+    from gpsdio.drivers import _DRIVERS
+    from gpsdio.drivers import _DRIVERS_BY_EXT
 
-    if path == '-' and 'r' in mode:
-        path = sys.stdin
-    elif path == '-' and ('w' in mode or 'a' in mode):
-        path = sys.stdout
+    if name == '-' and 'r' in mode:
+        logger.debug("")
+        name = sys.stdin
+    elif name == '-' and mode in ('w', 'a'):
+        name = sys.stdout
 
-    logger.debug("Opening: %s" % path)
+    logger.debug("Opening '%s' with mode '%s'", name, mode)
 
+    # Handle defaults
     do = do or {}
     co = co or {}
-    dmode = dmode or mode
-    cmode = cmode or mode
+    schema = schema or gpsdio.schema.build_schema(extensions=schema_extensions)
 
-    # Input path is a file-like object
-    if not isinstance(path, six.string_types):
+    in_name = name if isinstance(name, six.string_types) else getattr(name, 'name', None)
 
-        logger.debug("Input path is a file-like object: %s", path)
+    # Disable compression checks with False
+    if compression is False:
+        logger.debug("Disabled auto-checking compression")
+        cmp_driver = None
 
-        # If we get a driver name, just use that
-        # Otherwise, detect it from the object's path property
-        # If that doesn't work, crash because we don't know what to do
-        if driver:
-            io_driver = registered_drivers[driver]
-        else:
-            io_driver = detect_file_type(getattr(path, 'name', None))
+    # User explicitly supplied a compression name
+    elif compression is not None:
+        logger.debug("User says the compression is '%s'", compression)
+        cmp_driver = _COMPRESSION[compression]
 
-        # Don't be too strict about compression.  At some point the driver
-        # will try to read or write, which will throw an error if its really
-        # a compressed file.
-        if compression:
-            comp_driver = registered_compression[compression]
-        else:
-            comp_driver = None
-
-    # Input path is a string
+    # Detect compression
     else:
-
-        if driver:
-            io_driver = registered_drivers[driver] 
+        cmp_driver = None
+        logger.debug("Detecting compression ...")
+        ext = os.path.splitext(in_name)[1].strip('.')
+        if ext in _DRIVERS_BY_EXT:
+            logger.debug("Skipping compression - not given and extension matches a driver")
+        elif not ext:
+            logger.debug("Input file doesn't have an extension - assuming no compression")
         else:
-            io_driver = detect_file_type(path)
-        
-        if compression:
-            comp_driver = registered_compression[compression]
-        else:
-            # We cannot allow driver to fail, but detect_compression_type()
-            # failing probably means that the file just isn't compressed
-            try:
-                comp_driver = detect_compression_type(path)
-            except ValueError:
-                comp_driver = None
+            cmp_driver = _COMPRESSION_BY_EXT[ext]
+            logger.debug("Detected compression as '%s'", cmp_driver.name)
 
-    logger.debug("Compression driver: %s", io_driver)
-    logger.debug("Driver: %s", comp_driver)
-    
-    if comp_driver:
-        c_stream = comp_driver(path, mode=cmode, **co)
+    # User explicitly specified a driver by name
+    if driver is not None:
+        logger.debug("User says the driver is '%s'", driver)
+        io_driver = _DRIVERS[driver]
+
+    # Detect driver
     else:
-        c_stream = path
-        
-    stream = io_driver(c_stream, mode=dmode, **do)
+        logger.debug("Detecting driver ...")
+        _path, ext = os.path.splitext(in_name)
+        if ext.strip('.') in _COMPRESSION_BY_EXT:
+            _path, ext = os.path.splitext(_path)
+        io_driver = _DRIVERS_BY_EXT[ext.strip('.')]
+        logger.debug("Successfully detected driver")
 
-    logger.debug("Built base I/O stream: %s", stream)
+    logger.debug("compression driver: %s", cmp_driver)
+    logger.debug("I/O driver: %s", io_driver)
+
+    if cmp_driver:
+        cmp_stream = cmp_driver()
+        cmp_stream.start(name=name, mode=mode, **co)
+        logger.debug("Started compression stream")
+    else:
+        cmp_stream = name
+
+    stream = io_driver(schema=schema)
+    stream.start(name=cmp_stream, mode=mode, **do)
+    logger.debug("Started I/O stream")
 
     if mode == 'r':
         logger.debug("Starting read session")
-        return GPSDIOReader(stream, mode=mode, **kwargs)
+        return GPSDIOReader(stream, mode=mode, schema=schema, **kwargs)
     elif mode in ('w', 'a'):
         logger.debug("Starting write or append session")
-        return GPSDIOWriter(stream, mode=mode, **kwargs)
-    return GPSDIOBaseStream(stream, mode=mode, **kwargs)
+        return GPSDIOWriter(stream, mode=mode, schema=schema, **kwargs)
+    else:
+        raise ValueError("Mode '{}' is invalid.".format(mode))
 
 
-class GPSDIOBaseStream(object):
-
-    def __init__(self, stream, mode='r', convert=True, skip_failures=False):
-
-        """
-        Read or write a stream of AIS data.
-
-        Parameters
-        ----------
-        stream : file-like object or iterable
-            Expects one dictionary per iteration.
-        mode : str, optional
-            Determines if stream is operating in read, write, or append mode.
-        force_message : bool, optional
-
-        """
-
-        self._stream = stream
-        self.skip_failures = skip_failures
-        self._mode = mode
-        self.convert = convert
-        self.skip_failures = skip_failures
-
-    def __iter__(self):
-        return self
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._stream.close()
-
-    def __repr__(self):
-        return "<%s Stream '%r', mode '%s' at %s>" % (
-            "closed" if self.closed else "open",
-            self._stream,
-            self.mode,
-            hex(id(self))
-        )
-
-    @property
-    def closed(self):
-        return self._stream.closed
-
-    @property
-    def mode(self):
-        return self._mode
-
-    @property
-    def name(self):
-        return getattr(self._stream, 'name', None)
-
-    def close(self):
-
-        """
-        Close the underlying stream and flush to disk.
-        """
-
-        return self._stream.close()
-
-
-class GPSDIOReader(GPSDIOBaseStream):
+class GPSDIOReader(gpsdio.base.GPSDIOBaseStream):
 
     """
     Read GPSd messages.  Some overhead is removed by abstracting this class,
     which can be significant when multiplied across a large number of messages.
     """
 
-    def __init__(self, *args, **kwargs):
-
-        """
-        Instantiate a reader object and make sure the I/O mode matches.
-        """
-
-        assert kwargs['mode'] == 'r', \
-            "{name} can only read data.".format(self.__class__.__name__)
-        super(GPSDIOReader, self).__init__(*args, **kwargs)
+    def __iter__(self):
+        return self
 
     def __next__(self):
 
-        try:
+        """
+        Get a GPSd message from the driver and validate.
+        """
 
-            msg = next(self._stream)
-
-            if self.convert:
-                msg = {
-                    fld: schema.schema_import_functions.get(fld, lambda x: x)(v)
-                    for fld, v in six.iteritems(msg)}
-
-            return msg
-
-        except StopIteration:
-            raise
-
-        except Exception as e:
-            # TODO: Include a traceback for better error handling
-            logger.exception(str(e))
-            if not self.skip_failures:
-                raise e
+        return self.validate_msg(next(self._iterator))
 
     next = __next__
 
 
-class GPSDIOWriter(GPSDIOBaseStream):
+class GPSDIOWriter(gpsdio.base.GPSDIOBaseStream):
 
     """
     Write GPSd messages.  Some overhead is removed by abstracting this class,
     which can be significant when multiplied across a large number of messages.
     """
 
-    def __init__(self, *args, **kwargs):
-
-        """
-        Instantiate a writer object and make sure the I/O mode matches.
-        """
-
-        assert kwargs['mode'] in ('w', 'a'), \
-            "{name} can only write and append data.".format(self.__class__.__name__)
-        super(GPSDIOWriter, self).__init__(*args, **kwargs)
-
     def write(self, msg):
 
         """
-        Write a message to disk.
+        Validate and write a message to disk.
+
+        Parameters
+        ----------
+        msg : dict
+            GPSd message.
         """
 
-        try:
-
-            if self.convert:
-                msg = {
-                    fld: schema.schema_export_functions.get(fld, lambda x: x)(v)
-                    for fld, v in six.iteritems(msg)}
-
-            self._stream.write(msg)
-
-        except Exception as e:
-            logger.exception(str(e))
-            if not self.skip_failures:
-                raise e
+        return self._stream.write(self.validate_msg(msg))

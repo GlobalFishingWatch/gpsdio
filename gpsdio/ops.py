@@ -1,51 +1,12 @@
 """
-Message modification operations.
+Operations
 """
 
 
-import copy
-import warnings
-
 import six
 
-import gpsdio.schema
-from gpsdio.schema import export_msg
 
-
-def strip_msgs(stream, keep_invalid=False, invalid_key='__invalid__'):
-
-    """
-    Remove unrecognized fields from a stream of messages.  Messages can be kept
-    and moved to a specific key if desired.
-
-    Parameters
-    ----------
-    stream : iter
-        Iterable producing GPSd messages.
-    keep_invalid : bool, optional
-        Place unrecognized fields into a dictionary in `invalid_key`.
-    invalid_key : str, optional
-        Key to store unrecognized fields.
-    """
-
-    for msg in stream:
-
-        # Copy the input message to make sure we don't modify the dicts outside
-        # this scope.  Valid fields are removed from this `invalid` dict, which
-        # just leaves us with the invalid keys
-        invalid = copy.deepcopy(msg)
-
-        m = {
-            k: invalid.pop(k) for k in tuple(invalid.keys())
-            if k in gpsdio.schema.fields_by_msg_type[msg['type']]}
-
-        if keep_invalid and invalid:
-            m[invalid_key] = invalid
-
-        yield m
-
-
-def sort(stream, field='timestamp'):
+def sort(stream, field, default=None):
 
     """
     A generator to sort data by the specified field.  Requires the entire stream
@@ -56,16 +17,11 @@ def sort(stream, field='timestamp'):
     stream : iter
         Iterator producing one message per iteration.
     field : str, optional
-        Field to sort by.  Defaults to sorting by `timestamp`.
+        Field to sort by.
     """
 
-    queue = six.moves.queue.PriorityQueue()
-    for msg in stream:
-        if field in msg:
-            queue.put((msg[field], msg))
-
-    while not queue.empty():
-        yield queue.get()[1]
+    for msg in sorted(stream, key=lambda x: x.get(field, default)):
+        yield msg
 
 
 def filter(expressions, stream):
@@ -129,6 +85,88 @@ def filter(expressions, stream):
             yield msg
 
 
+def msg2geojson(msg):
+
+    """
+    **Experimental**
+
+    Convert a single positional message to GeoJSON.  `lat` and `lon` are used
+    to create the geometry and all other fields are placed in the `properties`
+    key.
+
+    Input:
+
+        {
+          "radio": 0,
+          "course": 321.1000061035,
+          "accuracy": 0,
+          "maneuver": 0,
+          "lon": 94.9923782349,
+          "mmsi": 373061000,
+          "repeat": 0,
+          "turn": 0,
+          "raim": false,
+          "type": 1,
+          "status": 0,
+          "speed": 9.6999998093,
+          "second": 59,
+          "lat": -12.2402667999,
+          "spare": 0,
+          "heading": 320,
+          "timestamp": "2015-01-01T00:00:00.000000Z"
+        }
+
+    Output:
+
+        {
+            "type": "Feature",
+            "properties": {
+                "radio": 0,
+                "course": 321.1000061035,
+                "accuracy": 0,
+                "maneuver": 0,
+                "mmsi": 373061000,
+                "repeat": 0,
+                "turn": 0,
+                "raim": false,
+                "type": 1,
+                "status": 0,
+                "speed": 9.6999998093,
+                "second": 59,
+                "spare": 0,
+                "heading": 320,
+                "timestamp": "2015-01-01T00:00:00.000000Z"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": (94.9923782349, -12.2402667999)
+        }
+
+    Parameters
+    ----------
+    msg : dict
+        GPSd message.
+
+    Returns
+    -------
+    dict
+        GeoJSON
+    """
+
+    y = msg.pop('lat')
+    x = msg.pop('lon')
+
+    return {
+        'type': 'Feature',
+        'properties': {
+            k: v for k, v in six.iteritems(msg) if (k != 'lat' or k != 'lon')},
+        'geometry': {
+            'type': 'Point',
+            'coordinates': (x, y)
+        }
+    }
+
+
 def geojson(stream):
 
     """
@@ -153,19 +191,9 @@ def geojson(stream):
         GeoJSON features.
     """
 
-    warnings.warn("gpsdio.ops.geojson() is experimental.")
-
     for msg in stream:
-        lat = msg.get('lat')
-        lon = msg.get('lon')
-        if lat is not None and lon is not None:
-            yield {
-                'type': 'Feature',
-                'properties': {
-                    k: v for k, v in six.iteritems(export_msg(msg))
-                    if (k != 'lat' or k != 'lon')},
-                'geometry': {
-                    'type': 'Point',
-                    'coordinates': (lon, lat)
-                }
-            }
+        try:
+            yield msg2geojson(msg)
+        # Non-posit message
+        except KeyError:
+            pass

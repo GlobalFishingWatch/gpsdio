@@ -8,8 +8,14 @@ import logging
 import click
 
 import gpsdio
+import gpsdio.base
 from gpsdio import ops
 from gpsdio.cli import options
+import newlinejson as nlj
+import ujson
+
+
+logger = logging.getLogger('gpsdio')
 
 
 @click.command(name='cat')
@@ -30,7 +36,6 @@ def cat(ctx, infile, input_driver, geojson,
     Print messages to stdout as newline JSON.
     """
 
-    logger = logging.getLogger('gpsdio-cli-cat')
     logger.setLevel(ctx.obj['verbosity'])
     logger.debug('Starting cat')
 
@@ -38,12 +43,31 @@ def cat(ctx, infile, input_driver, geojson,
                      driver=input_driver,
                      compression=input_compression,
                      do=input_driver_opts,
-                     co=input_compression_opts) as src:
+                     co=input_compression_opts,
+                     **ctx.obj['idefine']) as src:
 
-        with gpsdio.open('-', 'w',
-                         driver='NewlineJSON',
-                         compression=False,
-                         do=output_driver_opts) as dst:
-            iterator = ops.geojson(src) if geojson else src
-            for msg in iterator:
+        base_driver = gpsdio.base.BaseDriver(schema=src.schema)
+
+        if geojson:
+            outlib = nlj
+            kwargs = output_driver_opts
+            kwargs.update(json_lib=kwargs.get('json_lib', ujson))
+        else:
+            outlib = gpsdio
+            kwargs = {
+                'driver': 'NewlineJSON',
+                'compression': False,
+                'do': output_driver_opts
+            }
+            kwargs.update(**ctx.obj['odefine'])
+
+        out = click.get_text_stream('stdout')
+        with outlib.open(out, 'w', **kwargs) as dst:
+            for msg in src:
+                if geojson:
+                    if 'lat' in msg and 'lon' in msg:
+                        # Dump datetimes to string
+                        msg = gpsdio.ops.msg2geojson(base_driver.dump(msg))
+                    else:
+                        continue
                 dst.write(msg)

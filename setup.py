@@ -6,60 +6,53 @@ Setup script for gpsdio
 """
 
 
+from codecs import open
 import os
-import sys
 
-from setuptools.command.test import test as TestCommand
+from Cython.Build import cythonize
+from setuptools.extension import Extension
 from setuptools import find_packages
 from setuptools import setup
 
 
-# https://pytest.org/latest/goodpractises.html
-class PyTest(TestCommand):
-    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.pytest_args = ['tests']
-
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        # Import here, because outside the eggs aren't loaded
-        import pytest
-        errno = pytest.main(self.pytest_args)
-        sys.exit(errno)
-
-
-with open('README.rst') as f:
+with open('README.rst', encoding='utf-8') as f:
     readme = f.read().strip()
 
 
-version = None
-author = None
-email = None
-source = None
-with open(os.path.join('gpsdio', '__init__.py')) as f:
-    for line in f:
-        if line.strip().startswith('__version__'):
-            version = line.split('=')[1].strip().replace('"', '').replace("'", '')
-        elif line.strip().startswith('__author__'):
-            author = line.split('=')[1].strip().replace('"', '').replace("'", '')
-        elif line.strip().startswith('__email__'):
-            email = line.split('=')[1].strip().replace('"', '').replace("'", '')
-        elif line.strip().startswith('__source__'):
-            source = line.split('=')[1].strip().replace('"', '').replace("'", '')
-        elif None not in (version, author, email, source):
-            break
+def parse_dunder_line(string):
+
+    """
+    Take a line like:
+
+        "__version__ = '0.0.8'"
+
+    and turn it into a tuple:
+
+        ('__version__', '0.0.8')
+
+    Not very fault tolerant.
+    """
+
+    # Split the line and remove outside quotes
+    variable, value = (s.strip() for s in string.split('=')[:2])
+    value = value[1:-1].strip()
+    return variable, value
+
+
+with open(os.path.join('gpsdio', '__init__.py'), encoding='utf-8') as f:
+    dunders = dict((parse_dunder_line(line) for line in f if line.strip().startswith('__')))
+    version = dunders['__version__']
+    author = dunders['__author__']
+    email = dunders['__email__']
+    source = dunders['__source__']
+
+
+ext_modules = cythonize([Extension('gpsdio._validate', ['gpsdio/_validate.pyx'])])
 
 
 setup(
     author=author,
     author_email=email,
-    cmdclass={'test': PyTest},
     description="A general purpose AIS I/O library using the GPSd AIVDM schema.",
     entry_points='''
         [console_scripts]
@@ -73,10 +66,12 @@ setup(
         insp=gpsdio.cli.insp:insp
         load=gpsdio.cli.load:load
     ''',
+    ext_modules=ext_modules,
     extras_require={
         'dev': [
             'pytest',
             'pytest-cov',
+            'coveralls'
         ]
     },
     install_requires=[
@@ -84,17 +79,17 @@ setup(
         'click-plugins',
         'msgpack-python',
         'newlinejson>=1.0',
-        'python-dateutil',
         'str2type>=0.4',
         'six>=1.8',
         'ujson',
+        'cython'
     ],
     license='Apache 2.0',
     long_description=readme,
     include_package_data=True,
     keywords="AIS I/O with Python, dictionaries, and the GPSd AIVDM schema.",
     name="gpsdio",
-    packages=find_packages(exclude=['test']),
+    packages=find_packages(exclude=['test', 'tests']),
     url=source,
     version=version,
 )

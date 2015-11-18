@@ -4,13 +4,13 @@ other commands.
 """
 
 
-import itertools
 import logging
 from pkg_resources import iter_entry_points
 import sys
 
 import click
 from click_plugins import with_plugins
+from str2type.ext import click_cb_key_val
 
 import gpsdio
 import gpsdio.drivers
@@ -26,10 +26,20 @@ entry_points = list(iter_entry_points('gpsdio.gpsdio_commands')) \
 @click.version_option(gpsdio.__version__)
 @click.option('-v', '--verbose', count=True, help="Increase verbosity.")
 @click.option('-q', '--quiet', count=True, help="Decrease verbosity.")
+@click.option(
+    '-d', 'idefine', metavar='NAME=VAL', multiple=True, callback=click_cb_key_val,
+    help="Define values within the gpsdio environment on read.  Poorly documented, "
+         "experimental, and maybe not permanent.")
+@click.option(
+    '-D', 'odefine', metavar='NAME=VAL', multiple=True, callback=click_cb_key_val,
+    help="Define values within the gpsdio environment on write.  Poorly documented, "
+         "experimental, and maybe not permanent.")
 @click.pass_context
-def main_group(ctx, verbose, quiet):
+def main_group(ctx, verbose, quiet, idefine, odefine):
     """
     gpsdio command line interface
+
+    Use `-D` to set options in `GPSDIOBaseStream()`.
     """
 
     verbosity = max(10, 30 - 10 * verbose) - quiet
@@ -37,4 +47,6 @@ def main_group(ctx, verbose, quiet):
 
     ctx.obj = {
         'verbosity': verbosity,
+        'idefine': idefine,
+        'odefine': odefine
     }
