@@ -13,15 +13,25 @@ Field Definitions
 """
 
 
+from collections import defaultdict
 import logging
+from pkg_resources import iter_entry_points
 
 import six
 
 from gpsdio.validate import (
-    Int, IntRange, DateTime, FloatRange, IntIn, Float, Instance, Any, All, In, Range)
+    Int, IntRange, DateTime, FloatRange, IntIn, Float, Instance, Any, In)
 
 
 logger = logging.getLogger('gpsdio')
+
+
+# Register extra fields here
+FIELD_EXTENSIONS = {}
+
+
+# Register extra fields by type here
+FIELDS_BY_TYPE_EXTENSIONS = {}
 
 
 _FIELDS = {
@@ -65,13 +75,12 @@ _FIELDS = {
         'default': 128,
     },
     'speed': {
-        'validate': All(
-            Instance(float, int), Any(Range(0, 102), In([1022, 1023, 1022.0, 1023.0]))),
+        'validate': Any(FloatRange(0, 102), In([1022.0, 1023.0])),
         'units': "knots",
         'description': "Speed over ground is in 0.1-knot resolution from 0 to 102 knots. "
                        "Value 1023 indicates speed is not available, value 1022 indicates "
                        "102.2 knots or higher.",
-        'default': 1023
+        'default': 1023.0
     },
     'accuracy': {
         'validate': IntIn([0, 1]),
@@ -82,24 +91,23 @@ _FIELDS = {
         'default': 0
     },
     'lon': {
-        'validate': Instance(int, float),
+        'validate': Float(),
         'units': 'WGS84 degrees',
         'description': "East/West coordinate in WGS84 degrees.  Special value '181' "
                        "indicates not available.  Would normally be constrained to -180/180 "
                        "but some interesting tracks can appear out of bounds.",
-        'default': 181
+        'default': 181.0
     },
     'lat': {
-        'validate': Instance(int, float),
+        'validate': Float(),
         'units': 'WGS84 degrees',
         'description': "North/South coordinate in WGS84 degrees.  Special value '91' "
                        "indicates not available.  Would normally be constrained to -90/90 but "
                        "some interesting tracks can appear out of bounds.",
-        'default': 91
+        'default': 91.0
     },
     'course': {
-        'validate': All(
-            Instance(int, float), Any(Range(0, 360, include_max=False), In([3600, 3600.0]))),
+        'validate': Any(FloatRange(0, 360, include_max=False), In([3600.0])),
         'units': 'degrees',
         'description': "Course over ground - degrees from true north to 0.1 degree precision",
         'default': 3600.0
@@ -234,7 +242,7 @@ _FIELDS = {
         'default': 0
     },
     'draught': {  # TODO: The spec says `meters / 10` (decimeters), but maybe should be meters?
-        'validate': Any(FloatRange(0), IntIn([0])),
+        'validate': FloatRange(0),
         'units': 'decimeters',
         'description': "Vessel draught in meters.",
         'default': 0.0
@@ -926,7 +934,42 @@ _HUMAN_TYPE_DESCRIPTION = {
 }
 
 
-def build_schema(fields_by_type=_FIELDS_BY_TYPE, fields=_FIELDS):
+def build_schema(fields_by_type=None, fields=None):
+
+    """
+    Merge a fields-by-type dictionary and fields dictionary.
+
+    Parameters
+    ----------
+    fields_by_type : None or dict, optional
+        Like: `{1: ('mmsi', 'lat', 'lon', ...)}`.  If `None` the built-in definition
+        will be merged with any that were loaded from external modules.
+    fields : None or dict, optional
+        Like: `{'mmsi': {'default': None, 'description': "words", ...}`.  If
+        `None` the built-in definition will be merged with any fields that were
+        loaded from an external module.
+
+    Returns
+    -------
+    dict
+        {
+            1: {
+                'mmsi': {
+                    'default': None,
+                    'description': "words",
+                    ...
+                }
+            },
+            2: ...
+        }
+    """
+
+    if fields_by_type is None:
+        fields_by_type = merge_fields_by_type(_FIELDS_BY_TYPE, FIELDS_BY_TYPE_EXTENSIONS)
+
+    if fields is None:
+        fields = merge_fields(_FIELDS, FIELD_EXTENSIONS)
+
     out = {}
     for mtype, mfields in six.iteritems(fields_by_type):
         definition = {}
@@ -935,3 +978,77 @@ def build_schema(fields_by_type=_FIELDS_BY_TYPE, fields=_FIELDS):
             definition[name] = fields[name]
         out[mtype] = definition
     return out
+
+
+def merge_fields(*fields):
+
+    """
+    Provided as a convenience to merge multiple groups of fields.  Equivalent
+    to: `fields.update(**other_fields)`.  Dictionaries are processed in order
+    and overwrite fields that are already present.
+
+    Parameters
+    ----------
+    fields : *args
+        Field dictionaries to merge.
+
+    Returns
+    -------
+    dict
+    """
+
+    out = {}
+    for flds in fields:
+        out.update(**flds)
+    return out
+
+
+def merge_fields_by_type(*fbt):
+
+    """
+    Merge field-by-type dictionaries.  A `set()` of fields is produced for each
+    type that is re-cast as a `tuple()`.
+
+    Parameters
+    ----------
+    fbt : *args
+        Dictionaries to process.
+
+    Returns
+    -------
+    dict
+        {
+            1: ('mmsi', 'lat', 'lon', ...),
+            2: ...
+        }
+    """
+
+    out = defaultdict(list)
+    for fdef in fbt:
+        for mtype, fields in six.iteritems(fdef):
+            out[mtype] = tuple(set(list(fields) + out[mtype]))
+    return out
+
+
+for ep in iter_entry_points('gpsdio.field_extensions'):
+    try:
+        FIELD_EXTENSIONS = merge_fields(FIELD_EXTENSIONS, ep.load())
+        logger.info("Registered external fields from '%s'", ep.name)
+    except Exception:
+        logger.exception("Failed to load external fields from '%s': %s", ep.name)
+
+
+for ep in iter_entry_points('gpsdio.field_by_type_extensions'):
+    try:
+        FIELDS_BY_TYPE_EXTENSIONS = merge_fields_by_type(FIELDS_BY_TYPE_EXTENSIONS, ep.load())
+        logger.info("Registered external fields by type from: %s", ep.name)
+    except Exception:
+        logger.exception("Failed to load external fields by type from '%s'", ep.name)
+
+
+for ep in iter_entry_points('gpsdio.human_type_descriptions'):
+    try:
+        _HUMAN_TYPE_DESCRIPTION.update(**ep.load())
+        logger.info("Registered external human type descriptions from: %s", ep.name)
+    except Exception:
+        logger.exception("Failed to load external human type descriptions from: %s", ep.name)

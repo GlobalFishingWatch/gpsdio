@@ -6,14 +6,16 @@ Setup script for gpsdio
 """
 
 
-import codecs
+from codecs import open
 import os
 
+from Cython.Build import cythonize
+from setuptools.extension import Extension
 from setuptools import find_packages
 from setuptools import setup
 
 
-with codecs.open('README.rst', encoding='utf-8') as f:
+with open('README.rst', encoding='utf-8') as f:
     readme = f.read().strip()
 
 
@@ -37,12 +39,15 @@ def parse_dunder_line(string):
     return variable, value
 
 
-with open(os.path.join('gpsdio', '__init__.py')) as f:
+with open(os.path.join('gpsdio', '__init__.py'), encoding='utf-8') as f:
     dunders = dict((parse_dunder_line(line) for line in f if line.strip().startswith('__')))
     version = dunders['__version__']
     author = dunders['__author__']
     email = dunders['__email__']
     source = dunders['__source__']
+
+
+ext_modules = cythonize([Extension('gpsdio._validate', ['gpsdio/_validate.pyx'])])
 
 
 setup(
@@ -61,6 +66,7 @@ setup(
         insp=gpsdio.cli.insp:insp
         load=gpsdio.cli.load:load
     ''',
+    ext_modules=ext_modules,
     extras_require={
         'dev': [
             'pytest',
@@ -76,13 +82,14 @@ setup(
         'str2type>=0.4',
         'six>=1.8',
         'ujson',
+        'cython'
     ],
     license='Apache 2.0',
     long_description=readme,
     include_package_data=True,
     keywords="AIS I/O with Python, dictionaries, and the GPSd AIVDM schema.",
     name="gpsdio",
-    packages=find_packages(exclude=['test']),
+    packages=find_packages(exclude=['test', 'tests']),
     url=source,
     version=version,
 )
