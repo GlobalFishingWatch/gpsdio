@@ -60,3 +60,6 @@ target/
 .idea
 venv
 venv2
+ignore/
+gpsdio/*.c
+gpsdio/*.html
