@@ -87,9 +87,21 @@ class GPSDIOBaseStream(object):
                 return {n: v(msg[n]) for n, v in six.iteritems(self._validator[msg['type']])}
             except KeyError as e:
                 raise gpsdio.errors.SchemaError(
-                    "Missing field '{}' from message: {}".format(e.args[0], msg))
+                    "Missing field '{}' from message OR type is undefined in the schema / "
+                    "validator: {}".format(e.args[0], msg))
         else:
             return msg
+    #
+    # def default_msg(self, type_):
+    #
+    #     """
+    #     Produce a message containing all default values.
+    #     """
+    #
+    #     m = {'type': type_}
+    #     m.update(
+    #         {n: d['default'] for n, d in six.iteritems(self._schema[type_]) if n != 'type'})
+    #     return m
 
     def __enter__(self):
         return self
@@ -149,6 +161,7 @@ class BaseDriver(six.with_metaclass(_DriverRegistry, object)):
         self._f = None
         self._schema = schema
         self._mode = None
+        self._validator = None
 
     def __enter__(self):
         return self
@@ -183,6 +196,12 @@ class BaseDriver(six.with_metaclass(_DriverRegistry, object)):
     @property
     def schema(self):
         return self._schema
+
+    # @property
+    # def validator(self):
+    #     if not self._validator:
+    #         self._validator = build_validator(self.schema)
+    #     return self._validator
 
     @property
     def closed(self):
