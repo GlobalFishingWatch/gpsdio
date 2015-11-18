@@ -157,9 +157,6 @@ class GPSDIOReader(gpsdio.base.GPSDIOBaseStream):
         Get a GPSd message from the driver and validate.
         """
 
-        if self.closed:
-            raise IOError("Cannot operate on a closed stream.")
-
         return self.validate_msg(next(self._iterator))
 
     next = __next__
@@ -182,8 +179,5 @@ class GPSDIOWriter(gpsdio.base.GPSDIOBaseStream):
         msg : dict
             GPSd message.
         """
-
-        if self.closed:
-            raise IOError("Cannot operate on a closed stream.")
 
         return self._stream.write(self.validate_msg(msg))

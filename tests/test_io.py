@@ -39,9 +39,9 @@ def test_io_on_closed_stream(tmpdir):
         with gpsdio.open(pth, mode=mode, driver='NewlineJSON') as src:
             src.close()
         assert src.closed
-        with pytest.raises((IOError, TypeError)):
+        with pytest.raises(Exception):
             next(src)
-        with pytest.raises((IOError, OSError, AttributeError)):
+        with pytest.raises(Exception):
             src.write(None)
 
 
