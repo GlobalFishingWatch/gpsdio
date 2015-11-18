@@ -28,7 +28,7 @@ def open(
         do=None,
         co=None,
         schema=None,
-        extensions=True,
+        schema_extensions=True,
         **kwargs):
 
     """
@@ -49,7 +49,7 @@ def open(
         Additional options to pass to the driver.
     co : dict, optional
         Additional options to pass to the compression driver.
-    exctensions : bool, optional
+    schema_extensions : bool, optional
         Use external field extensions?  Ignored if a `schema` is given.
     kwargs : **kwargs, optional
         Additional options to pass to the file-like object.
@@ -81,7 +81,7 @@ def open(
     # Handle defaults
     do = do or {}
     co = co or {}
-    schema = schema or gpsdio.schema.build_schema(extensions=extensions)
+    schema = schema or gpsdio.schema.build_schema(extensions=schema_extensions)
 
     in_name = name if isinstance(name, six.string_types) else getattr(name, 'name', None)
 
