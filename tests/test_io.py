@@ -6,6 +6,7 @@ Unittests for gpsdio.io
 import json
 
 import pytest
+import six
 from six.moves import StringIO
 
 import gpsdio
@@ -108,3 +109,16 @@ def test_stream_attrs(types_json_path):
         drv.stop()
         assert drv.closed
         assert drv.f.closed
+
+
+def test_validate_msg(types_json_path):
+    # Not enough fields
+    with gpsdio.open(types_json_path) as src:
+        with pytest.raises(gpsdio.errors.SchemaError):
+            src.validate_msg({'type': 1})
+    # Too many fields
+    with gpsdio.open(types_json_path) as src:
+        msg = {k: v.get('default', None) for k, v in six.iteritems(src.schema[1])}
+        msg['other'] = None
+        with pytest.raises(gpsdio.errors.SchemaError):
+            src.validate_msg(msg)
