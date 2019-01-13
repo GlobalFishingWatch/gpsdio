@@ -21,6 +21,3 @@ script:
 after_success:
   - coveralls
 
-notifications:
-  flowdock:
-    secure: sSDUIIuldA7tWGqgexf+nmeC/+Htm97bwcPaZOHv2+/c3jKsxUoMMnwkcT3ChqPTEvqs2pGoAYuSDDOWXYUZTpETmZyfECmSqPdfD9nePdqDCum8Q909jlttJWR4jmMuhToNifXdwIkPjnspnLrnxCj92/9/Nx/9uSo/+JfPfE0=

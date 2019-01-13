@@ -211,8 +211,8 @@ class MsgPackDriver(_BaseDriver):
 
     def open(self, name, mode='r', **kwargs):
 
-        if 'encoding' not in kwargs:
-            kwargs['encoding'] = 'utf-8'
+        # if 'encoding' not in kwargs:
+        #     kwargs['encoding'] = 'utf-8'
 
         # We need some additional MsgPack specific objects
         self._unpacker = None
@@ -231,7 +231,7 @@ class MsgPackDriver(_BaseDriver):
 
     def __next__(self):
         if self._unpacker is None:
-            self._unpacker = msgpack.Unpacker(self.f, **self._unpacker_args)
+            self._unpacker = msgpack.Unpacker(self.f, raw=False, **self._unpacker_args)
         return next(self._unpacker)
 
     next = __next__

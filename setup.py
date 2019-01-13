@@ -69,7 +69,7 @@ setup(
     ext_modules=ext_modules,
     extras_require={
         'dev': [
-            'pytest',
+            'pytest>=3.6',
             'pytest-cov',
             'coveralls'
         ]

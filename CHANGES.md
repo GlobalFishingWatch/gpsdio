@@ -1,6 +1,11 @@
 Changes
 =======
 
+Dev
+------------------
+
+- Fix some travis build problems
+- stop using deprectated `encoding` param with msgpack
 
 0.0.7 (2015-07-30)
 ------------------
