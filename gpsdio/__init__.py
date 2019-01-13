@@ -19,16 +19,17 @@ logger = logging.getLogger('gpsdio')
 __all__ = ('open', 'GPSDIOReader', 'GPSDIOWriter')
 
 
-__version__ = '0.0.8'
+__version__ = '0.0.9-dev'
 __author__ = 'Kevin Wurster, Egil Moeller'
 __email__ = 'kevin@skytruth.org, egil@skytruth.org'
 __source__ = 'https://github.com/SkyTruth/gpsdio'
 __license__ = """
-Copyright 2014-2015 SkyTruth
+Copyright 2014-2019 SkyTruth
 
 Authors:
 Kevin Wurster <kevin@skytruth.org>
-Egil Möller <egil@skytruth-org>
+Egil Möller <egil@skytruth.org>
+Paul Woods <paul@skytruth.org>
 
 
 Licensed under the Apache License, Version 2.0 (the "License");
